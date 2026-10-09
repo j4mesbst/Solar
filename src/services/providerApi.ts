@@ -12,11 +12,20 @@ export function validateProviderInput(name: string, baseUrl: string, secret: str
   if (!secret.trim()) return "La clé API est obligatoire.";
   return null;
 }
-const endpoint = (provider: Provider) => `${provider.baseUrl.replace(/\/$/, "")}/models`;
+const isGonkaRouter = (provider: Provider) => {
+  try { return new URL(provider.baseUrl).hostname === "api.gonkarouter.io"; }
+  catch { return false; }
+};
+const endpoint = (provider: Provider) => {
+  const baseUrl = provider.baseUrl.replace(/\/$/, "");
+  const isDev = Boolean((import.meta as ImportMeta & { env?: { DEV?: boolean } }).env?.DEV);
+  if (isDev && typeof window !== "undefined" && isGonkaRouter(provider)) return `/solar-router${new URL(baseUrl).pathname}/models`;
+  return `${baseUrl}/models`;
+};
 async function requestModels(provider: Provider, secret: string): Promise<Model[]> {
   let response: Response;
   try { response = await fetch(endpoint(provider), { headers: { Authorization: `Bearer ${secret}`, Accept: "application/json" } }); }
-  catch { throw new ProviderError("Impossible de joindre cet endpoint /models.", "unavailable"); }
+  catch { throw new ProviderError("Connexion au fournisseur impossible. Vérifie l’URL, ta connexion, puis redémarre Solar après une mise à jour.", "unavailable"); }
   if (response.status === 401 || response.status === 403) throw new ProviderError("La clé API a été refusée par le fournisseur.", "unauthorized");
   if (!response.ok) throw new ProviderError(`L’endpoint /models a répondu ${response.status}.`, "unavailable");
   let payload: unknown; try { payload = await response.json(); } catch { throw new ProviderError("La réponse /models n’est pas un JSON valide.", "invalid-response"); }
