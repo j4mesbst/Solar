@@ -9,7 +9,7 @@ export interface Model {
   id: string; providerId: string; name: string; capabilities: string[];
   source: "remote" | "manual"; enabled: boolean; providerModelId?: string;
 }
-export type Effort = "low" | "medium" | "high";
+export type Effort = "low" | "medium" | "high" | "ultra";
 export type MessageStatus = "pending" | "streaming" | "completed" | "interrupted" | "error";
 export interface Conversation {
   id: string; title: string; providerId?: string; modelId?: string; effort: Effort;

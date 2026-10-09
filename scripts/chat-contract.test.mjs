@@ -10,7 +10,9 @@ await streamChat({ provider, model: "model-a", messages, effort: "high", vault: 
 assert(answer === "Hello", "SSE chunks should be concatenated");
 assert(JSON.parse(request.body).stream === true, "request should ask for real streaming");
 assert(JSON.parse(request.body).model === "model-a", "request should use selected model");
-assert(JSON.parse(request.body).max_tokens === 1024, "request should reserve enough output tokens");
+assert(JSON.parse(request.body).max_tokens === 3072, "high effort should reserve enough output tokens");
+assert(JSON.parse(request.body).messages[0].role === "system", "effort should add a response instruction");
+assert(!answer.includes("<think>"), "internal reasoning tags must not reach the chat UI");
 globalThis.fetch = async () => new Response("", { status: 401 });
 try { await streamChat({ provider, model: "model-a", messages, effort: "medium", vault: { get: async () => "x" }, signal: new AbortController().signal, onDelta: () => {} }); throw new Error("401 should fail"); } catch (error) { assert(error instanceof ChatError && error.code === "unauthorized", "401 should normalize"); }
 console.log("chat-contract-tests: ok");
