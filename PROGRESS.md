@@ -151,3 +151,12 @@ Contract feature tests passed for memory-only temporary messages/drafts, no disk
 - First successful conversation turns request a capitalized title of at most three words from the same model. Atomic metadata writes preserve manually renamed titles, do not resurrect deleted chats and leave local fallbacks on failure. These brief auxiliary requests use the configured provider and its normal costs; no unrelated service is involved.
 - Appearance uses a unified settings canvas and persisted independent light/dark palettes: dominant color, canvas, surfaces/composer, text, navigation, user bubbles, borders and selection/focus. Radius and font are editable; reset restores defaults. Automatic 06:00/20:00 mode remains. Solar’s original wordmark typeface is preserved.
 - Validation: build, provider/chat/store/appearance/label/activity contracts and browser smoke, enhancement, reference, polish and customization suites. The customization suite imports actual PDF/DOCX fixture bytes, verifies extracted text in chat requests, exercises native editing/caret selection/multiline, real SSE thinking/writing transitions with hidden reasoning, provider-backed metadata requests/raw IDs, hover/press, animated Ultra/reset, palette persistence/reset, mobile and reduced motion. Native macOS and live provider/model checks remain outstanding.
+
+
+## 2026-10-09 — Compact composer and runtime controls
+- Composer baseline reduced to about half its former height; grows with multiline drafts.
+- Model, small red/green connection dot, effort and Send share the lower-right action row. Options moved top left.
+- Local preparation pulses light green, ready stabilizes, failures show red; readiness persists during generation.
+- Effort popup reduced to roughly one third its former height; every level has a distinct dynamic particle pattern.
+- Rail multipart motion runs on hover/focus only; click uses a separate scale spring, with reduced-motion support.
+- Narrow-window popovers stay inside the composer bounds. Focused browser regression covers placement, all effort animations, provider states, editable generation, hover/click, mobile and reduced motion.

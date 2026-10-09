@@ -15,7 +15,8 @@
     "test:ui:enhancements": "node scripts/ui-enhancements.cjs",
     "test:ui:reference": "node scripts/ui-reference-layout.cjs",
     "test:ui:polish": "node scripts/ui-polish.cjs",
-    "test:ui:customization": "node scripts/ui-customization.cjs"
+    "test:ui:customization": "node scripts/ui-customization.cjs",
+    "test:ui:compact": "node scripts/ui-compact.cjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",
