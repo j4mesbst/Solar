@@ -22,7 +22,7 @@ async function requestModels(provider: Provider, secret: string): Promise<Model[
   let payload: unknown; try { payload = await response.json(); } catch { throw new ProviderError("La réponse /models n’est pas un JSON valide.", "invalid-response"); }
   const rows = Array.isArray(payload) ? payload : (payload as { data?: unknown })?.data;
   if (!Array.isArray(rows)) throw new ProviderError("La réponse /models ne contient pas de liste de modèles.", "invalid-response");
-  return rows.flatMap((item) => { const id = typeof item === "string" ? item : (item as { id?: unknown })?.id; return typeof id === "string" && id.trim() ? [{ id, providerId: provider.id, name: id, capabilities: [], source: "remote" as const, enabled: true }] : []; });
+  return rows.flatMap((item) => { const id = typeof item === "string" ? item : (item as { id?: unknown })?.id; return typeof id === "string" && id.trim() ? [{ id: `${provider.id}:${id}`, providerId: provider.id, providerModelId: id, name: id, capabilities: [], source: "remote" as const, enabled: true }] : []; });
 }
 export const providerApi = {
   async test(provider: Provider, vault: SecretVault) { const secret = await vault.get(provider.secretRef); if (!secret) throw new ProviderError("Aucune clé API enregistrée pour ce fournisseur.", "unauthorized"); await requestModels(provider, secret); },

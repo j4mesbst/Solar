@@ -9,7 +9,7 @@ const provider = { id: "p", name: "Test", protocol: "openai-compatible", baseUrl
 const vault = { get: async () => "test-secret" };
 globalThis.fetch = async () => new Response(JSON.stringify({ data: [{ id: "model-a" }] }), { status: 200 });
 const models = await providerApi.discoverModels(provider, vault);
-assert(models[0].id === "model-a" && models[0].source === "remote", "models response should map");
+assert(models[0].providerModelId === "model-a" && models[0].source === "remote", "models response should map");
 
 globalThis.fetch = async () => new Response("", { status: 401 });
 try { await providerApi.test(provider, vault); throw new Error("401 should fail"); } catch (error) { assert(error instanceof ProviderError && error.code === "unauthorized", "401 should normalize"); }

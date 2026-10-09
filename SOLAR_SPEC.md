@@ -24,6 +24,13 @@ Solar will be a local-first macOS AI chat application. V0 creates its safe, exte
 - `/models` discovery accepts standard OpenAI-compatible `{ data: [{ id }] }` responses and keeps manual models.
 - No Gonka model IDs are hardcoded. Ollama remains an architecture option only; it is not implemented here.
 
+## Prompt 03 — first real chat path
+
+- Conversations and messages are persisted locally, including message status and order.
+- Solar sends OpenAI-compatible `stream: true` chat requests and renders server-sent response chunks as they arrive.
+- Stop uses an `AbortController`, retains received text and marks the assistant message interrupted.
+- The first message replaces the large welcome state. Enter sends; Shift+Enter adds a line break.
+
 ## Explicitly deferred
 
 Chat inference, Ollama connection, Anthropic/OpenAI providers, agents, subscriptions, model downloads and syncing.

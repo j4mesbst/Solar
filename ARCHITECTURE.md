@@ -24,3 +24,9 @@ The local store will hold non-secret settings, providers (without API keys), con
 `Settings → ProviderForm → SecretVault → providerApi → /models → SolarStore`.
 
 Remote models are marked `source: remote`; user-added IDs are marked `source: manual` and are not removed during refresh.
+
+## Chat flow
+
+`Conversation → user message (saved) → /chat/completions with stream=true → assistant chunks (saved) → completed/interrupted/error`.
+
+The OpenAI-compatible SSE parser accepts `data: { choices: [{ delta: { content } }] }` events and `[DONE]`. An `AbortController` cancels the actual network request when Stop is pressed. Effort is stored on the conversation but not sent until a documented Gonka parameter applies to the selected model.
