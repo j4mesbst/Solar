@@ -24,7 +24,8 @@ const endpoint = (provider: Provider) => {
 };
 async function requestModels(provider: Provider, secret: string): Promise<Model[]> {
   let response: Response;
-  try { response = await fetch(endpoint(provider), { headers: { Authorization: `Bearer ${secret}`, Accept: "application/json" } }); }
+  const apiKey = secret.trim();
+  try { response = await fetch(endpoint(provider), { headers: { Authorization: `Bearer ${apiKey}`, "x-api-key": apiKey, Accept: "application/json" } }); }
   catch { throw new ProviderError("Connexion au fournisseur impossible. Vérifie l’URL, ta connexion, puis redémarre Solar après une mise à jour.", "unavailable"); }
   if (response.status === 401 || response.status === 403) throw new ProviderError("La clé API a été refusée par le fournisseur.", "unauthorized");
   if (!response.ok) throw new ProviderError(`L’endpoint /models a répondu ${response.status}.`, "unavailable");

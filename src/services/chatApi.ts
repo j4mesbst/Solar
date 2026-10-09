@@ -10,6 +10,7 @@ const completionUrl = (provider: Provider) => `${provider.baseUrl.replace(/\/$/,
 export async function streamChat(input: { provider: Provider; model: string; messages: Message[]; effort: Effort; vault: SecretVault; signal: AbortSignal; onDelta: (text: string) => void }) {
   const key = await input.vault.get(input.provider.secretRef);
   if (!key) throw new ChatError("Aucune clé API n’est enregistrée pour ce fournisseur.", "unauthorized");
+  const apiKey = key.trim();
   const body = {
     model: input.model,
     stream: true,
@@ -18,7 +19,7 @@ export async function streamChat(input: { provider: Provider; model: string; mes
     // it is not sent because it is not a documented universal Gonka parameter.
   };
   let response: Response;
-  try { response = await fetch(completionUrl(input.provider), { method: "POST", signal: input.signal, headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}`, Accept: "text/event-stream" }, body: JSON.stringify(body) }); }
+  try { response = await fetch(completionUrl(input.provider), { method: "POST", signal: input.signal, headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}`, "x-api-key": apiKey, Accept: "text/event-stream" }, body: JSON.stringify(body) }); }
   catch (error) { if (input.signal.aborted) throw new ChatError("La génération a été interrompue.", "interrupted"); throw new ChatError("Impossible de joindre Gonka Router. Vérifie ta connexion et l’URL du fournisseur.", "network"); }
   if (response.status === 401 || response.status === 403) throw new ChatError("La clé API a été refusée par le fournisseur.", "unauthorized");
   if (response.status === 404) throw new ChatError("Le modèle ou l’URL de l’API est introuvable.", "model");
