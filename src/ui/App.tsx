@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Check, ChevronDown, FilePlus2, KeyRound, MoreHorizontal, PanelLeftClose, Plus, RefreshCw, Send, Settings2, Trash2, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Check, FilePlus2, KeyRound, MoreHorizontal, PanelLeftClose, Plus, RefreshCw, Send, Settings2, Trash2, X } from "lucide-react";
 import type { Model, Provider } from "../domain/types";
 import { mockStore } from "../services/mockStore";
 import { providerApi, ProviderError, validateProviderInput } from "../services/providerApi";
@@ -8,7 +8,7 @@ import { secretVault } from "../services/nativeVault";
 const threads = ["Welcome to Solar"];
 type View = "chat" | "settings";
 type FormState = { id?: string; name: string; baseUrl: string; protocol: Provider["protocol"]; secret: string };
-const emptyForm: FormState = { name: "", baseUrl: "https://api.gonka.ai/v1", protocol: "openai-compatible", secret: "" };
+const emptyForm: FormState = { name: "Gonka Router", baseUrl: "https://api.gonkarouter.io/v1", protocol: "openai-compatible", secret: "" };
 
 export function App() {
   const [collapsed, setCollapsed] = useState(false);
