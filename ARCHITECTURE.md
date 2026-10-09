@@ -17,7 +17,7 @@ React UI
 
 ## Persistence plan
 
-The local store will hold non-secret settings, providers (without API keys), conversations and messages. API tokens are referred to by key and accessed through `SecretVault`; the native Tauri implementation uses the `keyring` crate and macOS Keychain. The browser preview uses an in-memory vault and never persists the key. Each provider implements the same future provider-client contract, keeping model discovery and chat streaming replaceable.
+The browser preview scopes settings, providers, conversations and messages to the current browser tab. Reloading retains that tab’s work, while a new tab starts empty. API tokens are referred to by key and accessed through `SecretVault`; the native Tauri implementation uses the `keyring` crate and macOS Keychain. The preview vault uses session storage only and is cleared when the browser session ends. Each provider implements the same future provider-client contract, keeping model discovery and chat streaming replaceable.
 
 ## Provider flow
 

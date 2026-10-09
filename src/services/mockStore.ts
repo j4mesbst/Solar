@@ -1,9 +1,11 @@
 import type { SolarStore } from "./contracts";
 import type { AppSettings, Conversation, Message, Model, Provider } from "../domain/types";
 
-const keys = { providers: "solar.providers.v1", models: "solar.models.v1", conversations: "solar.conversations.v1", messages: "solar.messages.v1", settings: "solar.settings.v1" };
-const read = <T>(key: string, fallback: T): T => { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) as T : fallback; } catch { return fallback; } };
-const write = (key: string, value: unknown) => localStorage.setItem(key, JSON.stringify(value));
+// Preview state is intentionally scoped to one browser tab: reloading keeps the
+// current work, while opening Solar in a new tab starts with a blank session.
+const keys = { providers: "solar.session.providers.v1", models: "solar.session.models.v1", conversations: "solar.session.conversations.v1", messages: "solar.session.messages.v1", settings: "solar.session.settings.v1" };
+const read = <T>(key: string, fallback: T): T => { try { const raw = sessionStorage.getItem(key); return raw ? JSON.parse(raw) as T : fallback; } catch { return fallback; } };
+const write = (key: string, value: unknown) => sessionStorage.setItem(key, JSON.stringify(value));
 const providers: Provider[] = read(keys.providers, []);
 const models: Model[] = read(keys.models, []);
 const conversations: Conversation[] = read(keys.conversations, []);

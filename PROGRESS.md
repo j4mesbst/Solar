@@ -21,7 +21,7 @@
 - Tauri Store plugin declaration and native Keychain commands are prepared; they still require a macOS/Tauri build to verify against the real Keychain.
 - Gonka Router’s real endpoint, a real API key, and live model discovery were not tested in this workspace.
 - A real Gonka streamed response, Stop against a real network request, and Keychain persistence across a native-app restart require your configured macOS app and API key.
-- Browser preview secrets use memory only; they disappear on refresh and are never written to localStorage.
+- Browser preview state (including the preview key vault) is scoped to one browser tab: it survives reloads but is cleared when that tab session ends; it is never written to localStorage.
 - Native macOS build: this workspace does not have Rust installed, so it cannot compile the native bundle here.
 - Providers, model discovery, persistence adapters and chat execution: interfaces only; no live implementation is claimed.
 
