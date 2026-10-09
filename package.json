@@ -12,7 +12,8 @@
     "tauri": "tauri",
     "test:features": "node --experimental-strip-types scripts/features-contract.test.mjs",
     "test:ui": "node scripts/ui-smoke.cjs",
-    "test:ui:enhancements": "node scripts/ui-enhancements.cjs"
+    "test:ui:enhancements": "node scripts/ui-enhancements.cjs",
+    "test:ui:reference": "node scripts/ui-reference-layout.cjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",

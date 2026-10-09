@@ -15,7 +15,8 @@
 - [x] Targeted storage/search/paste/stream/provider tests and real-browser smoke suite
 
 - [x] Real streaming scroll suspension and return-to-latest
-- [x] Fixed navigation rail, refined chat/composer, animated effort gauge
+- [x] Reference-based two-row composer, top-right model/options controls and horizontal effort slider
+- [x] Animated fixed navigation rail, Favorites heart and Plugins/Skills placeholders
 - [x] Rich GFM/code/math rendering with table/code copy and safe links
 - [x] Local automatic titles with manual rename protection
 - [x] Persistent pinned conversations and favorite replies
