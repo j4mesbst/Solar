@@ -29,6 +29,12 @@
 - [x] Raster image import/paste/drop/preview, persisted drafts and native Ollama/OpenAI-compatible image payloads
 - [x] Browser checks for clock boundaries, manual theme override, image requests and provider rejection
 
+- [x] Prompt-style composer, native editing with animated caret, PDF/Word text extraction
+- [x] Provider-backed compact model labels and capitalized three-word conversation titles
+- [x] Real stream activity phases with shimmer and protected hidden reasoning
+- [x] Hover vector motion, spring click feedback and animated effort capsule
+- [x] Per-mode color palettes, borders, focus colors, font and corner controls
+
 ## Required macOS/live checks
 
 - [ ] Build/run native bundle with Rust/Xcode and verify native export save dialog/cancel/write

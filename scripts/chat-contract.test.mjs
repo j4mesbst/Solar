@@ -38,3 +38,5 @@ try { await runChunks(['data: {broken}\n\n']); throw new Error("bad JSON must fa
 const cancelled = new AbortController(); cancelled.abort();
 try { await runChunks([delta("hello"), "data: [DONE]\n\n"], { signal: cancelled.signal }); throw new Error("cancel must fail"); } catch (error) { assert(error instanceof ChatError && error.code === "interrupted", "cancellation should normalize"); }
 console.log("stream-regression-tests: ok");
+
+const activityStages=[];const hidden=await runChunks([`data: ${JSON.stringify({choices:[{delta:{reasoning_content:"hidden private content"}}]})}\n\n`,delta("<think>private</think>"),delta("Visible"),"data: [DONE]\n\n"],{onActivity:s=>activityStages.push(s)});assert(hidden==="Visible","activity events never reveal reasoning");assert(activityStages.join(",")==="connecting,waiting,thinking,writing","stages reflect received stream events");console.log("activity-contracts: ok (real connection/reasoning/writing events without reasoning exposure)");

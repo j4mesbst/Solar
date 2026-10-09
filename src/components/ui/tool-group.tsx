@@ -9,6 +9,7 @@ import {
   type ComponentType,
   type ReactNode,
 } from "react";
+import { TextShimmer } from "./text-shimmer";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -331,10 +332,9 @@ export const ToolGroup = memo(function ToolGroup({
         <span
           className={cn(
             "shrink-0",
-            isPending && "an-tg-shimmer",
           )}
         >
-          {headerLabel}
+          {isPending ? <TextShimmer>{headerLabel}</TextShimmer> : headerLabel}
         </span>
         {subtitle && (
           <span className="text-neutral-500 dark:text-neutral-400 truncate min-w-0 flex-1">

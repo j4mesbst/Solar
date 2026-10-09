@@ -29,7 +29,7 @@ console.log("features-contract-tests: ok (storage, restart, drafts, attachments,
 
 const { conversationTitle, exportConversations } = await import("../src/services/conversationTools.ts");
 assert.equal(conversationTitle("## Explique les étoiles\n\nUn second paragraphe"), "Explique les étoiles");
-assert.equal(conversationTitle("```js\nconst x = 1;"), "Question sur du code");
+assert.equal(conversationTitle("```js\nconst x = 1;"), "Question de code");
 assert.equal(conversationTitle("", 1), "Document à explorer");
 assert(conversationTitle("abc ".repeat(100)).length <= 54);
 await store.saveConversation({ ...conversation, id: "pinned", pinned: true, titleManuallyEdited: true });
@@ -71,3 +71,16 @@ assert.deepEqual(messagePayload(imageMessage,false).content[1],{type:'image_url'
 assert(!draftMessage({text:'Analyse',attachments:imageMessage.attachments}).includes('base64'));
 assert.throws(()=>messagePayload({...imageMessage,attachments:[{...imageMessage.attachments[0],content:'data:image/svg+xml;base64,aGVsbG8='}]},false),/invalide/);
 console.log('appearance-and-vision-contracts: ok (local-hour boundaries, explicit override, next timer, provider image formats, no base64 in text, invalid image rejection)');
+
+const { shortModelName, cleanLabel } = await import("../src/services/aiLabels.ts");
+assert.equal(shortModelName("bartowski/Qwen3.5-9B:Q4_K_M"),"Qwen 3.5 9B");
+assert.equal(shortModelName("deepseek/deepseek-v4-flash-instruct"),"deepseek v4 flash");
+assert.equal(cleanLabel('"architecture navale pour débuter"',"Sujet"),"Architecture navale pour");
+assert.equal(conversationTitle("salut comment vas-tu aujourd’hui"),"Salut comment vas-tu");
+await store.saveAutomaticTitle("pinned","Titre automatique");
+assert.equal((await store.listConversations()).find(c=>c.id==="pinned").title,conversation.title,"a manual title must survive metadata generation");
+await store.saveAutomaticTitle("a","Architecture navale");assert.equal((await store.listConversations()).find(c=>c.id==="a").title,"Architecture navale");
+await store.deleteConversation("a");await store.saveAutomaticTitle("a","Ne recrée pas");assert(!(await store.listConversations()).some(c=>c.id==="a"));
+await store.saveModel({id:"labels",name:"GPT-6-Astra-Pro",providerId:"p",enabled:true,source:"manual",capabilities:[]});await store.saveModelLabel("labels","GPT-6-Astra-Pro","GPT-6 Astra");assert.equal((await store.listModels()).find(m=>m.id==="labels").displayName,"GPT-6 Astra");await store.saveModelLabel("labels","old name","Wrong");assert.equal((await store.listModels()).find(m=>m.id==="labels").displayName,"GPT-6 Astra");
+const {appearanceStyle,paletteFor,contrastText}=await import("../src/services/appearance.ts");assert.equal(contrastText("#ffffff"),"#141416");assert.equal(contrastText("#000000"),"#ffffff");assert.equal(paletteFor({theme:"light",appearance:{light:{accent:"invalid",background:"#abccdd"}}},"light").accent,"#18181b");assert.equal(appearanceStyle({theme:"dark",appearance:{radius:999}},"dark")["--radius"],"36px");
+console.log("label-and-appearance-contracts: ok (compact labels, capitalization, protected titles, no resurrection, unchanged model IDs, validated palettes)");

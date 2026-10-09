@@ -21,7 +21,7 @@ export async function refreshOllama(): Promise<void> {
 }
 export async function reconcileModels(provider: Provider, found: Model[]) {
   const existing = (await solarStore.listModels()).filter(model => model.providerId === provider.id);
-  for (const model of found) { const old = existing.find(item => item.id === model.id); await solarStore.saveModel({ ...model, enabled: old?.enabled ?? true, source: old?.source === "manual" ? "manual" : model.source, available: true }); }
+  for (const model of found) { const old = existing.find(item => item.id === model.id); await solarStore.saveModel({ ...model, displayName: old?.displayName, displayNameSource: old?.displayNameSource, enabled: old?.enabled ?? true, source: old?.source === "manual" ? "manual" : model.source, available: true }); }
   for (const model of existing) if (model.source === "remote" && !found.some(item => item.id === model.id)) await solarStore.saveModel({ ...model, available: false });
 }
 export async function prepareOllama(provider: Provider, model: Model, signal: AbortSignal): Promise<"ready" | "skipped"> {

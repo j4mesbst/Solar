@@ -1,9 +1,10 @@
 import type { Conversation, Message } from "../domain/types";
 export function conversationTitle(text: string, attachments = 0): string {
   if (!text.trim()) return attachments ? "Document à explorer" : "Nouveau chat";
-  if (/^\s*```/.test(text) || /^\s*(?:const |import |def |function |class )/.test(text)) return "Question sur du code";
+  if (/^\s*```/.test(text) || /^\s*(?:const |import |def |function |class )/.test(text)) return "Question de code";
   const first = text.split(/\n/).find(line => line.trim())?.replace(/^\s*[#>*-]+\s*/, "").replace(/\s+/g, " ").trim() ?? "Nouveau chat";
-  return first.length > 54 ? `${first.slice(0, 51).replace(/\s+\S*$/, "")}…` : first;
+  const short = first.split(/\s+/).slice(0, 3).join(" ").slice(0, 40);
+  return short.charAt(0).toLocaleUpperCase("fr") + short.slice(1);
 }
 export function exportConversations(entries: { conversation: Conversation; messages: Message[] }[], format: "md" | "txt"): string {
   return entries.filter(entry => !entry.conversation.temporary && !entry.conversation.id.startsWith("temp:")).map(({ conversation, messages }) => {

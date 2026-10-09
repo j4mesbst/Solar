@@ -16,6 +16,8 @@ const effortConfig: Record<Effort, { maxTokens: number; instruction: string }> =
 // Buffer partial tags so internal analysis cannot briefly flash on screen when a tag
 // crosses token boundaries. Ordinary repeated tokens are valid and are never deduplicated.
 class VisibleTextFilter {
+  private onThinking?: () => void;
+  constructor(onThinking?: () => void) { this.onThinking = onThinking; }
   private pending = "";
   private hidden: string | null = null;
   append(text: string): string {
@@ -31,7 +33,7 @@ class VisibleTextFilter {
       output += this.pending.slice(0, index); this.pending = this.pending.slice(index);
       const lower = this.pending.toLowerCase();
       const tag = ["think", "analysis"].find(value => lower.startsWith(`<${value}>`));
-      if (tag) { this.hidden = tag; this.pending = this.pending.slice(tag.length + 2); continue; }
+      if (tag) { this.onThinking?.(); this.hidden = tag; this.pending = this.pending.slice(tag.length + 2); continue; }
       if (["<think>", "<analysis>"].some(value => value.startsWith(lower))) break;
       output += "<"; this.pending = this.pending.slice(1);
     }
@@ -45,13 +47,15 @@ const completionUrl = (provider: Provider) => {
   try { if (dev && typeof window !== "undefined" && !(window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ && new URL(base).hostname === "api.gonkarouter.io") return `/solar-router${new URL(base).pathname}/chat/completions`; } catch { /* Validation is handled by settings. */ }
   return `${base}/chat/completions`;
 };
-export async function streamChat(input: { provider: Provider; model: string; messages: Message[]; effort: Effort; vault: SecretVault; signal: AbortSignal; onDelta: (text: string) => void; systemInstruction?: string }) {
+export async function streamChat(input: { provider: Provider; model: string; messages: Message[]; effort: Effort; vault: SecretVault; signal: AbortSignal; onDelta: (text: string) => void; systemInstruction?: string; maxOutputTokens?: number; onActivity?: (stage: Message["activity"]) => void }) {
+  let stage: Message["activity"]; const activity = (value: Message["activity"]) => { if (stage !== value) { stage = value; input.onActivity?.(value); } }; activity("connecting");
   const local = input.provider.protocol === "ollama";
   const key = local ? null : await input.vault.get(input.provider.secretRef);
   if (!local && !key?.trim()) throw new ChatError("Aucune clé API n’est enregistrée pour ce fournisseur.", "unauthorized");
   const effort = effortConfig[input.effort];
   const messages = [{ role: "system", content: `${input.systemInstruction ?? ""} ${effort.instruction} Utilise du Markdown standard si utile : tableaux valides, code avec langage, listes simples. Évite les tableaux ASCII. Ne montre pas ton raisonnement interne. N’invente pas de recherche Internet ni d’accès à des données en temps réel.` }, ...input.messages.filter(message => message.role !== "assistant" || message.status === "completed").map(message => messagePayload(message, local))];
-  const body = { model: input.model, stream: true, messages, ...(local ? { options: { num_predict: effort.maxTokens } } : { max_tokens: effort.maxTokens }) };
+  const budget = input.maxOutputTokens ?? effort.maxTokens;
+  const body = { model: input.model, stream: true, messages, ...(local ? { options: { num_predict: budget } } : { max_tokens: budget }) };
   const headers: Record<string, string> = { "Content-Type": "application/json", Accept: local ? "application/x-ndjson" : "text/event-stream" };
   if (key) { headers.Authorization = `Bearer ${key.trim()}`; headers["x-api-key"] = key.trim(); }
   let response: Response;
@@ -61,17 +65,19 @@ export async function streamChat(input: { provider: Provider; model: string; mes
   if (response.status === 404) throw new ChatError("Le modèle ou l’URL de l’API est introuvable.", "model");
   if ([400, 415, 422].includes(response.status) && input.messages.some(message => message.attachments?.some(item => item.kind === "image"))) throw new ChatError("Le fournisseur n’a pas accepté cette demande avec image. Choisis un modèle compatible vision ou vérifie son format d’API.", "model");
   if (!response.ok || !response.body) throw new ChatError(`Le fournisseur a répondu ${response.status}.`, "provider");
-  const reader = response.body.getReader(); const decoder = new TextDecoder(); const filter = new VisibleTextFilter();
+  activity("waiting");
+  const reader = response.body.getReader(); const decoder = new TextDecoder(); const filter = new VisibleTextFilter(() => activity("thinking"));
   let buffer = ""; let dataLines: string[] = []; let completed = false; let visibleLength = 0; let snapshot = "";
-  const emit = (text: string) => { const visible = filter.append(text); if (visible) { visibleLength += visible.length; input.onDelta(visible); } };
+  const emit = (text: string) => { const visible = filter.append(text); if (visible) { activity("writing"); visibleLength += visible.length; input.onDelta(visible); } };
   const parse = (data: string) => {
     if (data === "[DONE]") { completed = true; return; }
-    let payload: { error?: unknown; done?: boolean; message?: { content?: string }; choices?: Array<{ delta?: { content?: string }; message?: { content?: string } }> };
+    let payload: { error?: unknown; done?: boolean; message?: { content?: string; thinking?: string }; choices?: Array<{ delta?: { content?: string; reasoning_content?: string; reasoning?: string }; message?: { content?: string } }> };
     try { payload = JSON.parse(data); } catch { throw new ChatError("Le flux de réponse du fournisseur est invalide.", "invalid-response"); }
     if (payload.error) throw new ChatError("Le fournisseur a signalé une erreur pendant la génération. Vérifie le modèle sélectionné puis réessaie.", "provider");
-    if (local) { if (typeof payload.message?.content === "string") emit(payload.message.content); if (payload.done) completed = true; }
+    if (local) { if (payload.message?.thinking) activity("thinking"); if (typeof payload.message?.content === "string") emit(payload.message.content); if (payload.done) completed = true; }
     else {
       const choice = payload.choices?.[0];
+      if (choice?.delta?.reasoning_content || choice?.delta?.reasoning) activity("thinking");
       if (typeof choice?.delta?.content === "string") emit(choice.delta.content);
       else if (typeof choice?.message?.content === "string") {
         // Explicit full-message snapshots are different from deltas. Accept only

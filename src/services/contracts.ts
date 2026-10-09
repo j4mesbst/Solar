@@ -8,5 +8,7 @@ export interface SolarStore {
   getSettings(): Promise<AppSettings>; saveSettings(settings: AppSettings): Promise<void>;
   saveProvider(provider: Provider): Promise<void>; deleteProvider(providerId: string): Promise<void>;
   saveModel(model: Model): Promise<void>; deleteModel(modelId: string): Promise<void>;
+  saveModelLabel(id: string, source: string, label: string): Promise<void>;
+  saveAutomaticTitle(id: string, title: string): Promise<void>;
 }
 export interface SecretVault { get(key: string): Promise<string | null>; set(key: string, value: string): Promise<void>; delete(key: string): Promise<void>; }
