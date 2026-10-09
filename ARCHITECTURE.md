@@ -17,7 +17,7 @@ React UI
 
 ## Persistence plan
 
-The browser preview scopes settings, providers, conversations and messages to the current browser tab. Reloading retains that tab’s work, while a new tab starts empty. API tokens are referred to by key and accessed through `SecretVault`; the native Tauri implementation uses the `keyring` crate and macOS Keychain. The preview vault uses session storage only and is cleared when the browser session ends. Each provider implements the same future provider-client contract, keeping model discovery and chat streaming replaceable.
+The browser preview remembers provider settings and the preview API key for this browser at the same Solar address. Conversations and messages remain scoped to the current browser tab, so a new tab starts without chat history. API tokens are referred to by key and accessed through `SecretVault`; the native Tauri implementation uses the `keyring` crate and macOS Keychain. Each provider implements the same future provider-client contract, keeping model discovery and chat streaming replaceable.
 
 ## Provider flow
 

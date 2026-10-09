@@ -1,11 +1,13 @@
 import type { SolarStore } from "./contracts";
 import type { AppSettings, Conversation, Message, Model, Provider } from "../domain/types";
 
-// Preview state is intentionally scoped to one browser tab: reloading keeps the
-// current work, while opening Solar in a new tab starts with a blank session.
-const keys = { providers: "solar.session.providers.v1", models: "solar.session.models.v1", conversations: "solar.session.conversations.v1", messages: "solar.session.messages.v1", settings: "solar.session.settings.v1" };
-const read = <T>(key: string, fallback: T): T => { try { const raw = sessionStorage.getItem(key); return raw ? JSON.parse(raw) as T : fallback; } catch { return fallback; } };
-const write = (key: string, value: unknown) => sessionStorage.setItem(key, JSON.stringify(value));
+// Providers and keys are remembered by this browser at the same Solar address.
+// Conversation history remains scoped to one tab and disappears in a new session.
+const keys = { providers: "solar.providers.v2", models: "solar.models.v2", conversations: "solar.session.conversations.v1", messages: "solar.session.messages.v1", settings: "solar.settings.v2" };
+const legacySessionKeys: Record<string, string> = { "solar.providers.v2": "solar.session.providers.v1", "solar.models.v2": "solar.session.models.v1", "solar.settings.v2": "solar.session.settings.v1" };
+const storageFor = (key: string) => key.includes(".session.") ? sessionStorage : localStorage;
+const read = <T>(key: string, fallback: T): T => { try { const storage = storageFor(key); let raw = storage.getItem(key); if (!raw && legacySessionKeys[key]) { raw = sessionStorage.getItem(legacySessionKeys[key]); if (raw) storage.setItem(key, raw); } return raw ? JSON.parse(raw) as T : fallback; } catch { return fallback; } };
+const write = (key: string, value: unknown) => storageFor(key).setItem(key, JSON.stringify(value));
 const providers: Provider[] = read(keys.providers, []);
 const models: Model[] = read(keys.models, []);
 const conversations: Conversation[] = read(keys.conversations, []);
@@ -28,14 +30,14 @@ export const mockStore: SolarStore = {
   async deleteModel(modelId) { const i = models.findIndex(item => item.id === modelId); if (i !== -1) models.splice(i, 1); write(keys.models, models); }
 };
 
-// Browser preview only: keys survive a page reload in the current tab, but are
-// never put in localStorage and disappear when the browser session ends.
-const previewVaultKey = "solar.preview-vault.v1";
+// Browser preview: persist a key for this browser + Solar address. Native builds
+// keep using the macOS Keychain through nativeVault instead.
+const previewVaultKey = "solar.preview-vault.v2";
 const readPreviewSecrets = (): Record<string, string> => {
-  try { return JSON.parse(sessionStorage.getItem(previewVaultKey) ?? "{}") as Record<string, string>; }
+  try { let raw = localStorage.getItem(previewVaultKey); if (!raw) { raw = sessionStorage.getItem("solar.preview-vault.v1"); if (raw) localStorage.setItem(previewVaultKey, raw); } return JSON.parse(raw ?? "{}") as Record<string, string>; }
   catch { return {}; }
 };
-const writePreviewSecrets = (secrets: Record<string, string>) => sessionStorage.setItem(previewVaultKey, JSON.stringify(secrets));
+const writePreviewSecrets = (secrets: Record<string, string>) => localStorage.setItem(previewVaultKey, JSON.stringify(secrets));
 export const previewVault = {
   async get(key: string) { return readPreviewSecrets()[key] ?? null; },
   async set(key: string, value: string) { const secrets = readPreviewSecrets(); secrets[key] = value; writePreviewSecrets(secrets); },

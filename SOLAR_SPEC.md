@@ -26,7 +26,7 @@ Solar will be a local-first macOS AI chat application. V0 creates its safe, exte
 
 ## Prompt 03 — first real chat path
 
-- Conversations and messages are retained only for the current Solar browser tab, including message status and order. A new tab starts with no history.
+- Conversations and messages are retained only for the current Solar browser tab, including message status and order. A new tab starts with no history; provider settings and the browser preview API key are remembered on the same Solar address.
 - Solar sends OpenAI-compatible `stream: true` chat requests and renders server-sent response chunks as they arrive.
 - Stop uses an `AbortController`, retains received text and marks the assistant message interrupted.
 - The first message replaces the large welcome state. Enter sends; Shift+Enter adds a line break.
