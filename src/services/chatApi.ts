@@ -5,7 +5,17 @@ export class ChatError extends Error {
   readonly code: "provider" | "model" | "unauthorized" | "network" | "invalid-response" | "interrupted";
   constructor(message: string, code: "provider" | "model" | "unauthorized" | "network" | "invalid-response" | "interrupted") { super(message); this.code = code; }
 }
-const completionUrl = (provider: Provider) => `${provider.baseUrl.replace(/\/$/, "")}/chat/completions`;
+const isGonkaRouter = (provider: Provider) => {
+  try { return new URL(provider.baseUrl).hostname === "api.gonkarouter.io"; }
+  catch { return false; }
+};
+const completionUrl = (provider: Provider) => {
+  const baseUrl = provider.baseUrl.replace(/\/$/, "");
+  const isDev = Boolean((import.meta as ImportMeta & { env?: { DEV?: boolean } }).env?.DEV);
+  // Keep chat requests on the same Vite proxy as model discovery in browser preview.
+  if (isDev && typeof window !== "undefined" && isGonkaRouter(provider)) return `/solar-router${new URL(baseUrl).pathname}/chat/completions`;
+  return `${baseUrl}/chat/completions`;
+};
 
 export async function streamChat(input: { provider: Provider; model: string; messages: Message[]; effort: Effort; vault: SecretVault; signal: AbortSignal; onDelta: (text: string) => void }) {
   const key = await input.vault.get(input.provider.secretRef);
