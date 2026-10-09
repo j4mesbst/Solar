@@ -26,6 +26,16 @@ export const mockStore: SolarStore = {
   async deleteModel(modelId) { const i = models.findIndex(item => item.id === modelId); if (i !== -1) models.splice(i, 1); write(keys.models, models); }
 };
 
-// Preview only: secrets are held in memory and never written to localStorage.
-const memory = new Map<string, string>();
-export const previewVault = { async get(key: string) { return memory.get(key) ?? null; }, async set(key: string, value: string) { memory.set(key, value); }, async delete(key: string) { memory.delete(key); } };
+// Browser preview only: keys survive a page reload in the current tab, but are
+// never put in localStorage and disappear when the browser session ends.
+const previewVaultKey = "solar.preview-vault.v1";
+const readPreviewSecrets = (): Record<string, string> => {
+  try { return JSON.parse(sessionStorage.getItem(previewVaultKey) ?? "{}") as Record<string, string>; }
+  catch { return {}; }
+};
+const writePreviewSecrets = (secrets: Record<string, string>) => sessionStorage.setItem(previewVaultKey, JSON.stringify(secrets));
+export const previewVault = {
+  async get(key: string) { return readPreviewSecrets()[key] ?? null; },
+  async set(key: string, value: string) { const secrets = readPreviewSecrets(); secrets[key] = value; writePreviewSecrets(secrets); },
+  async delete(key: string) { const secrets = readPreviewSecrets(); delete secrets[key]; writePreviewSecrets(secrets); }
+};

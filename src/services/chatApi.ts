@@ -24,6 +24,7 @@ export async function streamChat(input: { provider: Provider; model: string; mes
   const body = {
     model: input.model,
     stream: true,
+    max_tokens: 1024,
     messages: input.messages.filter(message => message.role !== "assistant" || message.status === "completed").map(message => ({ role: message.role, content: message.content })),
     // Gonka's OpenAI-compatible endpoint accepts common chat fields. Effort is retained locally;
     // it is not sent because it is not a documented universal Gonka parameter.
