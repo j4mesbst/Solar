@@ -7,7 +7,7 @@ export interface Provider {
 }
 export interface Model {
   id: string; providerId: string; name: string; capabilities: string[];
-  source: "remote" | "manual"; enabled: boolean; providerModelId?: string;
+  source: "remote" | "manual"; enabled: boolean; available?: boolean; providerModelId?: string;
 }
 export type Effort = "low" | "medium" | "high" | "ultra";
 export type MessageStatus = "pending" | "streaming" | "completed" | "interrupted" | "error";
@@ -17,6 +17,9 @@ export interface Conversation {
 }
 export interface Message {
   id: string; conversationId: string; role: "user" | "assistant" | "system";
-  content: string; status: MessageStatus; createdAt: string; order: number; error?: string;
+  content: string; status: MessageStatus; createdAt: string; order: number; error?: string; modelName?: string; effort?: Effort; durationSeconds?: number; displayText?: string; attachments?: PastedContent[];
 }
-export interface AppSettings { theme: "system" | "dark" | "light"; defaultModelId?: string; }
+export interface AppSettings { theme: "system" | "dark" | "light"; defaultModelId?: string; sendOnEnter?: boolean; }
+
+export interface PastedContent { id: string; title: string; content: string; kind: "text" | "code"; }
+export interface Draft { conversationId: string; text: string; attachments: PastedContent[]; updatedAt: string; }

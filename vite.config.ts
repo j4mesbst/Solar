@@ -1,8 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   clearScreen: false,
   server: {
     port: 1420,
@@ -12,6 +13,7 @@ export default defineConfig({
     // route only its requests through Vite; the native Tauri build uses the
     // provider URL directly.
     proxy: {
+      "/solar-ollama": { target: "http://127.0.0.1:11434", changeOrigin: true, timeout: 120000, proxyTimeout: 120000, rewrite: path => path.replace(/^\/solar-ollama/, "") },
       "/solar-router": {
         target: "https://api.gonkarouter.io",
         changeOrigin: true,

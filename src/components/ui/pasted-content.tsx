@@ -1,0 +1,8 @@
+import { useEffect, useRef, useState } from "react";
+import { FileText, Code2, X } from "lucide-react";
+import type { PastedContent } from "../../domain/types";
+export function PastedContents({ items, onRemove, onExpand }: { items: PastedContent[]; onRemove?: (id:string)=>void; onExpand?: (id:string)=>void }) {
+  const [preview,setPreview]=useState<PastedContent | null>(null);const dialog=useRef<HTMLDialogElement>(null);
+  useEffect(()=>{if(preview)dialog.current?.showModal();},[preview]);
+  return <><div className="paste-chips">{items.map(item=><div className="paste-chip" key={item.id}><button onClick={()=>setPreview(item)}>{item.kind==="code"?<Code2 size={14}/>:<FileText size={14}/>}<span>{item.title}<small>{item.kind==="code"?`${item.content.split("\n").length} lignes`:`${item.content.length.toLocaleString("fr")} caractères`}</small></span></button>{onRemove && <button onClick={()=>onRemove(item.id)} aria-label={`Supprimer ${item.title}`}><X size={13}/></button>}</div>)}</div>{preview && <dialog ref={dialog} className="paste-preview" onClose={()=>setPreview(null)} onClick={event=>{if(event.target===dialog.current){const rect=dialog.current.getBoundingClientRect();if(event.clientX<rect.left || event.clientX>rect.right || event.clientY<rect.top || event.clientY>rect.bottom)dialog.current.close();}}}><header><h2>{preview.title}</h2><button className="icon-button" onClick={()=>dialog.current?.close()} aria-label="Fermer l’aperçu"><X size={17}/></button></header><pre>{preview.content}</pre><footer>{onExpand && <button className="small-button" onClick={()=>{onExpand(preview.id);dialog.current?.close();}}>Remettre dans le champ</button>}<button className="small-button" onClick={()=>dialog.current?.close()}>Fermer</button></footer></dialog>}</>;
+}

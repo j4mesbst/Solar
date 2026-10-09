@@ -21,3 +21,9 @@ globalThis.fetch = async () => new Response("{}", { status: 200 });
 try { await providerApi.test(provider, vault); throw new Error("invalid response should fail"); } catch (error) { assert(error instanceof ProviderError && error.code === "invalid-response", "invalid response should normalize"); }
 
 console.log("provider-contract-tests: ok");
+assert(validateProviderInput("Ollama", "http://localhost:11434", "", "ollama") === null, "Ollama must not require an API key");
+let localUrl;
+globalThis.fetch = async (url, init) => { localUrl = url; assert(!init.headers.Authorization, "local discovery must not send an API key"); return new Response(JSON.stringify({ models: [{ name: "qwen:test" }] }), { status: 200 }); };
+const localModels = await providerApi.discoverModels({ ...provider, protocol: "ollama", baseUrl: "http://localhost:11434" }, { get: async () => { throw new Error("local discovery must not require the vault"); } });
+assert(localUrl.endsWith("/api/tags") && localModels[0].providerModelId === "qwen:test", "Ollama tags must map to model IDs");
+console.log("local-provider-tests: ok");

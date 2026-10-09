@@ -1,6 +1,7 @@
-import type { AppSettings, Conversation, Message, Model, Provider } from "../domain/types";
+import type { AppSettings, Conversation, Draft, Message, Model, Provider } from "../domain/types";
 
 export interface SolarStore {
+  getDraft(conversationId: string): Promise<Draft | null>; saveDraft(draft: Draft): Promise<void>; deleteDraft(conversationId: string): Promise<void>;
   listProviders(): Promise<Provider[]>; listModels(): Promise<Model[]>;
   listConversations(): Promise<Conversation[]>; saveConversation(conversation: Conversation): Promise<void>; deleteConversation(conversationId: string): Promise<void>;
   listMessages(conversationId: string): Promise<Message[]>; saveMessage(message: Message): Promise<void>;

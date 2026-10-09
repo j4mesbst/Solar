@@ -1,36 +1,24 @@
-# Solar — V0 foundation
+# Solar — implemented V1
 
-## Intent
+Solar is a local-first macOS AI chat application with local Ollama and configured OpenAI-compatible providers, including GonkaRouter. The shipped frontend uses a flat dark/light visual system with a collapsible sidebar and a readable chat.
 
-Solar will be a local-first macOS AI chat application. V0 creates its safe, extensible shell; it does **not** yet connect to any model.
+## Implemented
 
-## Chosen stack
+- Provider management, API credential masking/replacement, connection status and model discovery/manual IDs.
+- Safe Markdown/GFM, code/table scrolling and copying, streaming/interruption/error states.
+- Editable draft/model/effort during generation; changes apply to the next request.
+- Locally persisted conversations/messages/drafts/compact attachments with schema-v3 migration.
+- Cmd K offline history search, keyboard navigation, excerpts and exact-message jump.
+- Automatic Ollama detection and nonblocking, conservative model preloading.
+- Smart paste and contextual Simplify/Expand/Correct actions through the real provider service.
+- Appearance, models, providers, storage and preferences pages.
 
-- **Tauri v2 + Rust:** small native macOS app, direct access to native storage and Keychain.
-- **React + TypeScript + Vite:** fast, typed interface layer with a pleasant local browser preview.
-- **Tauri Store + a future Keychain adapter:** app data is local; API secrets will belong in macOS Keychain, never in chat data or source control.
+## Boundaries
 
-## V0 scope
+Browser data is remembered for the same browser and origin. Native data uses Tauri Store; native secrets use macOS Keychain. Browser credential preview storage is not encrypted. Effort profiles adjust response depth/output budget; native reasoning support is not inferred from a model name. Context limits remain provider-controlled: pasted content is sent in full and a provider rejection is surfaced.
 
-- Typed domain models: providers, models, conversations, messages, settings.
-- Storage and secret-vault contracts, ready for native adapters.
-- Temporary dark interface with sidebar, conversation surface and disabled model composer.
-- Native shell configuration and local browser preview.
+## Deferred
 
-## Prompt 02 — Gonka Router and model providers
+Adaptive Solar model, model downloads, hardware sizing recommendations, real web search/tools/agents, Anthropic-specific adapter, accounts, cloud sync, export and a large-history database.
 
-- Settings now has a provider-management page with OpenAI-compatible protocol as the first option.
-- Providers store metadata locally; secrets use the native `SecretVault` boundary and macOS Keychain adapter.
-- `/models` discovery accepts standard OpenAI-compatible `{ data: [{ id }] }` responses and keeps manual models.
-- No Gonka model IDs are hardcoded. Ollama remains an architecture option only; it is not implemented here.
-
-## Prompt 03 — first real chat path
-
-- Conversations and messages are retained only for the current Solar browser tab, including message status and order. A new tab starts with no history; provider settings and the browser preview API key are remembered on the same Solar address.
-- Solar sends OpenAI-compatible `stream: true` chat requests and renders server-sent response chunks as they arrive.
-- Stop uses an `AbortController`, retains received text and marks the assistant message interrupted.
-- The first message replaces the large welcome state. Enter sends; Shift+Enter adds a line break.
-
-## Explicitly deferred
-
-Chat inference, Ollama connection, Anthropic/OpenAI providers, agents, subscriptions, model downloads and syncing.
+Native macOS behavior and live providers require validation on macOS; browser tests use controlled network fixtures against the actual application code.
