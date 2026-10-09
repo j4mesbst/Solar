@@ -14,7 +14,7 @@ export function useDraft(id: string) {
     return () => { void flush(id); };
   }, [id, flush]);
   useEffect(() => {
-    const save = () => { if (!(window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__) { try { localStorage.setItem("solar.draft-recovery.v3", JSON.stringify(Object.values(draftRef.current))); } catch { setError("Impossible de sauvegarder les brouillons avant la fermeture."); } } void flush(); }; const visibility = () => { if (document.visibilityState === "hidden") save(); };
+    const save = () => { if (!(window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__) { try { localStorage.setItem("solar.draft-recovery.v3", JSON.stringify(Object.values(draftRef.current).filter(draft => !draft.conversationId.startsWith("temp:")))); } catch { setError("Impossible de sauvegarder les brouillons avant la fermeture."); } } void flush(); }; const visibility = () => { if (document.visibilityState === "hidden") save(); };
     window.addEventListener("pagehide", save); document.addEventListener("visibilitychange", visibility);
     // Native close waits for disk persistence; browser localStorage writes happen synchronously in the driver.
     let unlisten: (() => void) | undefined; let disposed = false;
@@ -31,7 +31,7 @@ export function useDraft(id: string) {
     if (value && (value.text !== snapshot.text || JSON.stringify(value.attachments) !== JSON.stringify(snapshot.attachments))) return;
     clearTimeout(timers.current.get(key)); pending.current.delete(key);
     await solarStore.deleteDraft(key); const next = { ...draftRef.current, [key]: blank(key) }; draftRef.current = next; setDrafts(next);
-    if (localStorage.getItem("solar.draft-recovery.v3")) localStorage.setItem("solar.draft-recovery.v3", JSON.stringify(Object.values(next)));
+    if (localStorage.getItem("solar.draft-recovery.v3")) localStorage.setItem("solar.draft-recovery.v3", JSON.stringify(Object.values(next).filter(draft => !draft.conversationId.startsWith("temp:"))));
   };
   const transfer = async (from: string, to: string) => { const value = draftRef.current[from]; if (!value) return; update({ text: value.text, attachments: value.attachments }, to); await flush(to); await clearSent(from, value); };
   return { draft: drafts[id] ?? blank(id), ready: Boolean(drafts[id]), update, clearSent, transfer, flush, error };

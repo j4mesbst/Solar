@@ -11,12 +11,21 @@
 - [x] Automatic Ollama discovery, namespaced IDs and removed-model states
 - [x] Debounced memory-aware local preload, no cloud preload/download/unload
 - [x] Smart paste preview/remove/expand and full-content model input
-- [x] Simplify/Expand/Correct on selected assistant text, isolated streaming result
+- [x] Five contextual text actions on selected assistant text, isolated streaming result
 - [x] Targeted storage/search/paste/stream/provider tests and real-browser smoke suite
+
+- [x] Real streaming scroll suspension and return-to-latest
+- [x] Fixed navigation rail, refined chat/composer, animated effort gauge
+- [x] Rich GFM/code/math rendering with table/code copy and safe links
+- [x] Local automatic titles with manual rename protection
+- [x] Persistent pinned conversations and favorite replies
+- [x] Temporary memory-only chats excluded from disk, draft recovery, search and exports
+- [x] Settings-only single/all Markdown/text export in browser
+- [x] Timed SSE browser regression and new feature contracts
 
 ## Required macOS/live checks
 
-- [ ] Build/run native bundle with Rust/Xcode
+- [ ] Build/run native bundle with Rust/Xcode and verify native export save dialog/cancel/write
 - [ ] Verify Tauri Store migration and native close/reopen draft restoration
 - [ ] Verify Keychain create/read/replace/delete with OS permissions
 - [ ] Verify installed Ollama discovery, real first-token latency, low-RAM behavior and Stop
@@ -27,5 +36,5 @@
 - [ ] Adaptive Solar model/hardware sizing and explicit native effort capability mapping
 - [ ] Model downloads and progress
 - [ ] Anthropic-native protocol, web search and real agent tools
-- [ ] History export, database/index tuning for very large archives, robust multi-window synchronization
+- [ ] Database/index tuning for very large archives, robust multi-window synchronization
 - [ ] Optional accounts/cloud sync

@@ -5,6 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   clearScreen: false,
+  build: { rollupOptions: { output: { manualChunks(id) { if (id.includes("node_modules/katex")) return "math"; if (id.includes("node_modules/highlight.js")) return "syntax"; } } } },
   server: {
     port: 1420,
     strictPort: true,

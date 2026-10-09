@@ -2,7 +2,7 @@
 
 ## Completed implementation
 
-The approved Solar design and the six additional features are implemented in the existing Tauri/React project. No repository history has been rewritten.
+The approved Solar redesign, previous features and latest attached feature brief are implemented in the existing Tauri/React project, with native export awaiting macOS verification. No repository history has been rewritten.
 
 - Flat dark/light interface, larger consistent corners, macOS system typography, restrained icons, collapsible sidebar, pinned settings and independently scrolling chat.
 - Drafting and changing model/effort while generating; each request keeps its captured settings, later edits apply to the next turn.
@@ -12,7 +12,7 @@ The approved Solar design and the six additional features are implemented in the
 - Nonblocking Ollama detection, manual selector refresh, distinct model IDs, preserved cloud providers and removed-model availability states.
 - Debounced local preparation with stale-result cancellation, one preload at a time, `/api/ps` resident-model check and five-minute expiry. No cloud preloading, model download or forced unloading.
 - Compact smart paste from 1500 characters or 30 lines: preview, removal, conversion to textarea text, draft persistence, full unmodified attachment content in model input.
-- Simplify/Expand/Correct for selected assistant text: shared real-provider streaming service, separate result, copy/insert/stop, original response retained, captured text treated as data. Primary and contextual generation do not overlap.
+- Simplify/Expand/Correct/Rephrase/Summarize for selected assistant text: shared real-provider streaming service, separate result, copy/insert/stop, original response retained, captured text treated as data. Primary and contextual generation do not overlap.
 - Stored API key masked using a dummy display, read-only until explicit replacement; saving unchanged never stores the dummy. Native Keychain errors are distinguished from absent credentials.
 
 ## Checks actually run
@@ -21,7 +21,7 @@ The approved Solar design and the six additional features are implemented in the
 - `npm run test:chat`: passed. SSE/NDJSON, request settings, auth, repeated tokens/whitespace, split reasoning tags, full-message snapshots, malformed/truncated streams and cancellation.
 - `npm run test:features`: passed. Store recreation/restart, separate drafts and exact attachments, write failures, serialized mutations, deletion/late-stream guard, offline accent-insensitive search/highlights, compact-paste thresholds/full input.
 - `npm run build`: passed. TypeScript and Vite production bundle.
-- Browser smoke suite with controlled provider responses: passed against the real application. Verified editable draft and controls during generation, next-request settings, isolation when switching/new chat, Markdown/code/tables, all three selection actions, copy/insert, compact paste preview/full send, draft/attachment restoration after reload, Cmd K search/Enter message jump/Escape, masked stored key, light/dark theme, automatic local discovery, rapid-change preload debounce, removed-model reconciliation and responsive sidebar/settings at 390×700.
+- Browser smoke suite with controlled provider responses: passed against the real application. Verified editable draft and controls during generation, next-request settings, isolation when switching/new chat, Markdown/code/tables, all five selection actions, copy/insert, compact paste preview/full send, draft/attachment restoration after reload, Cmd K search/Enter message jump/Escape, masked stored key, light/dark theme, automatic local discovery, rapid-change preload debounce, removed-model reconciliation and responsive sidebar/settings at 390×700.
 - Additional browser checks passed: unavailable Ollama does not block configured cloud models; simulated preload memory failure does not block local sending; paste expand/remove preserves content; Stop marks a request interrupted.
 - Desktop chat, search palette, light settings and small-window provider settings were rendered and visually inspected.
 - `git diff --check`: passed.
@@ -100,3 +100,19 @@ Rust/Xcode and a macOS target are unavailable in this workspace. `npm run tauri 
 - `src/ui/App.tsx`
 - `tsconfig.app.json`
 - `vite.config.ts`
+
+## Latest redesign and attached feature brief
+
+- Fixed streaming autoscroll: upward wheel, touch, keyboard or scrollbar movement suspends following; return-to-latest resumes. Search and favorite jumps remain at the chosen message, including when already viewing that conversation.
+- Permanent icon rail (Home, Plugins, Skills, Settings), independently scrolling collapsible history with smooth reduced-motion-aware transitions, enlarged original Solar wordmark, thinner rounded rows. Plugins shows actual configured connections; Skills shows the five existing text transformations. No plugin marketplace or arbitrary skill runtime is claimed.
+- Removed top-right delete control and assistant/model labels. History hover/context actions support deletion/renaming/pinning. Real request preparation/response receipt status and elapsed time precede a thin separator; results stream progressively and settle with a short fade. No invented agent activity.
+- Effort gauge/menu with an understated warm Ultra state; existing model search/grouping/refresh retained. Effort remains an instruction/output-budget profile, not a guarantee of native reasoning.
+- Rich GFM tables with TSV copy, code language/copy/syntax coloring, nested/task lists, H1–H6, safe links/quotes and KaTeX math. Unsupported formulas preserve their source; HTML is skipped and untrusted math commands disabled. Display updates capped at roughly 10 per second while all chunks remain in the final persisted response. Math/syntax bundles split out.
+- Temporary chats use a separate memory store, never the disk store or draft recovery. No search/export/favorite/pin participation; explicit close removes their content. Cloud-provider handling remains distinct from local retention.
+- Persistent pins and favorite message flags (deduplicated on the original message), favorite previews/original-message navigation/removal.
+- First-message local titles with code/attachment fallbacks and manual-title protection.
+- Settings-only single/all Markdown or text export with ordered message content/model metadata; temporary chats and provider credentials excluded. Browser download verified. Rust native save-dialog command implemented with user-chosen path only; compilation and dialog behavior require macOS verification.
+
+### Additional verification
+
+Contract feature tests passed for memory-only temporary messages/drafts, no disk writes, restart loss, close/late-write protection, persistent pins/favorites, deduplication, title cleanup and export filtering. Existing provider/chat contracts passed. Existing browser regression suite passed, including all five selection actions and small-window settings. New browser enhancement suite passed against timed SSE chunks: small and large upward scrolling, stable reading position during additional chunks, resume-follow button, pins/manual titles, favorite navigation and reload, temporary privacy/recovery/close, downloaded export content, math/syntax/copy/safe links, rail visibility and mobile overflow. Native Rust/macOS remains untested.

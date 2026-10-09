@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import { MarkdownMessage } from "./markdown-message";
 import type { TextAction } from "../../hooks/useTextActions";
 export function SelectionToolbar({selection,disabled,onAction}:{selection:{x:number;y:number};disabled:boolean;onAction:(action:TextAction)=>void}){
- return <div className="selection-toolbar" role="toolbar" aria-label="Actions sur le passage sélectionné" style={{left:selection.x,top:selection.y}} onMouseDown={event=>event.preventDefault()}>{(["Simplifier","Développer","Corriger"] as const).map(action=><button key={action} disabled={disabled} title={disabled?"Attends la fin de la génération en cours.":action} onClick={()=>onAction(action)}>{action}</button>)}</div>;
+ return <div className="selection-toolbar" role="toolbar" aria-label="Actions sur le passage sélectionné" style={{left:selection.x,top:selection.y}} onMouseDown={event=>event.preventDefault()}>{(["Simplifier","Développer","Corriger","Reformuler","Résumer"] as const).map(action=><button key={action} disabled={disabled} title={disabled?"Attends la fin de la génération en cours.":action} onClick={()=>onAction(action)}>{action}</button>)}</div>;
 }
 export function SelectionResult({result,busy,onStop,onClose,onInsert}:{result:{text:string;action:TextAction;error?:string};busy:boolean;onStop:()=>void;onClose:()=>void;onInsert:(text:string)=>void}){
  const [copyState,setCopyState]=useState("");

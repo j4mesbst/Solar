@@ -3,7 +3,8 @@ pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_store::Builder::default().build())
     .plugin(tauri_plugin_http::init())
-    .invoke_handler(tauri::generate_handler![secret_get, secret_set, secret_delete])
+    .plugin(tauri_plugin_dialog::init())
+    .invoke_handler(tauri::generate_handler![secret_get, secret_set, secret_delete, export_save])
     .run(tauri::generate_context!())
     .expect("error while running Solar");
 }
@@ -24,4 +25,22 @@ fn secret_set(key: String, value: String) -> Result<(), String> {
 fn secret_delete(key: String) -> Result<(), String> {
   let entry = keyring::Entry::new("solar", &key).map_err(|e| e.to_string())?;
   entry.delete_credential().map_err(|e| e.to_string())
+}
+
+// The path is chosen by the native dialog; frontend code cannot provide an arbitrary write path.
+#[tauri::command]
+async fn export_save(app: tauri::AppHandle, content: String, format: String, suggested_name: String) -> Result<bool, String> {
+  if format != "md" && format != "txt" { return Err("Format non pris en charge".into()); }
+  tauri::async_runtime::spawn_blocking(move || {
+    use tauri_plugin_dialog::DialogExt;
+    let selected = app.dialog().file().set_file_name(&suggested_name).add_filter("Conversation Solar", &[&format]).blocking_save_file();
+    match selected {
+      None => Ok(false),
+      Some(file) => {
+        let path = file.into_path().map_err(|error| error.to_string())?;
+        std::fs::write(path, content).map_err(|error| error.to_string())?;
+        Ok(true)
+      }
+    }
+  }).await.map_err(|error| error.to_string())?
 }

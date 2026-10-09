@@ -283,7 +283,7 @@ export const ToolGroup = memo(function ToolGroup({
           className,
         )}
       >
-        <span>{interruptedLabel}</span>
+        <span>{interruptedLabel}</span>{showElapsed && elapsedTime && <span>{elapsedTime}</span>}
       </div>
     );
   }

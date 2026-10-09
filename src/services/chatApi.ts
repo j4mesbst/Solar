@@ -49,7 +49,7 @@ export async function streamChat(input: { provider: Provider; model: string; mes
   const key = local ? null : await input.vault.get(input.provider.secretRef);
   if (!local && !key?.trim()) throw new ChatError("Aucune clé API n’est enregistrée pour ce fournisseur.", "unauthorized");
   const effort = effortConfig[input.effort];
-  const messages = [{ role: "system", content: `${input.systemInstruction ?? ""} ${effort.instruction} Ne montre pas ton raisonnement interne. N’invente pas de recherche Internet ni d’accès à des données en temps réel.` }, ...input.messages.filter(message => message.role !== "assistant" || message.status === "completed").map(message => ({ role: message.role, content: message.content }))];
+  const messages = [{ role: "system", content: `${input.systemInstruction ?? ""} ${effort.instruction} Utilise du Markdown standard si utile : tableaux valides, code avec langage, listes simples. Évite les tableaux ASCII. Ne montre pas ton raisonnement interne. N’invente pas de recherche Internet ni d’accès à des données en temps réel.` }, ...input.messages.filter(message => message.role !== "assistant" || message.status === "completed").map(message => ({ role: message.role, content: message.content }))];
   const body = { model: input.model, stream: true, messages, ...(local ? { options: { num_predict: effort.maxTokens } } : { max_tokens: effort.maxTokens }) };
   const headers: Record<string, string> = { "Content-Type": "application/json", Accept: local ? "application/x-ndjson" : "text/event-stream" };
   if (key) { headers.Authorization = `Bearer ${key.trim()}`; headers["x-api-key"] = key.trim(); }

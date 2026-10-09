@@ -3,7 +3,7 @@ import type { AppSettings, Conversation, Draft, Message, Model, Provider } from 
 export interface SolarStore {
   getDraft(conversationId: string): Promise<Draft | null>; saveDraft(draft: Draft): Promise<void>; deleteDraft(conversationId: string): Promise<void>;
   listProviders(): Promise<Provider[]>; listModels(): Promise<Model[]>;
-  listConversations(): Promise<Conversation[]>; saveConversation(conversation: Conversation): Promise<void>; deleteConversation(conversationId: string): Promise<void>;
+  listConversations(): Promise<Conversation[]>; listTemporaryConversations(): Promise<Conversation[]>; saveConversation(conversation: Conversation): Promise<void>; deleteConversation(conversationId: string): Promise<void>;
   listMessages(conversationId: string): Promise<Message[]>; saveMessage(message: Message): Promise<void>;
   getSettings(): Promise<AppSettings>; saveSettings(settings: AppSettings): Promise<void>;
   saveProvider(provider: Provider): Promise<void>; deleteProvider(providerId: string): Promise<void>;

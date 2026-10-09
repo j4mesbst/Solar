@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "test:features": "node --experimental-strip-types scripts/features-contract.test.mjs",
-    "test:ui": "node scripts/ui-smoke.cjs"
+    "test:ui": "node scripts/ui-smoke.cjs",
+    "test:ui:enhancements": "node scripts/ui-enhancements.cjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",
@@ -22,7 +23,10 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
     "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {

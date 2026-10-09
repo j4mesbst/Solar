@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowUp, Check, ChevronDown, Copy, FilePlus2, KeyRound, PanelLeft, Pencil, Plus, RefreshCw, Search, Settings2, Square, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowDown, ArrowUp, Home, Blocks, WandSparkles, Bookmark, Pin, MoreHorizontal, Clock3, Check, ChevronDown, Copy, FilePlus2, KeyRound, PanelLeft, Pencil, Plus, RefreshCw, Search, Settings2, Square, Trash2, X } from "lucide-react";
 import type { AppSettings, Conversation, Effort, Message, Model, Provider } from "../domain/types";
 import { solarStore } from "../services/store";
 import { ChatError, streamChat } from "../services/chatApi";
@@ -14,6 +14,7 @@ import { useModelPreparation } from "../hooks/useModelPreparation";
 import { useTextActions } from "../hooks/useTextActions";
 import { draftMessage, pastedContent, shouldCompactPaste } from "../services/pastedContent";
 import { refreshOllama, reconcileModels } from "../services/ollama";
+import { conversationTitle, exportConversations, saveExport } from "../services/conversationTools";
 import { ToolGroup } from "../components/ui/tool-group";
 
 type SettingsSection = "providers" | "models" | "appearance" | "storage" | "preferences";
@@ -24,34 +25,35 @@ const effortLabels: Record<Effort, string> = { low: "Bas", medium: "Moyen", high
 
 export function App() {
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < 800);
-  const [view, setView] = useState<"chat" | "settings">("chat");
+  const [view, setView] = useState<"chat" | "settings" | "plugins" | "skills" | "favorites">("chat");
   const [providers, setProviders] = useState<Provider[]>([]);
   const [models, setModels] = useState<Model[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectionRevision, setSelectionRevision] = useState(0);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const currentIdRef = useRef<string | null>(null);
   const conversationsRef = useRef<Conversation[]>([]);
-  const cancelRequest = useRef<(() => void) | null>(null);
+  const cancelRequest = useRef<((conversationId?: string) => void) | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [settings, setSettings] = useState<AppSettings>({ theme: "dark", sendOnEnter: true });
   const [searchOpen, setSearchOpen] = useState(false);
   const [targetMessageId, setTargetMessageId] = useState<string | undefined>();
   const [appError, setAppError] = useState("");
   const reload = async () => {
-    const [p, m, c, s] = await Promise.all([solarStore.listProviders(), solarStore.listModels(), solarStore.listConversations(), solarStore.getSettings()]);
+    const [p, m, c, s] = await Promise.all([solarStore.listProviders(), solarStore.listModels(), Promise.all([solarStore.listConversations(), solarStore.listTemporaryConversations()]).then(([a,b]) => [...b,...a]), solarStore.getSettings()]);
     setProviders(p); setModels(m); setConversations(c); conversationsRef.current = c; setSettings(s);
   };
-  const selectConversation = (id: string | null) => { setTargetMessageId(undefined); currentIdRef.current = id; setCurrentId(id); setMessages([]); setView("chat"); if (window.innerWidth < 800) setCollapsed(true); };
+  const selectConversation = (id: string | null) => { setTargetMessageId(undefined); currentIdRef.current = id; setCurrentId(id); setSelectionRevision(value => value + 1); setMessages([]); setView("chat"); if (window.innerWidth < 800) setCollapsed(true); };
   const current = conversations.find(item => item.id === currentId) ?? null;
   const updateConversation = async (value: Conversation) => {
     await solarStore.saveConversation(value);
-    const list = await solarStore.listConversations(); conversationsRef.current = list; setConversations(list);
+    const list = [...await solarStore.listTemporaryConversations(), ...await solarStore.listConversations()]; conversationsRef.current = list; setConversations(list);
   };
-  const createConversation = async () => {
+  const createConversation = async (temporary = false) => {
     const list = conversationsRef.current;
     const latest = list.find(item => item.id === currentIdRef.current && item.modelId) ?? list.find(item => item.modelId);
     const fallback = models.find(model => model.id === settings.defaultModelId && model.enabled);
-    const conversation: Conversation = { id: crypto.randomUUID(), title: "Nouveau chat", providerId: latest?.providerId ?? fallback?.providerId, modelId: latest?.modelId ?? fallback?.id, effort: latest?.effort ?? "medium", createdAt: now(), updatedAt: now() };
+    const conversation: Conversation = { id: `${temporary ? "temp:" : ""}${crypto.randomUUID()}`, temporary, title: "Nouveau chat", providerId: latest?.providerId ?? fallback?.providerId, modelId: latest?.modelId ?? fallback?.id, effort: latest?.effort ?? "medium", createdAt: now(), updatedAt: now() };
     await updateConversation(conversation); selectConversation(conversation.id); return conversation;
   };
   useEffect(() => {
@@ -67,16 +69,16 @@ export function App() {
     let live = true;
     if (currentId) void solarStore.listMessages(currentId).then(value => { if (live) setMessages(value); });
     return () => { live = false; };
-  }, [currentId]);
+  }, [currentId, selectionRevision]);
   const updateMessages = (id: string, value: Message[]) => { if (currentIdRef.current === id) setMessages(value); };
   const updateSettings = async (next: AppSettings) => { await solarStore.saveSettings(next); setSettings(next); };
   const rename = async (conversation: Conversation) => {
     const title = window.prompt("Nom de la conversation", conversation.title)?.trim();
-    if (title) await updateConversation({ ...conversation, title, updatedAt: now() });
+    if (title) await updateConversation({ ...conversation, title, titleManuallyEdited: true, updatedAt: now() });
   };
   const remove = async (conversation: Conversation) => {
-    if (!window.confirm(`Supprimer « ${conversation.title} » ?`)) return;
-    cancelRequest.current?.(); await solarStore.deleteConversation(conversation.id); await reload(); selectConversation(conversationsRef.current[0]?.id ?? null);
+    if (!conversation.temporary && !window.confirm(`Supprimer « ${conversation.title} » ?`)) return;
+    cancelRequest.current?.(conversation.id); await solarStore.deleteConversation(conversation.id); await reload(); if (conversation.id === currentIdRef.current) selectConversation(conversationsRef.current[0]?.id ?? null);
   };
   const clearHistory = async () => {
     if (!window.confirm("Supprimer toutes les conversations enregistrées ? Les fournisseurs et les clés seront conservés.")) return;
@@ -86,15 +88,19 @@ export function App() {
   };
   return <><main className={`shell ${collapsed ? "collapsed" : ""} ${settings.theme === "light" ? "" : "dark"}`} data-theme={settings.theme}>
     {!collapsed && <button className="sidebar-scrim" aria-label="Fermer la barre latérale" onClick={() => setCollapsed(true)}/>}
+    <nav className="app-rail" aria-label="Navigation principale" {...(searchOpen ? { inert: "" } : {})}><button className={`rail-button ${view === "chat" ? "active" : ""}`} aria-label="Accueil" title="Accueil" onClick={() => { setView("chat"); if (window.innerWidth < 800) setCollapsed(true); }}><Home size={20}/></button><button className={`rail-button ${view === "plugins" ? "active" : ""}`} aria-label="Plugins" title="Plugins" onClick={() => { setView("plugins"); if (window.innerWidth < 800) setCollapsed(true); }}><Blocks size={20}/></button><button className={`rail-button ${view === "skills" ? "active" : ""}`} aria-label="Skills" title="Skills" onClick={() => { setView("skills"); if (window.innerWidth < 800) setCollapsed(true); }}><WandSparkles size={20}/></button><button className={`rail-button rail-settings ${view === "settings" ? "active" : ""}`} aria-label="Paramètres" title="Paramètres" onClick={() => { setView("settings"); if (window.innerWidth < 800) setCollapsed(true); }}><Settings2 size={20}/></button></nav>
     <aside className="sidebar" aria-label="Conversations" {...((collapsed || searchOpen) ? { inert: "" } : {})}>
-      <div className="side-top"><span className="wordmark">Solar</span><button className="icon-button" onClick={() => setCollapsed(true)} aria-label="Masquer la barre latérale"><PanelLeft size={18}/></button></div>
-      <button className="new-thread" onClick={() => void createConversation()}><FilePlus2 size={17}/><span>Nouveau chat</span></button>
-      <nav aria-label="Historique"><p className="thread-label">Conversations</p>{conversations.length ? conversations.map(conversation => <div className={`thread-wrap ${conversation.id === currentId && view === "chat" ? "active" : ""}`} key={conversation.id}><button className="thread" onClick={() => selectConversation(conversation.id)} aria-current={conversation.id === currentId && view === "chat" ? "page" : undefined}><span>{conversation.title}</span></button><button className="thread-action" onClick={() => void rename(conversation)} aria-label={`Renommer ${conversation.title}`}><Pencil size={13}/></button></div>) : <p className="sidebar-empty">Tes conversations apparaîtront ici.</p>}</nav>
-      <button className={`settings ${view === "settings" ? "active" : ""}`} onClick={() => { setView("settings"); if (window.innerWidth < 800) setCollapsed(true); }}><Settings2 size={17}/><span>Paramètres</span></button>
+      <div className="side-top"><span className="wordmark">Solar</span><button className="icon-button" onClick={() => setCollapsed(true)} aria-label="Masquer la barre latérale"><PanelLeft size={19}/></button></div>
+      <div className="new-chat-actions"><button className="new-thread" onClick={() => void createConversation()}><Plus size={17}/><span>Nouveau chat</span></button><details className="new-chat-menu"><summary aria-label="Options du nouveau chat"><ChevronDown size={14}/></summary><button onClick={event => { event.currentTarget.closest("details")?.removeAttribute("open"); void createConversation(true); }}><Clock3 size={15}/>Chat temporaire</button></details></div>
+      <button className="history-search" onClick={() => setSearchOpen(true)}><Search size={15}/>Rechercher<span>⌘ K</span></button>
+      <nav aria-label="Historique">{(["temporary", "pinned", "recent"] as const).map(group => { const list = conversations.filter(c => group === "temporary" ? c.temporary : !c.temporary && Boolean(c.pinned) === (group === "pinned")); return list.length ? <div key={group}><p className="thread-label">{group === "temporary" ? "Cette session" : group === "pinned" ? "Épinglées" : "Récentes"}</p>{list.map(conversation => <div className={`thread-wrap ${conversation.id === currentId && view === "chat" ? "active" : ""}`} key={conversation.id} onContextMenu={event => { event.preventDefault(); const menu = event.currentTarget.querySelector("details"); if (menu) menu.open = true; }}><button className="thread" onClick={() => selectConversation(conversation.id)} aria-current={conversation.id === currentId && view === "chat" ? "page" : undefined}><span>{conversation.title}</span></button><details className="thread-menu" onToggle={event => { const menu = event.currentTarget; if (!menu.open) return; const bounds = menu.querySelector("summary")!.getBoundingClientRect(); const panel = menu.querySelector("div")!; panel.style.left = `${Math.max(8, Math.min(bounds.left - 170, window.innerWidth - 210))}px`; panel.style.top = `${Math.max(8, Math.min(bounds.bottom + 5, window.innerHeight - 150))}px`; }}><summary aria-label={`Actions pour ${conversation.title}`}><MoreHorizontal size={15}/></summary><div onClick={event => { event.currentTarget.closest("details")?.removeAttribute("open"); }}><button onClick={() => void rename(conversation)}><Pencil size={14}/>Renommer</button>{!conversation.temporary && <button onClick={() => void updateConversation({ ...conversation, pinned: !conversation.pinned })}><Pin size={14}/>{conversation.pinned ? "Désépingler" : "Épingler"}</button>}<button onClick={() => void remove(conversation)}><Trash2 size={14}/>Supprimer</button></div></details><button className="thread-action" onClick={() => void remove(conversation)} aria-label={`Supprimer ${conversation.title}`}><Trash2 size={14}/></button></div>)}</div> : null; })}{!conversations.length && <p className="sidebar-empty">Un nouveau départ.<br/>Tes conversations apparaîtront ici.</p>}</nav>
+      <button className="history-search" onClick={() => setView("favorites")}><Bookmark size={15}/>Réponses enregistrées</button>
     </aside>
-    <section className="workspace" {...(searchOpen ? { inert: "" } : {})}><header className="header"><div className="header-start">{collapsed && <button className="icon-button" onClick={() => setCollapsed(false)} aria-label="Afficher la barre latérale"><PanelLeft size={18}/></button>}<span className="title">{collapsed ? "Solar" : view === "settings" ? "Paramètres" : current?.title ?? "Nouveau chat"}</span></div>{view === "chat" && current && <button className="icon-button" onClick={() => void remove(current)} aria-label="Supprimer la conversation"><Trash2 size={16}/></button>}</header>
+    <section className="workspace" {...(searchOpen ? { inert: "" } : {})}><header className="header"><div className="header-start">{collapsed && <button className="icon-button" onClick={() => setCollapsed(false)} aria-label="Afficher la barre latérale"><PanelLeft size={18}/></button>}<span className="title">{collapsed ? "Solar" : view === "settings" ? "Paramètres" : view === "plugins" ? "Plugins" : view === "skills" ? "Skills" : view === "favorites" ? "Réponses enregistrées" : current?.temporary ? "Chat temporaire" : current?.title ?? "Nouveau chat"}</span>{view === "chat" && current?.temporary && <span className="temporary-badge">◌ Temporaire</span>}</div>{view === "chat" && current?.temporary && <button className="icon-button" aria-label="Fermer le chat temporaire" onClick={() => void remove(current)}><X size={16}/></button>}</header>
       {appError && <p className="global-error" role="alert">{appError}</p>}
-      <div className="chat-pane" hidden={view !== "chat"}><ChatView current={current} messages={messages} providers={providers} models={models} settings={settings} onCreated={createConversation} onConversation={updateConversation} onMessages={updateMessages} onSettings={() => setView("settings")} cancelRequest={cancelRequest} targetMessageId={targetMessageId} onTargetShown={() => setTargetMessageId(undefined)} onRefreshModels={async () => { await refreshOllama(); await reload(); }}/></div>
+      <div className="chat-pane" hidden={view !== "chat"}><ChatView current={current} messages={messages} providers={providers} models={models} settings={settings} onCreated={() => createConversation()} onConversation={updateConversation} onMessages={updateMessages} onSettings={() => setView("settings")} cancelRequest={cancelRequest} targetMessageId={targetMessageId} onTargetShown={() => setTargetMessageId(undefined)} onRefreshModels={async () => { await refreshOllama(); await reload(); }}/></div>
+      {view === "favorites" && <FavoritesView onOpen={(id, messageId) => { selectConversation(id); setTargetMessageId(messageId); }}/>}
+      {(view === "plugins" || view === "skills") && <div className="settings-page"><h1>{view === "plugins" ? "Plugins" : "Skills"}</h1><p className="settings-note">{view === "plugins" ? "Les connexions actives de Solar. Gère leurs modèles et leurs clés dans les paramètres." : "Les actions de texte sont disponibles en sélectionnant un passage d’une réponse."}</p>{view === "plugins" ? providers.map(provider => <div className="preference-row" key={provider.id}><div><h3>{provider.name}</h3><p>{provider.protocol === "ollama" ? "Modèles locaux avec Ollama" : "API de chat compatible OpenAI"}</p></div><span className={`status-dot ${provider.connectionState}`}/></div>) : ["Simplifier", "Développer", "Corriger", "Reformuler", "Résumer"].map(action => <div className="preference-row" key={action}><h3>{action}</h3><span className="settings-note">Passage sélectionné</span></div>)}<button className="small-button" onClick={() => setView("settings")}>Ouvrir les paramètres</button></div>}
       {view === "settings" && <SettingsView providers={providers} models={models} settings={settings} updateSettings={updateSettings} reload={reload} onBack={() => setView("chat")} clearHistory={clearHistory}/>}
     </section>
   </main>{searchOpen && <SearchPalette onClose={() => setSearchOpen(false)} onOpen={(id, messageId) => { selectConversation(id); setTargetMessageId(messageId); }}/>}</>;
@@ -104,7 +110,7 @@ function ChatView({ current, messages, providers, models, settings, onCreated, o
   current: Conversation | null; messages: Message[]; providers: Provider[]; models: Model[]; settings: AppSettings;
   onCreated: () => Promise<Conversation>; onConversation: (value: Conversation) => Promise<void>; onMessages: (id: string, value: Message[]) => void;
   targetMessageId?: string; onTargetShown: () => void; onRefreshModels: () => Promise<void>;
-  onSettings: () => void; cancelRequest: React.MutableRefObject<(() => void) | null>;
+  onSettings: () => void; cancelRequest: React.MutableRefObject<((conversationId?: string) => void) | null>;
 }) {
   const draftKey = current?.id ?? "new";
   const { draft: savedDraft, update: updateDraft, clearSent, transfer, error: draftError, ready: draftReady } = useDraft(draftKey);
@@ -115,7 +121,7 @@ function ChatView({ current, messages, providers, models, settings, onCreated, o
   const requestRef = useRef<{ controller: AbortController; conversationId: string } | null>(null);
   const locked = useRef(false); const currentRef = useRef(current); currentRef.current = current;
   const [elapsed, setElapsed] = useState(0);
-  const textarea = useRef<HTMLTextAreaElement>(null); const scroll = useRef<HTMLDivElement>(null); const follow = useRef(true);
+  const textarea = useRef<HTMLTextAreaElement>(null); const scroll = useRef<HTMLDivElement>(null); const follow = useRef(true); const [following, setFollowing] = useState(true); const lastScroll = useRef(0);
   const selectedModel = models.find(model => model.id === (current?.modelId ?? settings.defaultModelId));
   const provider = providers.find(item => item.id === selectedModel?.providerId);
   const [actionBusy, setActionBusy] = useState(false);
@@ -123,12 +129,12 @@ function ChatView({ current, messages, providers, models, settings, onCreated, o
   const actions = useTextActions(current?.id, provider, selectedModel, current?.effort ?? "medium", Boolean(activeRequest) || locked.current, preparation.cancel);
   useEffect(() => { setActionBusy(actions.busy); }, [actions.busy]);
   const [highlighted, setHighlighted] = useState<string>();
-  useEffect(() => { if (!targetMessageId || !messages.some(message => message.id === targetMessageId)) return; const element = document.getElementById(`message-${targetMessageId}`); element?.scrollIntoView({ block: "center" }); follow.current = false; setHighlighted(targetMessageId); onTargetShown(); }, [targetMessageId, messages]);
+  useEffect(() => { if (!targetMessageId || !messages.some(message => message.id === targetMessageId)) return; const element = document.getElementById(`message-${targetMessageId}`); element?.scrollIntoView({ block: "center" }); follow.current = false; setFollowing(false); setHighlighted(targetMessageId); onTargetShown(); }, [targetMessageId, messages]);
   useEffect(() => { if (!highlighted) return; const timer = setTimeout(() => setHighlighted(undefined), 1800); return () => clearTimeout(timer); }, [highlighted]);
   const activeHere = Boolean(activeRequest && activeRequest.conversationId === current?.id);
-  useEffect(() => { cancelRequest.current = () => requestRef.current?.controller.abort(); return () => { requestRef.current?.controller.abort(); cancelRequest.current = null; }; }, []);
+  useEffect(() => { cancelRequest.current = id => { if (!id || requestRef.current?.conversationId === id) requestRef.current?.controller.abort(); }; return () => { requestRef.current?.controller.abort(); cancelRequest.current = null; }; }, []);
   useEffect(() => { if (!activeRequest) return; const timer = window.setInterval(() => setElapsed(Math.floor((Date.now() - activeRequest.started) / 1000)), 1000); return () => clearInterval(timer); }, [activeRequest]);
-  useEffect(() => { setError(""); follow.current = true; }, [current?.id]);
+  useEffect(() => { setError(""); follow.current = true; setFollowing(true); lastScroll.current = 0; }, [current?.id]);
   useEffect(() => { if (scroll.current && follow.current) scroll.current.scrollTop = scroll.current.scrollHeight; }, [messages]);
   useEffect(() => { if (textarea.current) { textarea.current.style.height = "auto"; textarea.current.style.height = `${Math.min(textarea.current.scrollHeight, 200)}px`; } }, [draft]);
   const changeSelection = async (modelId?: string, effort?: Effort) => {
@@ -158,14 +164,14 @@ function ChatView({ current, messages, providers, models, settings, onCreated, o
       const user: Message = { id: crypto.randomUUID(), conversationId: active.id, role: "user", content, displayText: snapshot.text, attachments: snapshot.attachments, status: "completed", createdAt: now(), order: rawHistory.length };
       latest = { id: crypto.randomUUID(), conversationId: active.id, role: "assistant", content: "", status: "streaming", createdAt: now(), order: rawHistory.length + 1, modelName: model.name, effort };
       history = [...rawHistory, user]; requestRef.current.conversationId = active.id;
-      const updated = { ...(currentRef.current?.id === active.id ? currentRef.current : active), title: ["New conversation", "Nouveau chat"].includes(active.title) ? content.slice(0, 48) : active.title, updatedAt: now() };
+      const updated = { ...(currentRef.current?.id === active.id ? currentRef.current : active), title: !active.titleManuallyEdited && ["New conversation", "Nouveau chat"].includes(active.title) ? conversationTitle(snapshot.text, snapshot.attachments.length) : active.title, titleManuallyEdited: true, updatedAt: now() };
       await onConversation(updated);
-      setElapsed(0); setActiveRequest({ conversationId: active.id, started });
+      follow.current = true; setFollowing(true); setElapsed(0); setActiveRequest({ conversationId: active.id, started });
       await solarStore.saveMessage(user); await solarStore.saveMessage(latest); onMessages(active.id, [...history, latest]);
       try { await clearSent(draftKey, snapshot); } catch { setError("Le message est envoyé, mais le brouillon n’a pas pu être effacé."); }
-      let lastSaved = 0;
+      let lastSaved = 0; let lastRendered = 0;
       await streamChat({ provider: activeProvider, model: model.providerModelId ?? model.id, messages: history, effort, vault: secretVault, signal: controller.signal, onDelta: delta => {
-        latest = { ...latest!, content: latest!.content + delta }; onMessages(active!.id, [...history, latest]);
+        latest = { ...latest!, content: latest!.content + delta }; if (Date.now() - lastRendered > 100) { lastRendered = Date.now(); onMessages(active!.id, [...history, latest]); }
         if (Date.now() - lastSaved > 250) { lastSaved = Date.now(); void solarStore.saveMessage(latest).catch(() => setError("La réponse s’affiche, mais son enregistrement a échoué.")); }
       } });
       latest = { ...latest, status: "completed", durationSeconds: Math.round((Date.now() - started) / 1000) };
@@ -173,23 +179,23 @@ function ChatView({ current, messages, providers, models, settings, onCreated, o
     } catch (reason) {
       const normalized = reason instanceof ChatError ? reason : new ChatError("Impossible de terminer la réponse ou de l’enregistrer. Réessaie après avoir vérifié le stockage.", "provider");
       if (latest && active) {
-        latest = { ...latest, status: normalized.code === "interrupted" ? "interrupted" : "error", error: normalized.code === "interrupted" ? undefined : normalized.message };
+        latest = { ...latest, status: normalized.code === "interrupted" ? "interrupted" : "error", durationSeconds: Math.round((Date.now() - started) / 1000), error: normalized.code === "interrupted" ? undefined : normalized.message };
         try { await solarStore.saveMessage(latest); } catch { /* Display the error even if persistence fails. */ }
         onMessages(active.id, [...history, latest]);
       } else setError(normalized.message);
     } finally { requestRef.current = null; locked.current = false; setActiveRequest(null); }
   };
-  return <><div ref={scroll} className={`chat-scroll ${messages.length ? "has-messages" : ""}`} onScroll={() => { const el = scroll.current; if (el) follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100; }}>
+  return <><div ref={scroll} className={`chat-scroll ${messages.length ? "has-messages" : ""}`} onWheel={event => { if (event.deltaY < 0) { follow.current = false; setFollowing(false); } }} onTouchMove={() => { follow.current = false; setFollowing(false); }} onKeyDown={event => { if (["PageUp", "Home", "ArrowUp"].includes(event.key)) { follow.current = false; setFollowing(false); } }} onScroll={() => { const el = scroll.current; if (!el) return; if (el.scrollTop < lastScroll.current - 2) { follow.current = false; setFollowing(false); } else if (el.scrollTop > lastScroll.current && el.scrollHeight - el.scrollTop - el.clientHeight < 12) { follow.current = true; setFollowing(true); } lastScroll.current = el.scrollTop; }}>
     {!messages.length ? <div className="canvas"><div className="welcome"><h1>Local AI.</h1><p>Un espace calme pour tes idées.</p>{!selectedModel && <button className="inline-link" onClick={onSettings}>Connecter un modèle <ArrowUp size={14}/></button>}</div></div> : <div className="message-list">{messages.filter(message => message.role !== "system").map(message => <article id={`message-${message.id}`} data-message-id={message.id} className={`message ${message.role} ${highlighted === message.id ? "highlighted" : ""}`} key={message.id}>
-      {message.role === "user" ? <><div className="user-bubble">{message.displayText ?? message.content}</div>{message.attachments && <PastedContents items={message.attachments}/>}</> : <><div className="message-role">Solar <span>{message.modelName}</span></div><div className="message-content"><MarkdownMessage content={message.content}/></div>
-      {(message.status === "streaming" || message.status === "interrupted") && <ToolGroup state={message.status === "streaming" ? "pending" : "interrupted"} completeLabel="Réponse terminée" shimmerLabel={message.content ? "Réponse en cours…" : "Préparation de la réponse…"} interruptedLabel="Réponse interrompue" elapsedTime={activeHere ? `${elapsed} s` : undefined} className="generation-status"/>}
-      {message.status === "completed" && message.content && <CopyMessage content={message.content}/>}</>}
+      {message.role === "user" ? <><div className="user-bubble">{message.displayText ?? message.content}</div>{message.attachments && <PastedContents items={message.attachments}/>}</> : <><ToolGroup defaultOpen={false} state={message.status === "streaming" ? "pending" : message.status === "completed" ? "completed" : "interrupted"} completeLabel="Réponse terminée" shimmerLabel={message.content ? "Rédaction de la réponse" : "Connexion au modèle"} interruptedLabel={message.status === "error" ? "Réponse non terminée" : "Réponse interrompue"} elapsedTime={`${message.status === "streaming" && activeHere ? elapsed : message.durationSeconds ?? 0} s`} nestedTools={[{ category: "generic", title: "Message préparé pour le fournisseur" }, { category: "generic", isError: message.status === "error", title: message.status === "completed" ? "Réponse reçue et enregistrée" : message.content ? "Réception du texte en cours" : "En attente de la réponse du modèle" }]} className="generation-status"/>
+      <div className={`message-content response-body ${message.status === "completed" ? "response-completed" : ""}`}><MarkdownMessage content={message.content}/></div>
+      {message.status === "completed" && message.content && <div className="response-actions"><CopyMessage content={message.content}/>{!current?.temporary && <button className={`copy-message ${message.favorite ? "saved" : ""}`} aria-label={message.favorite ? "Retirer des réponses enregistrées" : "Enregistrer la réponse"} onClick={async () => { const next = { ...message, favorite: !message.favorite }; await solarStore.saveMessage(next); onMessages(message.conversationId, messages.map(item => item.id === message.id ? next : item)); }}><Bookmark size={14} fill={message.favorite ? "currentColor" : "none"}/><span>{message.favorite ? "Enregistré" : "Enregistrer"}</span></button>}</div>}</>}
       {actions.result?.messageId === message.id && <SelectionResult result={actions.result} busy={actions.busy} onStop={actions.cancel} onClose={actions.close} onInsert={text => { setDraft(draft ? `${draft}\n\n${text}` : text); textarea.current?.focus(); }}/>}
       {message.error && <p className="message-error" role="alert">{message.error}</p>}
     </article>)}</div>}
   </div>{actions.selection && <SelectionToolbar selection={actions.selection} disabled={Boolean(activeRequest) || actions.busy} onAction={action => void actions.run(action)}/>}<div className="composer-wrap">{draftError && <p className="composer-error" role="alert">{draftError}</p>}{error && <p className="composer-error" role="alert">{error}</p>}<div className="composer">{savedDraft.attachments.length > 0 && <PastedContents items={savedDraft.attachments} onRemove={id => updateDraft({ attachments: savedDraft.attachments.filter(item => item.id !== id) })} onExpand={id => { const item = savedDraft.attachments.find(item => item.id === id); if (item) updateDraft({ text: draft ? `${draft}\n\n${item.content}` : item.content, attachments: savedDraft.attachments.filter(item => item.id !== id) }); }}/>}<textarea ref={textarea} readOnly={!draftReady} aria-busy={!draftReady} aria-label="Message à Solar" value={draft} onChange={event => setDraft(event.target.value)} onPaste={event => { const content = event.clipboardData.getData("text/plain"); if (shouldCompactPaste(content)) { event.preventDefault(); updateDraft({ attachments: [...savedDraft.attachments, pastedContent(content)] }); } }} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && settings.sendOnEnter !== false) { event.preventDefault(); void send(); } }} placeholder={activeRequest ? "Prépare ton prochain message…" : "Message à Solar…"} rows={2}/>
     {selectedModel?.available === false && <p className="composer-note">Ce modèle n’est plus disponible. Actualise Ollama ou choisis un autre modèle.</p>}<div className="composer-footer"><div className="composer-controls"><ModelSelector models={models} providers={providers} selected={selectedModel} onSelect={id => void changeSelection(id)} onSettings={onSettings} onRefresh={onRefreshModels} preparation={preparation.state}/><EffortSelector value={current?.effort ?? "medium"} onSelect={value => void changeSelection(undefined, value)}/></div>{activeRequest ? <button className="stop" type="button" onClick={() => requestRef.current?.controller.abort()} aria-label="Arrêter la génération"><Square size={13} fill="currentColor"/></button> : <button className="send" type="button" onClick={() => void send()} disabled={(!draft.trim() && !savedDraft.attachments.length) || !selectedModel || selectedModel.available === false || !provider?.enabled || actions.busy} aria-label="Envoyer le message"><ArrowUp size={20}/></button>}</div>
-  </div><p className="hint">{activeRequest ? "Tu peux écrire et changer les réglages du prochain message." : settings.sendOnEnter === false ? "Utilise le bouton pour envoyer ton message." : "Entrée pour envoyer · Maj + Entrée pour une nouvelle ligne"}</p></div></>;
+  </div>{!following && messages.length > 0 && <button className="jump-latest" onClick={() => { follow.current = true; setFollowing(true); scroll.current?.scrollTo({ top: scroll.current.scrollHeight, behavior: "smooth" }); }} aria-label="Revenir en bas"><ArrowDown size={16}/></button>}{current?.temporary && <p className="temporary-note">Temporaire · rien dans l’historique local. Le fournisseur conserve ses propres règles de données.</p>}<p className="hint">{activeRequest ? "Tu peux écrire et changer les réglages du prochain message." : settings.sendOnEnter === false ? "Utilise le bouton pour envoyer ton message." : "Entrée pour envoyer · Maj + Entrée pour une nouvelle ligne"}</p></div></>;
 }
 
 function CopyMessage({ content }: { content: string }) {
@@ -204,7 +210,7 @@ function ModelSelector({ models, providers, selected, onSelect, onSettings, onRe
   useEffect(() => {
     if (!open) return; input.current?.focus();
     const outside = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); };
-    document.addEventListener("pointerdown", outside); return () => document.removeEventListener("pointerdown", outside);
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { setOpen(false); trigger.current?.focus(); } }; document.addEventListener("keydown", escape); document.addEventListener("pointerdown", outside); return () => { document.removeEventListener("keydown", escape); document.removeEventListener("pointerdown", outside); };
   }, [open]);
   const filtered = models.filter(model => model.enabled && model.available !== false && providers.some(p => p.id === model.providerId && p.enabled) && `${model.name} ${providers.find(p => p.id === model.providerId)?.name}`.toLowerCase().includes(query.toLowerCase()));
   return <div className="control-popover" ref={root} onKeyDown={event => { if (event.key === "Escape") { setOpen(false); trigger.current?.focus(); } }}><button ref={trigger} className="model-control" aria-haspopup="dialog" aria-expanded={open} onClick={() => { setQuery(""); setOpen(!open); }}><span>{selected?.name ?? "Choisir un modèle"}</span>{preparation && <small className="preparation-state">{preparation}</small>}<ChevronDown size={13}/></button>
@@ -212,7 +218,19 @@ function ModelSelector({ models, providers, selected, onSelect, onSettings, onRe
   </div>;
 }
 function EffortSelector({ value, onSelect }: { value: Effort; onSelect: (value: Effort) => void }) {
-  return <label className="effort-label" title="Profil de réponse : adapte la consigne et le budget de sortie. Le fournisseur n’indique pas de niveaux de raisonnement natif."><span className="sr-only">Niveau d’effort</span><select className="effort-control" aria-label="Niveau d’effort" value={value} onChange={event => onSelect(event.target.value as Effort)}>{Object.entries(effortLabels).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>;
+  const [open, setOpen] = useState(false); const levels = Object.keys(effortLabels) as Effort[]; const root = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (!open) return; const close = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); }; document.addEventListener("pointerdown", close); return () => document.removeEventListener("pointerdown", close); }, [open]);
+  return <div ref={root} className={`effort-picker ${value === "ultra" ? "ultra" : ""}`} onKeyDown={event => { if (event.key === "Escape") setOpen(false); }}><button className="effort-trigger" aria-label="Niveau d’effort" aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(!open)}><span className="effort-gauge" aria-hidden="true">{levels.map((level, i) => <i key={level} className={i <= levels.indexOf(value) ? "filled" : ""}/>)}</span><span>{effortLabels[value]}</span></button>{open && <div className="effort-popover" role="dialog" aria-label="Choisir le niveau d’effort"><p>Profil de réponse</p>{levels.map((level, i) => <button key={level} className={value === level ? "selected" : ""} onClick={() => { onSelect(level); setOpen(false); }}><span className={`effort-gauge ${level === "ultra" ? "ultra" : ""}`}>{levels.map((_, n) => <i key={n} className={n <= i ? "filled" : ""}/>)}</span><span><strong>{effortLabels[level]}</strong><small>{["Court et rapide", "Complet et équilibré", "Analyse approfondie", "Budget de réponse maximal"][i]}</small></span>{value === level && <Check size={14}/>}</button>)}<small className="effort-disclosure">Consigne et budget de sortie. Raisonnement natif non déclaré par ce modèle.</small></div>}</div>;
+}
+function FavoritesView({ onOpen }: { onOpen: (id: string, messageId: string) => void }) {
+  const [items, setItems] = useState<{ conversation: Conversation; message: Message }[]>([]);
+  useEffect(() => { void solarStore.listConversations().then(async conversations => { const groups = await Promise.all(conversations.map(async conversation => (await solarStore.listMessages(conversation.id)).filter(message => message.favorite).map(message => ({ conversation, message })))); setItems(groups.flat()); }); }, []);
+  return <div className="settings-page"><h1>Réponses enregistrées</h1>{!items.length && <p className="settings-note">Enregistre une réponse depuis le chat pour la retrouver ici.</p>}{items.map(({ conversation, message }) => <div className="favorite-row" key={message.id}><button onClick={() => onOpen(conversation.id, message.id)}><strong>{conversation.title}</strong><span>{message.content.slice(0, 200)}</span></button><button className="icon-button" aria-label="Retirer la réponse enregistrée" onClick={async () => { await solarStore.saveMessage({ ...message, favorite: false }); setItems(items.filter(item => item.message.id !== message.id)); }}><X size={15}/></button></div>)}</div>;
+}
+function ExportPanel() {
+  const [conversations, setConversations] = useState<Conversation[]>([]); const [chosen, setChosen] = useState("all"); const [format, setFormat] = useState<"md" | "txt">("md"); const [notice, setNotice] = useState("");
+  useEffect(() => { void solarStore.listConversations().then(setConversations); }, []);
+  return <div className="export-panel"><h3>Exporter les conversations</h3><p>Messages et noms des modèles uniquement. Les chats temporaires et les clés sont exclus.</p><div><select aria-label="Conversation à exporter" value={chosen} onChange={event => setChosen(event.target.value)}><option value="all">Toutes les conversations</option>{conversations.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select><select aria-label="Format d’export" value={format} onChange={event => setFormat(event.target.value as "md" | "txt")}><option value="md">Markdown</option><option value="txt">Texte brut</option></select><button className="small-button" disabled={!conversations.length} onClick={async () => { try { const entries = await Promise.all(conversations.filter(c => chosen === "all" || c.id === chosen).map(async conversation => ({ conversation, messages: await solarStore.listMessages(conversation.id) }))); const saved = await saveExport(exportConversations(entries, format), format); setNotice(saved ? "Export préparé." : "Export annulé."); } catch { setNotice("L’export a échoué. Réessaie ou vérifie les droits du dossier choisi."); } }}>Exporter</button></div>{notice && <p role="status">{notice}</p>}</div>;
 }
 
 function SettingsView({ providers, models, settings, updateSettings, reload, onBack, clearHistory }: { providers: Provider[]; models: Model[]; settings: AppSettings; updateSettings: (next: AppSettings) => Promise<void>; reload: () => Promise<void>; onBack: () => void; clearHistory: () => Promise<void> }) {
@@ -223,7 +241,7 @@ function SettingsView({ providers, models, settings, updateSettings, reload, onB
     {section === "providers" && <><div className="section-title"><div><h2>Fournisseurs</h2><p>Connecte un modèle local ou une API compatible.</p></div>{!editing && <button className="small-button" onClick={() => setEditing({ ...emptyForm })}><Plus size={15}/> Ajouter</button>}</div>{editing ? <ProviderForm key={editing.id ?? "new"} initial={editing} onDone={async () => { await reload(); setEditing(null); }} onCancel={() => setEditing(null)}/> : <ProviderList providers={providers} models={models} setEditing={setEditing} reload={reload}/>}</>}
     {section === "appearance" && <><div className="section-title"><div><h2>Apparence</h2><p>Un espace à ton goût.</p></div></div><div className="theme-options">{(["dark", "light"] as const).map(theme => <button key={theme} className={`theme-card ${settings.theme === theme ? "selected" : ""}`} aria-pressed={settings.theme === theme} onClick={() => void saveSettings({ ...settings, theme })}><span className={`theme-preview ${theme}`}><i/><i/><i/></span><span>{theme === "dark" ? "Sombre" : "Clair"}{settings.theme === theme && <Check size={15}/>}</span></button>)}</div></>}
     {section === "models" && <><div className="section-title"><div><h2>Modèles</h2><p>Seuls les modèles ajoutés ou détectés apparaissent dans le chat.</p></div></div>{models.length ? providers.map(provider => { const list = models.filter(model => model.providerId === provider.id); return list.length ? <div className="settings-model-group" key={provider.id}><h3>{provider.name}</h3>{list.map(model => <div className="settings-model-row" key={model.id}><div><strong>{model.name}</strong><p>{model.available === false ? "Modèle supprimé ou indisponible" : model.source === "manual" ? "Ajouté manuellement" : "Détecté auprès du fournisseur"}</p></div><label className="toggle-label"><input type="checkbox" checked={model.enabled} onChange={async event => { await solarStore.saveModel({ ...model, enabled: event.target.checked }); await reload(); }}/><span>Disponible</span></label><button className="icon-button" aria-label={`Supprimer le modèle ${model.name}`} onClick={async () => { await solarStore.deleteModel(model.id); await reload(); }}><Trash2 size={15}/></button></div>)}</div> : null; }) : <div className="empty-card"><h3>Aucun modèle pour le moment</h3><p>Ajoute un fournisseur puis actualise sa liste de modèles.</p><button className="small-button" onClick={() => setSection("providers")}>Configurer un fournisseur</button></div>}<p className="settings-note">Solar est le nom de l’application. Le modèle Solar adaptatif n’est pas encore disponible.</p></>}
-    {section === "storage" && <><div className="section-title"><div><h2>Stockage</h2><p>Garde le contrôle sur ce que Solar conserve.</p></div></div><div className="preference-row"><div><h3>Conversations</h3><p>Enregistrées localement avec leurs messages et brouillons, puis restaurées à la réouverture de Solar.</p></div><button className="small-button" onClick={() => void clearHistory()}>Effacer</button></div><div className="preference-row"><div><h3>Fournisseurs et clés</h3><p>Conservés sur ce navigateur et à cette adresse. L’application macOS utilise le Trousseau pour les clés ; l’aperçu web utilise le stockage du navigateur.</p></div></div></>}
+    {section === "storage" && <><ExportPanel/><div className="section-title"><div><h2>Stockage</h2><p>Garde le contrôle sur ce que Solar conserve.</p></div></div><div className="preference-row"><div><h3>Conversations</h3><p>Enregistrées localement avec leurs messages et brouillons, puis restaurées à la réouverture de Solar.</p></div><button className="small-button" onClick={() => void clearHistory()}>Effacer</button></div><div className="preference-row"><div><h3>Fournisseurs et clés</h3><p>Conservés sur ce navigateur et à cette adresse. L’application macOS utilise le Trousseau pour les clés ; l’aperçu web utilise le stockage du navigateur.</p></div></div></>}
     {section === "preferences" && <><div className="section-title"><div><h2>Préférences</h2><p>Les petits détails qui rendent le chat plus naturel.</p></div></div><div className="preference-row"><div><h3>Envoyer avec Entrée</h3><p>Maj + Entrée ajoute toujours une nouvelle ligne.</p></div><input aria-label="Envoyer avec Entrée" type="checkbox" checked={settings.sendOnEnter !== false} onChange={event => void saveSettings({ ...settings, sendOnEnter: event.target.checked })}/></div><div className="preference-row"><div><h3>Modèle par défaut</h3><p>Pour la première conversation. Les suivantes reprennent ton dernier choix.</p></div><select aria-label="Modèle par défaut" value={settings.defaultModelId ?? ""} onChange={event => void saveSettings({ ...settings, defaultModelId: event.target.value || undefined })}><option value="">Choisir dans le chat</option>{models.filter(m => m.enabled).map(model => <option key={model.id} value={model.id}>{model.name}</option>)}</select></div><div className="preference-row"><div><h3>Niveaux d’effort</h3><p>Bas : réponse courte. Moyen : réponse complète. Élevé et Ultra : réponse plus approfondie avec un budget plus grand. Ces profils ne déclenchent pas de recherche Internet ; les capacités de raisonnement natif ne sont pas déclarées par les fournisseurs.</p></div></div></>}
     {error && <p className="form-error" role="alert">{error}</p>}
   </div></div></div>;

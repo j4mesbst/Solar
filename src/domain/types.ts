@@ -13,11 +13,11 @@ export type Effort = "low" | "medium" | "high" | "ultra";
 export type MessageStatus = "pending" | "streaming" | "completed" | "interrupted" | "error";
 export interface Conversation {
   id: string; title: string; providerId?: string; modelId?: string; effort: Effort;
-  createdAt: string; updatedAt: string;
+  createdAt: string; updatedAt: string; pinned?: boolean; temporary?: boolean; titleManuallyEdited?: boolean;
 }
 export interface Message {
   id: string; conversationId: string; role: "user" | "assistant" | "system";
-  content: string; status: MessageStatus; createdAt: string; order: number; error?: string; modelName?: string; effort?: Effort; durationSeconds?: number; displayText?: string; attachments?: PastedContent[];
+  content: string; status: MessageStatus; createdAt: string; order: number; error?: string; modelName?: string; effort?: Effort; durationSeconds?: number; favorite?: boolean; displayText?: string; attachments?: PastedContent[];
 }
 export interface AppSettings { theme: "system" | "dark" | "light"; defaultModelId?: string; sendOnEnter?: boolean; }
 
