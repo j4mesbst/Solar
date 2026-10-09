@@ -21,5 +21,5 @@ export interface Message {
 }
 export interface AppSettings { theme: "system" | "dark" | "light"; defaultModelId?: string; sendOnEnter?: boolean; }
 
-export interface PastedContent { id: string; title: string; content: string; kind: "text" | "code"; }
+export interface PastedContent { id: string; title: string; content: string; kind: "text" | "code" | "image"; }
 export interface Draft { conversationId: string; text: string; attachments: PastedContent[]; updatedAt: string; }

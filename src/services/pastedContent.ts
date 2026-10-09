@@ -6,5 +6,5 @@ export function pastedContent(content: string): PastedContent {
 }
 export function draftMessage(draft: Pick<Draft,"text" | "attachments">): string {
   // Only separator text is added. Attachment bytes, whitespace and indentation are untouched.
-  return [draft.text, ...draft.attachments.map(attachment => `${attachment.title} :\n${attachment.content}`)].filter(Boolean).join("\n\n");
+  return [draft.text, ...draft.attachments.map(attachment => attachment.kind === "image" ? `[Image jointe : ${attachment.title}]` : `${attachment.title} :\n${attachment.content}`)].filter(Boolean).join("\n\n");
 }

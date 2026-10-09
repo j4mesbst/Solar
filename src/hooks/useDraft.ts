@@ -34,5 +34,6 @@ export function useDraft(id: string) {
     if (localStorage.getItem("solar.draft-recovery.v3")) localStorage.setItem("solar.draft-recovery.v3", JSON.stringify(Object.values(next).filter(draft => !draft.conversationId.startsWith("temp:"))));
   };
   const transfer = async (from: string, to: string) => { const value = draftRef.current[from]; if (!value) return; update({ text: value.text, attachments: value.attachments }, to); await flush(to); await clearSent(from, value); };
-  return { draft: drafts[id] ?? blank(id), ready: Boolean(drafts[id]), update, clearSent, transfer, flush, error };
+  const appendAttachments = (items: Draft["attachments"]) => update({ attachments: [...(draftRef.current[id]?.attachments ?? []), ...items] });
+  return { appendAttachments, draft: drafts[id] ?? blank(id), ready: Boolean(drafts[id]), update, clearSent, transfer, flush, error };
 }

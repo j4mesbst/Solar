@@ -15,7 +15,7 @@
 - [x] Targeted storage/search/paste/stream/provider tests and real-browser smoke suite
 
 - [x] Real streaming scroll suspension and return-to-latest
-- [x] Reference-based two-row composer, top-right model/options controls and horizontal effort slider
+- [x] Compact taller composer, top-right model/options controls and horizontal effort slider
 - [x] Animated fixed navigation rail, Favorites heart and Plugins/Skills placeholders
 - [x] Rich GFM/code/math rendering with table/code copy and safe links
 - [x] Local automatic titles with manual rename protection
@@ -24,6 +24,11 @@
 - [x] Settings-only single/all Markdown/text export in browser
 - [x] Timed SSE browser regression and new feature contracts
 
+- [x] Full-width searchable settings and scheduled automatic appearance at 06:00/20:00
+- [x] Multi-part vector icon motion, animated popup exit, practical feedback and reduced motion
+- [x] Raster image import/paste/drop/preview, persisted drafts and native Ollama/OpenAI-compatible image payloads
+- [x] Browser checks for clock boundaries, manual theme override, image requests and provider rejection
+
 ## Required macOS/live checks
 
 - [ ] Build/run native bundle with Rust/Xcode and verify native export save dialog/cancel/write
@@ -31,6 +36,8 @@
 - [ ] Verify Keychain create/read/replace/delete with OS permissions
 - [ ] Verify installed Ollama discovery, real first-token latency, low-RAM behavior and Stop
 - [ ] Verify a live GonkaRouter connection and model response with the user's configured credential
+
+- [ ] Verify real image analysis with a configured vision-capable cloud and local model
 
 ## Future
 
