@@ -4,7 +4,8 @@
 
 - GitHub access to `j4mesbst/Solar` has been confirmed.
 - Node.js and npm are available.
-- The Vite development preview will be verified after dependencies install.
+- `npm install` and `npm run build` completed successfully.
+- The Vite development preview responded successfully at `http://127.0.0.1:1420`.
 
 ## Prepared, not yet verified
 
