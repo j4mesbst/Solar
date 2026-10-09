@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "test:providers": "node --experimental-strip-types scripts/provider-contract.test.mjs",
     "preview": "vite preview",
     "tauri": "tauri"
   },
