@@ -1,3 +1,5 @@
+import type { PerformanceProfile } from "../domain/extensions";
+import { runtimeProfile } from "./performance";
 import type { Model, Provider } from "../domain/types";
 import { solarStore } from "./store";
 import { providerApi } from "./providerApi";
@@ -24,7 +26,7 @@ export async function reconcileModels(provider: Provider, found: Model[]) {
   for (const model of found) { const old = existing.find(item => item.id === model.id); await solarStore.saveModel({ ...model, displayName: old?.displayName, displayNameSource: old?.displayNameSource, enabled: old?.enabled ?? true, source: old?.source === "manual" ? "manual" : model.source, available: true }); }
   for (const model of existing) if (model.source === "remote" && !found.some(item => item.id === model.id)) await solarStore.saveModel({ ...model, available: false });
 }
-export async function prepareOllama(provider: Provider, model: Model, signal: AbortSignal): Promise<"ready" | "skipped"> {
+export async function prepareOllama(provider: Provider, model: Model, signal: AbortSignal,profile:PerformanceProfile="balanced"): Promise<"ready" | "skipped"> {
   const response = await providerFetch(ollamaUrl(provider.baseUrl, "/api/ps"), { signal });
   if (!response.ok) throw new Error("État mémoire indisponible.");
   const payload = await response.json() as { models?: { name?: string; model?: string; size?: number }[] };
@@ -32,7 +34,7 @@ export async function prepareOllama(provider: Provider, model: Model, signal: Ab
   if (loaded.some(item => item.name === id || item.model === id)) return "ready";
   // Avoid evicting another resident model or consuming extra RAM just to prewarm.
   if (loaded.length) return "skipped";
-  const request = await providerFetch(ollamaUrl(provider.baseUrl, "/api/chat"), { method: "POST", signal, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: id, messages: [], stream: false, keep_alive: "5m" }) });
+  const request = await providerFetch(ollamaUrl(provider.baseUrl, "/api/chat"), { method: "POST", signal, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: id, messages: [], stream: false, ...runtimeProfile(profile) }) });
   if (!request.ok) throw new Error("Préchargement indisponible.");
   const result = await request.json() as { error?: string }; if (result.error) throw new Error("Préchargement indisponible.");
   return "ready";

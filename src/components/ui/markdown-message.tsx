@@ -1,5 +1,5 @@
 import { memo, useState, type ReactNode } from "react";
-import ReactMarkdown from "react-markdown";
+import { Streamdown } from "streamdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -16,6 +16,6 @@ function Table({ children }: { children?: ReactNode }) {
   const [state, setState] = useState("");
   return <div className="rich-table"><div className="table-scroll"><table>{children}</table></div><button className="table-copy" onClick={async event => { const table = event.currentTarget.closest(".rich-table")?.querySelector("table"); const data = [...(table?.rows ?? [])].map(row => [...row.cells].map(cell => cell.textContent).join("\t")).join("\n"); try { await navigator.clipboard.writeText(data); setState("Copié"); } catch { setState("Copie indisponible"); } }}><Copy size={12}/>{state || "Copier le tableau"}</button></div>;
 }
-export const MarkdownMessage = memo(function MarkdownMessage({ content }: { content: string }) {
-  return <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[[rehypeKatex, { throwOnError: false, trust: false, strict: "ignore" }], [rehypeHighlight, { detect: false, ignoreMissing: true }]]} skipHtml components={{ pre: ({ children }) => <CodeBlock>{children}</CodeBlock>, a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>, table: ({ children }) => <Table>{children}</Table> }}>{content}</ReactMarkdown>;
+export const MarkdownMessage = memo(function MarkdownMessage({ content, streaming = false }: { content: string; streaming?: boolean }) {
+  return <Streamdown mode={streaming ? "streaming" : "static"} isAnimating={streaming} parseIncompleteMarkdown={streaming} controls={false} urlTransform={url=>{try{const parsed=new URL(url,"https://solar.invalid/");return ["https:","http:","mailto:"].includes(parsed.protocol)?url:"";}catch{return "";}}} remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[[rehypeKatex, { throwOnError: false, trust: false, strict: "ignore" }], [rehypeHighlight, { detect: false, ignoreMissing: true }]]} skipHtml components={{ pre: ({ children }) => <CodeBlock>{children}</CodeBlock>, a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>, table: ({ children }) => <Table>{children}</Table> }}>{content}</Streamdown>;
 });

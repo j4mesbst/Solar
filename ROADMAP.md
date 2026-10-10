@@ -52,3 +52,20 @@
 - [ ] Anthropic-native protocol, web search and real agent tools
 - [ ] Database/index tuning for very large archives, robust multi-window synchronization
 - [ ] Optional accounts/cloud sync
+
+
+## 2026-10-10 evolution
+
+- [x] Chat / Work sessions and bounded project context
+- [x] Work file proposals, before/after review, apply/refuse/undo with conflict guards (browser adapter tested)
+- [x] Streamdown renderer, safe links and incomplete Markdown handling
+- [x] Configurable SearXNG/Brave/Ollama Web Search with consent, cache and real sources
+- [x] Local Smart intent rules and manual overrides
+- [x] Explicit Ollama performance profiles and measured response timings
+- [x] Structured artifacts with real PPTX/PDF/DOCX/CSV/XLSX/code/SVG exports and stable editing identity
+- [x] First-open setup, provider configuration, Ollama discovery and real model pull progress/cancellation
+- [x] Anthropic model discovery and streaming protocol
+- [x] Centered first-chat composer, visible Thinking shimmer, more effort glow, contextual automatic titles
+- [ ] Native macOS compilation/dialog/disk/hardware validation
+- [ ] Publish new version after the explicit authorization required by automatic approval review
+- [ ] Future isolated terminal, active MCP/plugins/skills, full website creation (intentionally outside this version)

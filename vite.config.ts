@@ -14,6 +14,7 @@ export default defineConfig({
     // route only its requests through Vite; the native Tauri build uses the
     // provider URL directly.
     proxy: {
+      "/solar-anthropic": {target:"https://api.anthropic.com",changeOrigin:true,timeout:120000,proxyTimeout:120000,rewrite:path=>path.replace(/^\/solar-anthropic/,"")},
       "/solar-ollama": { target: "http://127.0.0.1:11434", changeOrigin: true, timeout: 120000, proxyTimeout: 120000, rewrite: path => path.replace(/^\/solar-ollama/, "") },
       "/solar-router": {
         target: "https://api.gonkarouter.io",

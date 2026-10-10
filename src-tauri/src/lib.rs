@@ -1,10 +1,13 @@
+mod work;
+mod hardware;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_store::Builder::default().build())
     .plugin(tauri_plugin_http::init())
     .plugin(tauri_plugin_dialog::init())
-    .invoke_handler(tauri::generate_handler![secret_get, secret_set, secret_delete, export_save])
+    .manage(work::WorkState::default())
+    .invoke_handler(tauri::generate_handler![secret_get, secret_set, secret_delete, export_save, artifact_save, work::work_open, work::work_read, work::work_apply, work::work_undo, hardware::hardware_info])
     .run(tauri::generate_context!())
     .expect("error while running Solar");
 }
@@ -43,4 +46,11 @@ async fn export_save(app: tauri::AppHandle, content: String, format: String, sug
       }
     }
   }).await.map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+async fn artifact_save(app:tauri::AppHandle,content:Vec<u8>,suggested_name:String)->Result<bool,String>{
+ if content.len()>20_000_000{return Err("Export trop volumineux".into());}
+ if suggested_name.contains('/')||suggested_name.contains('\\')||suggested_name.starts_with('.') {return Err("Nom de fichier invalide".into());}
+ tauri::async_runtime::spawn_blocking(move||{use tauri_plugin_dialog::DialogExt;let selected=app.dialog().file().set_file_name(&suggested_name).blocking_save_file();match selected{None=>Ok(false),Some(file)=>{std::fs::write(file.into_path().map_err(|e|e.to_string())?,content).map_err(|e|e.to_string())?;Ok(true)}}}).await.map_err(|e|e.to_string())?
 }

@@ -2,9 +2,10 @@ import type { Conversation, Message } from "../domain/types";
 export function conversationTitle(text: string, attachments = 0): string {
   if (!text.trim()) return attachments ? "Document à explorer" : "Nouveau chat";
   if (/^\s*```/.test(text) || /^\s*(?:const |import |def |function |class )/.test(text)) return "Question de code";
-  const first = text.split(/\n/).find(line => line.trim())?.replace(/^\s*[#>*-]+\s*/, "").replace(/\s+/g, " ").trim() ?? "Nouveau chat";
-  const short = first.split(/\s+/).slice(0, 3).join(" ").slice(0, 40);
-  return short.charAt(0).toLocaleUpperCase("fr") + short.slice(1);
+  if(/^\s*(?:salut|bonjour|hello|coucou)[!.,\s]*$/i.test(text))return "Premier échange";
+  const stripped=text.split(/\n/).find(line=>line.trim())?.replace(/^\s*[#>*-]+\s*/,"").replace(/^(?:s.il te pla[iî]t|peux.tu|pourrais.tu|est.ce que|comment|pourquoi|donne.moi|fais.moi|je veux|j.aimerais|explique.moi|cr[eé]e.moi|aide.moi|fais|cr[eé]e)\s+/i,"").replace(/[?!.,;:]+$/g,"").trim()??"Nouvelle conversation";
+  const words=stripped.split(/\s+/);const short=words.slice(0,3).join(" ").slice(0,40);
+  return short.charAt(0).toLocaleUpperCase("fr")+short.slice(1);
 }
 export function exportConversations(entries: { conversation: Conversation; messages: Message[] }[], format: "md" | "txt"): string {
   return entries.filter(entry => !entry.conversation.temporary && !entry.conversation.id.startsWith("temp:")).map(({ conversation, messages }) => {

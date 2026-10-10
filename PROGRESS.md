@@ -1,3 +1,57 @@
+# Solar — Compte rendu du 10 octobre 2026
+
+## Implémenté
+
+- **Affichage de génération** : Thinking en shimmer 17 px lorsque le fournisseur signale une phase de réflexion, phases connexion/préparation/rédaction, chronomètre et rapport repliable. Aucun raisonnement interne affiché. Lueur renforcée sur chaque niveau d’effort, avec réduction des animations respectée.
+- **Nouvelle conversation** : chatbox plus grande et centrée, puis retour animé au bas de la conversation au premier envoi. Les conversations existantes gardent la version compacte.
+- **Titres** : génération après le premier échange à partir de la demande et de la réponse, 2–3 mots et majuscule ; rejette les préambules/titres génériques ; protège les titres manuels. Repli local lorsque l’API échoue. Pas de promesse de titre parfait indépendamment du modèle choisi.
+- **Chat / Work** : navigation séparée, sessions Work dans l’historique, fournisseurs/modèles/effort/rendu partagés. Dossier choisi explicitement, explorateur repliable, aperçu de fichiers et sélection de contexte. Maximum 2 000 entrées, 10 fichiers transmis, 200 000 caractères de contexte ; fichiers binaires, privés, gros fichiers et liens symboliques exclus.
+- **Work contrôlé** : analyse du projet et propositions JSON validées sur les seuls fichiers transmis, aperçu avant/après, acceptation/refus, écriture réelle, historique persistant, annulation avec contrôle de concurrence. Nouvelle autorisation de dossier = nouvelles propositions requises. Aucun terminal ni exécution automatique de code. Le cloud reçoit l’arborescence et les fichiers sélectionnés seulement après consentement explicite.
+- **Rich Responses** : Streamdown remplace ReactMarkdown, avec reprise du rendu GFM/code/math existant, copie des tableaux/blocs de code, gestion du Markdown incomplet en streaming, HTML brut désactivé et liens limités à HTTP/HTTPS/mailto.
+- **Solar Web** : interfaces SearchProvider/Query/Result/Source, SearXNG sans abonnement imposé, Brave et Ollama Web Search ; modes Auto/On/Off ; consentement, clé dédiée dans le coffre, timeout 12 s, cache mémoire 5 min, sources réellement récupérées et erreurs visibles. SearXNG nécessite une instance configurée avec JSON activé ; l’aperçu navigateur nécessite CORS. Aucun moteur payant obligatoire ni recherche fictive.
+- **Performance** : détection ponctuelle architecture/OS/mémoire et informations de puce sur macOS ; profils Ollama Économique (2 048, pas de préchargement, keep_alive 0), Équilibré (4 096, 5 min), Performance (8 192, 15 min). Réutilisation des modèles résidents, préchargement cohérent avec le contexte choisi. Mesures premier token/durée ; chargement/tokens par seconde uniquement si Ollama les fournit. Explication des effets sur le contexte dans les paramètres.
+- **Solar Smart** : classification locale rapide (pas de deuxième modèle systématique), consignes courtes adaptées, utilisateur garde modèle/effort et peut désactiver Smart/Web. Reconnaissance des demandes explicites d’artefacts et de leurs modifications.
+- **Artifacts** : panneaux repliables, structures JSON validées et bornées, identifiant/revision conservés pendant une modification, stockage local associé à la conversation. Code éditable/copiable/exportable, présentations navigables export PPTX, documents PDF/DOCX, tableaux éditables/triables CSV/XLSX, diagrammes Mermaid SVG/MMD. Prévisualisation des diagrammes isolée sans script ; aucun code exécuté. Exports macOS par dialogue natif, exports navigateur par téléchargement. Les chats temporaires gardent leurs artefacts en mémoire uniquement.
+- **Installation intelligente** : Welcome to Solar, Commencer/Configurer plus tard, choix multiple Ollama/GonkaRouter/OpenAI/Anthropic/compatible ; configuration et tests des fournisseurs, clés masquées ; détection Ollama, lien d’installation volontaire, recommandations selon RAM connue, téléchargement Ollama avec vrais octets/progression par couche, annulation et reprise via couches déjà téléchargées. Assistant conservé comme terminé, pas de compte obligatoire.
+- **Anthropic** : découverte /models, requêtes /messages, SSE text/thinking/message_stop et images adaptées à son format. Les clés du modèle et du moteur Web restent séparées.
+- **Extensibilité** : ToolRegistry, ToolDefinition, ToolExecutor, ToolPermissions, SkillRegistry et PluginRegistry ; transport MCP prévu, aucune installation automatique de plugin.
+
+## Tests et limites de validation
+
+- Types TypeScript et build Vite de production.
+- Contrats fournisseurs/chat/stockage, et nouvelle suite évolution : structures invalides, révisions, exports binaires PPTX/PDF/DOCX/XLSX, sécurité CSV, chemins Work/propositions, permissions d’outils, consentement/cache/sources Web, profils, flux de téléchargement tronqué/succès et protocole Anthropic.
+- Tests navigateur sur la vraie application avec réponses de fournisseurs contrôlées : chat existant, scroll pendant streaming, titres manuels, favoris, Markdown/liens sûrs, paramètres/images, nouvelle chatbox, états du modèle, effort, présentation 6 diapositives et modification, téléchargement, sources Web, opérations Work dans l’adaptateur de fichiers navigateur, exports PDF/DOCX/XLSX et diagramme SVG, configuration ignorée puis rechargement.
+- Test avec véritables événements SSE différés : Thinking 17 px, raisonnement interne absent, réponse finale et lueur des quatre niveaux.
+- Les réponses des services externes et le navigateur de fichiers sont des fixtures de test. Aucun secret réel n’a été utilisé. Le code de production appelle les vrais fournisseurs et les vraies API de fichiers.
+- **À valider sur macOS** : compilation Rust/Tauri, dialogues natifs, Trousseau, accès au disque et mesures matérielles. Ce conteneur n’a pas Rust/macOS ; un workflow GitHub macOS est préparé mais ne peut démarrer avant publication autorisée. L’annulation native ne survit pas à la fermeture de l’app (les sauvegardes restent en mémoire) ; l’historique reste visible.
+- **Délibérément futurs selon le brief** : terminal isolé, intégrations Git/GitHub/navigateur/MCP actives, vrais skills/plugins, construction complète de sites. Monaco n’est pas ajouté : éditeur texte et coloration existante suffisants pour cette première version, sans charger un IDE dans Chat.
+- Le PDF utilise les polices standard jsPDF : les écritures hors alphabet latin peuvent nécessiter une police incorporée ultérieurement. Les tailles de modèles/RAM recommandées sont des estimations affichées comme telles.
+- Build : avertissements de taille sur certains modules (ExcelJS/Mermaid notamment), chargés à la demande. Pas d’erreur de build.
+
+## Dépendances
+
+Ajoutées : Streamdown, PptxGenJS, docx, ExcelJS, jsPDF, Mermaid. ReactMarkdown direct supprimé pour garder un seul moteur de rendu. Les exports/diagrammes sont importés à la demande.
+
+## Fichiers principaux
+
+- `src/domain/{types,extensions}.ts` : contrats de données.
+- `src/services/{artifacts,extensionStore,modelInstall,performance,solarSmart,solarWeb,toolRegistry,workProject}.ts` : nouveaux services.
+- `src/services/{aiLabels,chatApi,conversationTools,ollama,providerApi}.ts` et `src/hooks/useModelPreparation.ts` : services existants étendus.
+- `src/components/ui/{advanced-settings,artifact-panel,onboarding,work-surface}.tsx` : nouvelles interfaces ; `markdown-message.tsx`, `rail-icon.tsx` adaptés.
+- `src/ui/App.tsx`, `src/styles.css`, `vite.config.ts`, `package.json`, `package-lock.json` : intégration.
+- `src-tauri/src/{lib,work,hardware}.rs` : accès natif contrôlé, export binaire et matériel.
+- `scripts/evolution-contract.test.mjs`, `scripts/ui-{evolution,thinking}.cjs`, suites précédentes adaptées aux nouveaux états et dimensions.
+- `.github/workflows/validation.yml` : checks frontend et macOS Rust.
+
+## Publication
+
+Code prêt localement. L’approbation automatique a refusé l’envoi du nouveau code source sur GitHub : elle exige une autorisation utilisateur explicite de publication vers `j4mesbst/Solar`, malgré la vérification du propriétaire et de l’accès en écriture. Aucune branche distante n’a été modifiée pour cette version. Ne pas lancer `git pull` en espérant recevoir ces changements avant que cette publication soit autorisée et confirmée.
+
+
+---
+
+## Historique de la version précédente
+
 # Progress — 2026-10-09
 
 ## Completed implementation

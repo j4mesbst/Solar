@@ -16,23 +16,31 @@
     "test:ui:reference": "node scripts/ui-reference-layout.cjs",
     "test:ui:polish": "node scripts/ui-polish.cjs",
     "test:ui:customization": "node scripts/ui-customization.cjs",
-    "test:ui:compact": "node scripts/ui-compact.cjs"
+    "test:ui:compact": "node scripts/ui-compact.cjs",
+    "test:evolution": "node --experimental-strip-types scripts/evolution-contract.test.mjs",
+    "test:ui:evolution": "node scripts/ui-evolution.cjs",
+    "test:ui:thinking": "node scripts/ui-thinking.cjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",
     "@tauri-apps/plugin-http": "^2.8.1",
     "@tauri-apps/plugin-store": "^2.2.0",
     "clsx": "^2.1.1",
+    "docx": "^9.9.0",
+    "exceljs": "^4.4.0",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.468.0",
     "mammoth": "^1.13.0",
+    "mermaid": "^12.1.0",
     "pdfjs-dist": "^6.4.299",
+    "pptxgenjs": "^4.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-markdown": "^10.1.0",
     "rehype-highlight": "^7.0.2",
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
+    "streamdown": "^2.7.0",
     "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {

@@ -1,3 +1,5 @@
+import type { Metrics,PerformanceProfile } from "../domain/extensions";
+import { runtimeProfile } from "./performance.ts";
 import { messagePayload } from "./messagePayload.ts";
 import { providerFetch, ollamaUrl } from "./transport.ts";
 import type { Effort, Message, Provider } from "../domain/types";
@@ -43,11 +45,12 @@ class VisibleTextFilter {
 const completionUrl = (provider: Provider) => {
   const base = provider.baseUrl.replace(/\/$/, "");
   if (provider.protocol === "ollama") return ollamaUrl(base, "/api/chat");
+  if(provider.protocol === "anthropic") return Boolean((import.meta as ImportMeta & {env?:{DEV?:boolean}}).env?.DEV) && typeof window!=="undefined" && !(window as Window & {__TAURI_INTERNALS__?:unknown}).__TAURI_INTERNALS__ && new URL(base).hostname==="api.anthropic.com" ? "/solar-anthropic/v1/messages" : `${base}/messages`;
   const dev = Boolean((import.meta as ImportMeta & { env?: { DEV?: boolean } }).env?.DEV);
   try { if (dev && typeof window !== "undefined" && !(window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ && new URL(base).hostname === "api.gonkarouter.io") return `/solar-router${new URL(base).pathname}/chat/completions`; } catch { /* Validation is handled by settings. */ }
   return `${base}/chat/completions`;
 };
-export async function streamChat(input: { provider: Provider; model: string; messages: Message[]; effort: Effort; vault: SecretVault; signal: AbortSignal; onDelta: (text: string) => void; systemInstruction?: string; maxOutputTokens?: number; onActivity?: (stage: Message["activity"]) => void }) {
+export async function streamChat(input: { provider: Provider; model: string; messages: Message[]; effort: Effort; vault: SecretVault; signal: AbortSignal; onDelta: (text: string) => void; performanceProfile?:PerformanceProfile; onMetrics?:(metrics:Metrics)=>void; systemInstruction?: string; maxOutputTokens?: number; onActivity?: (stage: Message["activity"]) => void }) {
   let stage: Message["activity"]; const activity = (value: Message["activity"]) => { if (stage !== value) { stage = value; input.onActivity?.(value); } }; activity("connecting");
   const local = input.provider.protocol === "ollama";
   const key = local ? null : await input.vault.get(input.provider.secretRef);
@@ -55,8 +58,12 @@ export async function streamChat(input: { provider: Provider; model: string; mes
   const effort = effortConfig[input.effort];
   const messages = [{ role: "system", content: `${input.systemInstruction ?? ""} ${effort.instruction} Utilise du Markdown standard si utile : tableaux valides, code avec langage, listes simples. Évite les tableaux ASCII. Ne montre pas ton raisonnement interne. N’invente pas de recherche Internet ni d’accès à des données en temps réel.` }, ...input.messages.filter(message => message.role !== "assistant" || message.status === "completed").map(message => messagePayload(message, local))];
   const budget = input.maxOutputTokens ?? effort.maxTokens;
-  const body = { model: input.model, stream: true, messages, ...(local ? { options: { num_predict: budget } } : { max_tokens: budget }) };
+  const profile=runtimeProfile(input.performanceProfile);
+  const anthropic=input.provider.protocol==="anthropic";
+  const anthropicMessages=messages.slice(1).map(m=>({role:m.role,content:typeof m.content==="string"?m.content:m.content.map((part:any)=>{if(part.type==="image_url"){const match=String(part.image_url.url).match(/^data:([^;]+);base64,(.+)$/);if(!match)throw new ChatError("Image invalide", "model");return {type:"image",source:{type:"base64",media_type:match[1],data:match[2]}};}return part;})}));
+  const body = { model: input.model, stream: true, messages:anthropic?anthropicMessages:messages, ...(anthropic?{system:messages[0].content}:{}),...(local ? {keep_alive:profile.keep_alive, options: { ...profile.options,num_predict: budget } } : { max_tokens: budget }) };
   const headers: Record<string, string> = { "Content-Type": "application/json", Accept: local ? "application/x-ndjson" : "text/event-stream" };
+  if(anthropic)headers["anthropic-version"]="2023-06-01";
   if (key) { headers.Authorization = `Bearer ${key.trim()}`; headers["x-api-key"] = key.trim(); }
   let response: Response;
   try { response = await providerFetch(completionUrl(input.provider), { method: "POST", signal: input.signal, headers, body: JSON.stringify(body) }); }
@@ -71,10 +78,11 @@ export async function streamChat(input: { provider: Provider; model: string; mes
   const emit = (text: string) => { const visible = filter.append(text); if (visible) { activity("writing"); visibleLength += visible.length; input.onDelta(visible); } };
   const parse = (data: string) => {
     if (data === "[DONE]") { completed = true; return; }
-    let payload: { error?: unknown; done?: boolean; message?: { content?: string; thinking?: string }; choices?: Array<{ delta?: { content?: string; reasoning_content?: string; reasoning?: string }; message?: { content?: string } }> };
+    let payload: { type?:string; delta?:{type?:string;text?:string;thinking?:string}; total_duration?:number;load_duration?:number;eval_count?:number;eval_duration?:number; error?: unknown; done?: boolean; message?: { content?: string; thinking?: string }; choices?: Array<{ delta?: { content?: string; reasoning_content?: string; reasoning?: string }; message?: { content?: string } }> };
     try { payload = JSON.parse(data); } catch { throw new ChatError("Le flux de réponse du fournisseur est invalide.", "invalid-response"); }
     if (payload.error) throw new ChatError("Le fournisseur a signalé une erreur pendant la génération. Vérifie le modèle sélectionné puis réessaie.", "provider");
-    if (local) { if (payload.message?.thinking) activity("thinking"); if (typeof payload.message?.content === "string") emit(payload.message.content); if (payload.done) completed = true; }
+    if(anthropic){if(payload.type==="message_stop"){completed=true;return;}if(payload.delta?.type==="thinking_delta")activity("thinking");if(payload.delta?.type==="text_delta"&&typeof payload.delta.text==="string")emit(payload.delta.text);return;}
+    if (local) { if(payload.done && payload.total_duration)input.onMetrics?.({totalMs:payload.total_duration/1e6,loadMs:(payload.load_duration??0)/1e6,tokens:payload.eval_count,tokensPerSecond:payload.eval_duration? (payload.eval_count??0)/(payload.eval_duration/1e9):undefined}); if (payload.message?.thinking) activity("thinking"); if (typeof payload.message?.content === "string") emit(payload.message.content); if (payload.done) completed = true; }
     else {
       const choice = payload.choices?.[0];
       if (choice?.delta?.reasoning_content || choice?.delta?.reasoning) activity("thinking");
