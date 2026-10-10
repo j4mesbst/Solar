@@ -1,6 +1,6 @@
 import { slideParagraphs } from "../../services/artifacts";
-import { useEffect, useState } from "react";
-import { X, Download, ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, Download, ChevronLeft, ChevronRight, Copy, Maximize2, Minimize2 } from "lucide-react";
 import type { Artifact } from "../../domain/extensions";
 import {
   artifactFormats,
@@ -21,6 +21,16 @@ export function ArtifactPanel({
   onChange: (a: Artifact) => void;
   onClose: () => void;
 }) {
+  const [expanded,setExpanded]=useState(false);
+  const panelRef=useRef<HTMLElement>(null);
+  useEffect(()=>{if(!expanded)return;const before=document.activeElement as HTMLElement|null;
+    const items=()=>Array.from(panelRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]),input,textarea,select,[tabindex="0"]')??[]);
+    const background=Array.from(document.querySelectorAll<HTMLElement>(".app-rail,.sidebar,.workspace>.header,.conversation-area"));const previous=background.map(node=>node.inert);background.forEach(node=>node.inert=true);
+    items()[0]?.focus();
+    const close=(event:KeyboardEvent)=>{if(event.key==="Escape"){event.preventDefault();setExpanded(false);}if(event.key!=="Tab")return;const controls=items(),first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}};
+    window.addEventListener("keydown",close);return()=>{window.removeEventListener("keydown",close);background.forEach((node,i)=>node.inert=previous[i]);before?.focus();};
+  },[expanded]);
+
   const [index, setIndex] = useState(0);
   const [mode, setMode] = useState<"preview" | "edit">("preview");
   const [draft, setDraft] = useState(JSON.stringify(artifact, null, 2));
@@ -86,12 +96,13 @@ export function ArtifactPanel({
     onChange(next);
   };
   return (
-    <aside className="artifact-panel" aria-label="Artefact">
+    <aside ref={panelRef} role={expanded?"dialog":"complementary"} aria-modal={expanded||undefined} className={`artifact-panel ${expanded?"artifact-expanded":""}`} aria-label="Artefact">
       <header>
         <div>
           <strong>{artifact.title}</strong>
           <small>Version {artifact.revision}</small>
         </div>
+        <button className="icon-button artifact-expand" aria-label={expanded?"Réduire l’artefact":"Agrandir l’artefact"} aria-pressed={expanded} onClick={()=>setExpanded(!expanded)}>{expanded?<Minimize2 size={18}/>:<Maximize2 size={18}/>}</button>
         <button
           className="icon-button"
           aria-label="Fermer l’artefact"

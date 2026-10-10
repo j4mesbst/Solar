@@ -1,0 +1,129 @@
+/* ===== Solar : chatbox, boutons + / envoi, bandeau d'état =====
+   Les couleurs sont des variables --sc-*. Relie-les au thème déjà présent dans Solar. */
+:root {
+  --sc-glass: rgba(255, 255, 255, 0.62);
+  --sc-border: rgba(24, 30, 38, 0.09);
+  --sc-border-focus: rgba(24, 30, 38, 0.2);
+  --sc-hi: rgba(255, 255, 255, 0.85);
+  --sc-shadow: 0 30px 70px -28px rgba(34, 52, 78, 0.34), 0 2px 8px rgba(34, 52, 78, 0.06);
+  --sc-banner: rgba(24, 30, 38, 0.05);
+  --sc-chip: rgba(24, 30, 38, 0.06);
+  --sc-chip-hover: rgba(24, 30, 38, 0.11);
+  --sc-ink: #1b1d20;
+  --sc-ink-2: #5b5f67;
+  --sc-ok: #0e5d6e;
+  --sc-send-bg: #1b1d20;
+  --sc-send-ink: #ffffff;
+  --sc-send-off-bg: rgba(24, 30, 38, 0.08);
+  --sc-send-off-ink: #7b7f87;
+  --sc-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --sc-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --sc-spring: linear(0, 0.0303, 0.0946, 0.1866, 0.2892, 0.3932, 0.4853, 0.5773, 0.6592, 0.7303, 0.7864, 0.8373, 0.8789, 0.91, 0.9368, 0.9575, 0.9732, 0.984, 0.9925, 0.9984, 1.0024, 1.0047, 1.006, 1.0066, 1.0067, 1.0064, 1.0058, 1.0052, 1.0045, 1.0038, 1.0032, 1.0026, 1.0021, 1.0017, 1.0013, 1.001, 1.0007, 1.0005, 1.0004, 1.0002, 1);
+    --sc-pop: linear(0, 0.0423, 0.1437, 0.268, 0.4169, 0.5656, 0.7029, 0.822, 0.9127, 0.9891, 1.0439, 1.0792, 1.0983, 1.1043, 1.1014, 1.0918, 1.0782, 1.0628, 1.0484, 1.0337, 1.0209, 1.0102, 1.002, 0.9964, 0.9923, 0.99, 0.9891, 0.9893, 0.9902, 0.9915, 0.9931, 0.9948, 0.9963, 0.9976, 0.9987, 0.9996, 1.0003, 1.0008, 1.001, 1.0011, 1);
+  }
+}
+/* Thème sombre : adapte le sélecteur à celui de Solar (classe .dark, attribut data-theme, etc.). */
+:root[data-theme="dark"], .dark {
+  --sc-glass: rgba(40, 46, 57, 0.56);
+  --sc-border: rgba(255, 255, 255, 0.11);
+  --sc-border-focus: rgba(255, 255, 255, 0.24);
+  --sc-hi: rgba(255, 255, 255, 0.09);
+  --sc-shadow: 0 32px 80px -28px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0, 0, 0, 0.25);
+  --sc-banner: rgba(255, 255, 255, 0.07);
+  --sc-chip: rgba(255, 255, 255, 0.08);
+  --sc-chip-hover: rgba(255, 255, 255, 0.15);
+  --sc-ink: #f3f4f6;
+  --sc-ink-2: #a9afba;
+  --sc-ok: #95dae7;
+  --sc-send-bg: #f3f4f6;
+  --sc-send-ink: #12161c;
+  --sc-send-off-bg: rgba(255, 255, 255, 0.1);
+  --sc-send-off-ink: #8c939e;
+}
+
+/* 1. Forme de la chatbox : verre léger, coins 28 px, reflet intérieur, bordure qui se renforce au focus */
+.sc-bar {
+  position: relative; border-radius: 28px; background: var(--sc-glass); border: 1px solid var(--sc-border);
+  box-shadow: var(--sc-shadow);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5); backdrop-filter: blur(22px) saturate(1.5);
+  transition: border-color 0.25s ease, background-color 0.5s ease;
+}
+.sc-bar::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: inset 0 1px 0 var(--sc-hi); }
+.sc-bar:focus-within { border-color: var(--sc-border-focus); }
+.sc-toolbar { display: flex; align-items: center; gap: 8px; padding: 6px 12px 12px; }
+.sc-spacer { flex: 1; }
+
+/* 2. Bouton + : rond, la croix tourne d'un quart de tour au survol, petit rebond au clic */
+.sc-round {
+  display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; padding: 0; border: 0;
+  border-radius: 50%; background: var(--sc-chip); color: var(--sc-ink-2); cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.3s var(--sc-spring);
+}
+.sc-round:hover { background: var(--sc-chip-hover); color: var(--sc-ink); }
+.sc-round:active { transform: scale(0.93); }
+.sc-round svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.45s var(--sc-spring); }
+.sc-round.sc-plus:hover svg { transform: rotate(90deg); }
+
+/* 3. Bouton envoi : gris inactif, devient plein avec un petit « pop » dès qu'il y a du texte, la flèche monte au survol */
+.sc-send {
+  display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; padding: 0; border: 0;
+  border-radius: 50%; background: var(--sc-send-off-bg); color: var(--sc-send-off-ink); cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s var(--sc-spring);
+}
+.sc-send:disabled { cursor: default; }
+.sc-send[data-ready="true"] { background: var(--sc-send-bg); color: var(--sc-send-ink); animation: sc-sendPop 0.5s var(--sc-pop); }
+.sc-send[data-ready="true"]:active { transform: scale(0.92); }
+.sc-send svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.4s var(--sc-spring); }
+.sc-send[data-ready="true"]:hover svg { transform: translateY(-2px); }
+
+/* 4. Bandeau d'état au-dessus du champ : s'ouvre en douceur, icône qui change selon l'état, bouton Stop */
+.sc-banner-wrap {
+  display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden;
+  transition: grid-template-rows 0.5s var(--sc-spring), opacity 0.25s ease, visibility 0s linear 0.5s;
+}
+.sc-banner-wrap[data-open="true"] {
+  grid-template-rows: 1fr; opacity: 1; visibility: visible;
+  transition: grid-template-rows 0.5s var(--sc-spring), opacity 0.3s ease, visibility 0s;
+}
+.sc-banner-clip { min-height: 0; overflow: hidden; border-radius: 22px 22px 0 0; }
+.sc-banner { display: flex; align-items: center; gap: 14px; margin: 6px 6px 0; padding: 12px 12px 12px 16px; border-radius: 22px; background: var(--sc-banner); }
+.sc-glyph { position: relative; width: 26px; height: 26px; flex: none; color: var(--sc-ink); }
+.sc-glyph > * { position: absolute; inset: 0; margin: auto; opacity: 0; transform: scale(0.7); transition: opacity 0.2s ease, transform 0.45s var(--sc-pop); }
+.sc-dots { display: flex; align-items: center; justify-content: center; gap: 4px; width: 26px; height: 26px; }
+.sc-dots i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; animation: sc-dot 1.2s ease-in-out infinite; }
+.sc-dots i:nth-child(2) { animation-delay: 0.15s; }
+.sc-dots i:nth-child(3) { animation-delay: 0.3s; }
+.sc-glyph svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.sc-glyph .sc-g-done { color: var(--sc-ok); }
+.sc-glyph .sc-g-stop { color: var(--sc-ink-2); }
+.sc-glyph[data-state="thinking"] .sc-dots, .sc-glyph[data-state="writing"] .sc-dots,
+.sc-glyph[data-state="done"] .sc-g-done, .sc-glyph[data-state="stopped"] .sc-g-stop { opacity: 1; transform: none; }
+.sc-texts { min-width: 0; flex: 1; }
+.sc-b-title { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
+.sc-b-title > span { display: inline-block; }
+.sc-swap { animation: sc-swapIn 0.4s var(--sc-spring) backwards; }   /* à mettre sur le texte à chaque changement de phrase */
+.sc-b-sub { margin: 1px 0 0; font-size: 13px; line-height: 1.3; color: var(--sc-ink-2); font-variant-numeric: tabular-nums; }
+.sc-stop {
+  height: 34px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--sc-chip); color: var(--sc-ink); cursor: pointer;
+  font-size: 14px; font-weight: 500; transition: background-color 0.2s ease, opacity 0.25s ease, transform 0.3s var(--sc-spring);
+}
+.sc-stop:hover { background: var(--sc-chip-hover); }
+.sc-stop:active { transform: scale(0.95); }
+.sc-stop[data-show="false"] { opacity: 0; pointer-events: none; }
+
+@keyframes sc-sendPop { from { transform: scale(0.84); } }
+@keyframes sc-dot { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1.15); } }
+@keyframes sc-swapIn { from { opacity: 0; transform: translateY(6px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-bar *, .sc-bar, .sc-banner-wrap { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; transition-delay: 0s !important; }
+  .sc-dots i { animation: none; opacity: 1; }
+}
+
+/* Existing Solar palette owns the supplied component colors. */
+.composer.sc-bar{--sc-glass:color-mix(in srgb,var(--surface) 86%,transparent);--sc-border:var(--line);--sc-border-focus:color-mix(in srgb,var(--text) 30%,var(--line));--sc-hi:var(--hover);--sc-banner:var(--hover);--sc-chip:var(--hover);--sc-chip-hover:color-mix(in srgb,var(--text) 12%,transparent);--sc-ink:var(--text);--sc-ink-2:var(--muted);--sc-ok:var(--text);--sc-send-bg:var(--button);--sc-send-ink:var(--button-text);--sc-send-off-bg:var(--hover);--sc-send-off-ink:var(--subtle);border:1px solid var(--sc-border);border-radius:28px;background:var(--sc-glass);box-shadow:0 12px 40px #0000000b;padding:0 18px 14px;isolation:isolate}
+.composer.sc-bar:focus-within{border-color:var(--sc-border-focus);box-shadow:0 12px 40px #0000000b}.composer.sc-bar .composer-input-row{padding-top:16px}.composer.sc-bar .composer-inline-actions{padding-bottom:0}.composer.sc-bar .sc-plus{width:38px;height:38px;background:var(--sc-chip);border-radius:50%;border:0;color:var(--muted)}.composer.sc-bar .sc-plus svg{width:18px;height:18px}.composer.sc-bar .sc-plus:hover{background:var(--sc-chip-hover);color:var(--text)}.composer.sc-bar .sc-send{width:42px;height:42px;background:var(--sc-send-off-bg);color:var(--sc-send-off-ink);opacity:1}.composer.sc-bar .sc-send[data-ready=true]{background:var(--sc-send-bg);color:var(--sc-send-ink)}.composer.sc-bar .sc-banner{margin:7px -11px 0;padding:12px 14px;border-radius:21px;background:var(--sc-banner)}.sc-b-title .animated-shiny-text{font-size:15px}.composer.sc-bar .sc-banner .sc-stop{color:var(--text);background:var(--sc-chip)}.sc-banner .sc-glyph svg{position:absolute}.sc-glyph[data-state=writing] .sc-g-write{opacity:1;transform:none}.sc-glyph[data-state=writing] .sc-dots{opacity:0}.work-active .composer-welcome .composer.sc-bar{padding:0 22px 17px;border-radius:28px}.work-active .composer-welcome .sc-bar .composer-input-row{padding-top:22px}
+.sc-bar .sc-banner-wrap[data-open=false]{pointer-events:none}

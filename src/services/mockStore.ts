@@ -1,10 +1,11 @@
+import { scopedKey, hasAccountScope } from "./accountScope.ts";
 export { solarStore as mockStore } from "./store";
 
 // Browser preview: persist a key for this browser + Solar address. Native builds
 // keep using the macOS Keychain through nativeVault instead.
-const previewVaultKey = "solar.preview-vault.v2";
+const previewVaultKey = scopedKey("solar.preview-vault.v2");
 const readPreviewSecrets = (): Record<string, string> => {
-  try { let raw = localStorage.getItem(previewVaultKey); if (!raw) { raw = sessionStorage.getItem("solar.preview-vault.v1"); if (raw) localStorage.setItem(previewVaultKey, raw); } return JSON.parse(raw ?? "{}") as Record<string, string>; }
+  try { let raw = localStorage.getItem(previewVaultKey); if (!raw && !hasAccountScope()) { raw = sessionStorage.getItem("solar.preview-vault.v1"); if (raw) localStorage.setItem(previewVaultKey, raw); } return JSON.parse(raw ?? "{}") as Record<string, string>; }
   catch { return {}; }
 };
 const writePreviewSecrets = (secrets: Record<string, string>) => localStorage.setItem(previewVaultKey, JSON.stringify(secrets));

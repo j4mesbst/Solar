@@ -110,3 +110,9 @@ Native validation: after adding the required application icons, GitHub Actions r
 - Work : ouvre un dossier et coche les fichiers avant de transmettre le contexte. Sans accès direct aux dossiers (Safari), l’import est en lecture seule et les propositions s’exportent en JSON. L’application macOS permet d’appliquer et d’annuler les modifications après validation.
 - Apparence : importe un fond PNG/JPEG/WebP et règle séparément la transparence de la barre des tâches et du chat. Le fond est redimensionné et enregistré localement. La configuration macOS ajoute une fenêtre transparente avec vibrancy ; l’API privée macOS impose une adaptation pour une distribution App Store.
 - Vérification complémentaire : node scripts/ui-refinement.cjs avec les mêmes variables Playwright que les autres suites UI.
+
+### Comptes et plugins
+
+Le compte Solar utilise un projet Supabase commun à la distribution (inscription e-mail, connexion et récupération). Les conversations restent locales et séparées par compte ; le mode sans compte est conservé. Les comptes doivent être activés par le mainteneur avant d'être utilisables.
+
+GitHub peut lire les README des dépôts autorisés avec un jeton à accès limité. Gmail peut rechercher et lire les e-mails autorisés, puis ajouter un message au brouillon. La connexion Google Web nécessite le client OAuth de Solar ; en natif, cette version propose un token readonly avancé. Voir [configuration et limites](docs/ACCOUNTS_AND_PLUGINS.md).

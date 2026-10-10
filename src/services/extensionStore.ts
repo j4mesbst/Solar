@@ -1,3 +1,4 @@
+import { scopedKey } from "./accountScope.ts";
 import type { Artifact, WorkOperation } from "../domain/extensions";
 interface ExtensionData {
   artifacts: Artifact[];
@@ -15,7 +16,7 @@ async function read(): Promise<ExtensionData> {
   if (native()) {
     const store = await (
       await import("@tauri-apps/plugin-store")
-    ).load("solar.extensions.json", { defaults: {}, autoSave: false });
+    ).load(scopedKey("solar.extensions")+".json", { defaults: {}, autoSave: false });
     return (
       (await store.get<ExtensionData>("data")) ?? {
         artifacts: [],
@@ -24,7 +25,7 @@ async function read(): Promise<ExtensionData> {
     );
   }
   return JSON.parse(
-    localStorage.getItem("solar.extensions.v1") ??
+    localStorage.getItem(scopedKey("solar.extensions.v1")) ??
       '{"artifacts":[],"operations":[]}',
   );
 }
@@ -60,10 +61,10 @@ export const extensionStore = {
       if (native()) {
         const store = await (
           await import("@tauri-apps/plugin-store")
-        ).load("solar.extensions.json", { defaults: {}, autoSave: false });
+        ).load(scopedKey("solar.extensions")+".json", { defaults: {}, autoSave: false });
         await store.set("data", data);
         await store.save();
-      } else localStorage.setItem("solar.extensions.v1", JSON.stringify(data));
+      } else localStorage.setItem(scopedKey("solar.extensions.v1"), JSON.stringify(data));
     });
     queue = operation.catch(() => {});
     return operation;
@@ -86,10 +87,10 @@ export const extensionStore = {
       if (native()) {
         const store = await (
           await import("@tauri-apps/plugin-store")
-        ).load("solar.extensions.json", { defaults: {}, autoSave: false });
+        ).load(scopedKey("solar.extensions")+".json", { defaults: {}, autoSave: false });
         await store.set("data", data);
         await store.save();
-      } else localStorage.setItem("solar.extensions.v1", JSON.stringify(data));
+      } else localStorage.setItem(scopedKey("solar.extensions.v1"), JSON.stringify(data));
     });
     queue = operation.catch(() => {});
     return operation;
