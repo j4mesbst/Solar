@@ -292,3 +292,13 @@ Contract feature tests passed for memory-only temporary messages/drafts, no disk
 - Effort popup reduced to roughly one third its former height; every level has a distinct dynamic particle pattern.
 - Rail multipart motion runs on hover/focus only; click uses a separate scale spring, with reduced-motion support.
 - Narrow-window popovers stay inside the composer bounds. Focused browser regression covers placement, all effort animations, provider states, editable generation, hover/click, mobile and reduced motion.
+
+## 10 octobre 2026 — fonds jumelés, Work et diaporamas
+
+- Commande exacte `npx shadcn@latest init --preset b48 --template next` exécutée. Réponses par défaut : installation du CLI acceptée ; écrasement de components.json refusé (défaut No). Le CLI s'arrête dans ce cas : la configuration shadcn existante et le projet Vite restent en place ; le preset b48 n'a pas été appliqué.
+- Six images fournies regroupées en Côte, Plage et Dunes, versions claire/sombre, optimisées en WebP. Aperçus moitié/moitié, choix enregistré, changement avec le thème automatique (6 h / 20 h) et manuel. Fonds limités au chat ; aucune image derrière la navigation ou les paramètres. Import personnel conservé.
+- Accueil et Skills arrondis, autres pictogrammes de navigation harmonisés. Icônes blanches sur capsule sombre au survol et sur la page active ; animations existantes respectent le mouvement réduit.
+- Work reprend la composition de la référence : accueil central, chatbox, choix de projet, Fichiers, Plugins. Aucun panneau droit permanent ou ouvert par une réponse. L'inspecteur s'ouvre sur demande ; Échap, fermeture, focus clavier et retour au bouton sont pris en charge. Sélection des fichiers, consentement cloud, approbation et annulation restent fonctionnels. Pas de dictée vocale ou d'approbation à la place de l'utilisateur.
+- « Réponse en cours » revient à gauche, en 14 px, secondes sur la même ligne. Les étapes sont celles observées, sans raisonnement privé.
+- Cartes d'artefacts monochromes selon le thème. Demandes diapo/diaporama/exposé détectées comme présentations. Export PPTX 16:9, couverture, hiérarchie typographique, contenu en points/colonnes, pied de page ; aperçu adapté. Les anciens artefacts de code restent conservés : demander un nouveau diaporama produit le bon type sans renommer un fichier texte en PowerPoint. La qualité des faits/contenus dépend du modèle sélectionné.
+- Vérification : build TypeScript/Vite ; contrats fonctionnalités et évolution (ZIP PPTX, six slides XML, taille 16:9) ; Playwright sur génération, artefacts, Work, import/export et thèmes/fonds, mobile et erreurs JS. Captures inspectées et contraste des icônes corrigé. Pas de test visuel natif macOS dans cet environnement.

@@ -8,9 +8,13 @@ import {ToolRegistry,ToolExecutor} from '../src/services/toolRegistry.ts';
 import {pullModel} from '../src/services/modelInstall.ts';
 import {streamChat} from '../src/services/chatApi.ts';
 const id='test';
+for(const request of ['Fais un diapo sur Newton','Je veux un diaporama de six pages','Prépare un exposé sur Newton','Crée un artefact de présentation'])assert.equal(artifactIntent(request),'slides');
+
 assert.equal(artifactIntent('Crée une présentation de 6 diapositives sur Newton'),'slides');assert.equal(classify('Explique les fractions',false),'learning');assert.equal(smartInstruction('Code',false,false),'');assert.equal(needsWeb('Actualité cette semaine'),true);assert.equal(safeSourceUrl('javascript:alert(1)'),undefined);
 const slides=validateArtifact({kind:'slides',title:'Newton',slides:Array.from({length:6},(_,i)=>({title:'Diapositive '+i,body:'Lois du mouvement'}))},id);
 const pptx=await exportArtifact(slides,'pptx');assert(pptx.size>1000);assert.equal(new TextDecoder().decode(new Uint8Array(await pptx.arrayBuffer()).slice(0,2)),'PK');
+const JSZip=(await import('jszip')).default;const archive=await JSZip.loadAsync(await pptx.arrayBuffer());assert.equal(Object.keys(archive.files).filter(name=>/^ppt\/slides\/slide\d+\.xml$/.test(name)).length,6);const cover=await archive.file('ppt/slides/slide1.xml').async('string');assert(cover.includes('171C29'));assert(cover.includes('Diapositive 0'));const size=await archive.file('ppt/presentation.xml').async('string');assert(size.includes('12192000')&&size.includes('6858000'));
+
 const doc=validateArtifact({kind:'document',title:'Rapport',sections:[{title:'Conclusion',body:'Les données sont pertinentes.'}]},id);for(const format of ['pdf','docx']){const file=await exportArtifact(doc,format);const bytes=new Uint8Array(await file.arrayBuffer());assert(file.size>100);assert.equal(new TextDecoder().decode(bytes.slice(0,format==='pdf'?4:2)),format==='pdf'?'%PDF':'PK');}
 const table=validateArtifact({kind:'table',title:'Chiffres',columns:['Nom','Valeur'],rows:[['A','=1+1'],['B','12']]},id);assert(csvContent(table).includes("'=1+1"));assert((await exportArtifact(table,'xlsx')).size>1000);
 assert.throws(()=>validateArtifact({kind:'table',title:'Bad',columns:['A'],rows:[['A','B']]},id));assert.throws(()=>parseArtifact('pas de JSON',id));const updated=validateArtifact({...slides,title:'Newton corrigé'},id,slides);assert.equal(updated.id,slides.id);assert.equal(updated.revision,2);assert(!displayAnswer('Voici.\n```solar-artifact\n{"x":').includes('solar-artifact'));

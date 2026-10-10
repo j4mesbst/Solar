@@ -1,11 +1,13 @@
 import {
+  createContext,
+  useContext,
   useEffect,
   useRef,
   useState,
   type ReactNode,
   type MutableRefObject,
 } from "react";
-import { FolderOpen, PanelRight, Check, X, Undo2 } from "lucide-react";
+import { FolderOpen, Files, Blocks, Check, X, Undo2 } from "lucide-react";
 import type { Provider } from "../../domain/types";
 import type { WorkOperation } from "../../domain/extensions";
 import {
@@ -28,28 +30,49 @@ export interface WorkBridge {
     signal: AbortSignal,
   ) => Promise<WorkContext>;
 }
+const WorkControls = createContext<ReactNode>(null);
+export function WorkShelf(){return <>{useContext(WorkControls)}</>;}
 export function WorkSurface({
   active,
   conversationId,
   provider,
   bridge,
   children,
+  onPlugins,
 }: {
   active: boolean;
   conversationId?: string;
   provider?: Provider;
   bridge: MutableRefObject<WorkBridge | null>;
   children: ReactNode;
+  onPlugins: () => void;
 }) {
   const [project, setProject] = useState<WorkProject | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [cloudConsent, setCloudConsent] = useState(false);
-  const [panel, setPanel] = useState(true);
+  const [panel, setPanel] = useState(false);
   const [filesQuery, setFilesQuery] = useState("");
   const [preview, setPreview] = useState<{ path: string; content: string }>();
   const [operations, setOperations] = useState<WorkOperation[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const dialogRef=useRef<HTMLElement>(null);
+  useEffect(()=>{
+    if(!panel||!active)return;
+    const previous=document.activeElement as HTMLElement|null;
+    const node=dialogRef.current;
+    const focusable=()=>Array.from(node?.querySelectorAll<HTMLElement>('button:not([disabled]),input:not([disabled]),summary,[tabindex="0"]')??[]);
+    focusable()[0]?.focus();
+    const trap=(event:KeyboardEvent)=>{
+      if(event.key==="Escape"){event.preventDefault();setPanel(false);}
+      if(event.key!=="Tab")return;
+      const items=focusable(),first=items[0],last=items.at(-1);
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}
+    };
+    document.addEventListener("keydown",trap);
+    return ()=>{document.removeEventListener("keydown",trap);previous?.focus();};
+  },[panel,active]);
   const loadedId = useRef(conversationId);
   loadedId.current = conversationId;
   useEffect(() => {
@@ -111,7 +134,7 @@ export function WorkSurface({
           await saveOperation(op);
           if (loadedId.current === id && snapshot.token === project.token) {
             setOperations((v) => [...v, op]);
-            setPanel(true);
+
           }
         },
       };
@@ -123,6 +146,7 @@ export function WorkSurface({
       const value = await openProject();
       if (value) {
         setProject(value);
+        setPanel(true);
         setError("");
       }
     } catch (e) {
@@ -165,31 +189,11 @@ export function WorkSurface({
   return (
     <div className={`work-surface ${active ? "work-active" : ""}`}>
       <div className="work-main">
-        {active && (
-          <div className="work-heading">
-            <button
-              className="small-button"
-              disabled={busy}
-              onClick={() => void open()}
-            >
-              <FolderOpen size={15} />
-              {project?.name ?? "Choisir un dossier"}
-            </button>
-            <span>Work</span>
-            <button
-              className="icon-button"
-              aria-label="Afficher les fichiers Work"
-              aria-expanded={panel}
-              onClick={() => setPanel((v) => !v)}
-            >
-              <PanelRight size={17} />
-            </button>
-          </div>
-        )}
-        {children}
+        <WorkControls.Provider value={active ? <div className="work-shelf"><button disabled={busy} onClick={()=>void open()}><FolderOpen size={16}/>{project?.name??"Choisir un projet"}</button><button aria-label="Afficher les fichiers Work" aria-expanded={panel} onClick={()=>setPanel(true)}><Files size={16}/>Fichiers{operations.some(op=>op.status==="proposed")&&<span className="work-pending-dot"/>}</button><button onClick={onPlugins}><Blocks size={16}/>Plugins</button></div> : null}>
+        {children}</WorkControls.Provider>
       </div>
       {active && panel && (
-        <aside className="work-panel" aria-label="Projet Work">
+        <div className="work-modal-backdrop" onClick={e=>{if(e.target===e.currentTarget)setPanel(false);}}><aside ref={dialogRef} className="work-panel" role="dialog" aria-modal="true" aria-label="Projet Work" onKeyDown={e=>{if(e.key==="Escape")setPanel(false);}}>
           <div className="work-panel-heading"><h2>Projet</h2><button className="icon-button" aria-label="Fermer le panneau Work" onClick={()=>setPanel(false)}><X size={17}/></button></div>
           {!project ? (
             <p>
@@ -349,7 +353,7 @@ export function WorkSurface({
               )}
             </section>
           ))}
-        </aside>
+        </aside></div>
       )}
     </div>
   );

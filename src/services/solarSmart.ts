@@ -9,6 +9,7 @@ export type Intent =
   | "summary"
   | "rewrite";
 export function artifactIntent(text: string): ArtifactKind | undefined {
+  if (/\bdiapo(?:sitive|rama)?s?\b|powerpoint|pptx|slides|(?:fais|cr[eé]e|g[eé]n[eè]re|pr[eé]pare|veux|besoin).*(?:pr[eé]sentation|expos[eé])/i.test(text)) return "slides";
   if (
     !/cr[eé]e|g[eé]n[eè]re|fais|produis|modifie|corrige|ajoute|create|generate|export/i.test(
       text,
