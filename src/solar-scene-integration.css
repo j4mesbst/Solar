@@ -52,3 +52,48 @@ html:has(.shell.dark),html:has(.shell.dark) body{background:#000}
 .solar-scene .composer .paste-chip>button>span{max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .solar-scene .composer .paste-chip.leaving{opacity:0;transform:scale(.88)}
 .solar-scene .message .user-bubble,.solar-scene .message.assistant .message-content{animation:rise .7s var(--spring) backwards}
+
+/* Compact chrome and mode-specific generation, October 2026. */
+.shell{grid-template-columns:44px 224px minmax(0,1fr)}
+.shell.collapsed{grid-template-columns:44px 0 minmax(0,1fr)}
+.shell .app-rail{padding:8px 4px 10px;gap:8px}
+.shell .rail-button{width:32px;height:34px;border-radius:12px}
+.shell .rail-button svg{width:19px;height:19px}
+.shell .workspace{border-top-left-radius:16px;overflow:hidden}
+.shell .header,.shell .workspace:has(.chat-pane:not([hidden])) .header{height:24px;padding:0 12px;gap:8px;overflow:visible}
+.shell .header-start{padding-left:0;gap:6px}
+.shell .header .icon-button{width:24px;height:24px;border-radius:8px}
+.shell .header .icon-button svg{width:16px;height:16px}
+.shell .solar-mode-trigger.wordmark{height:24px;padding:0 6px;gap:7px;font-size:22px;border-radius:8px;line-height:1}
+.shell .solar-mode-trigger svg{width:12px;height:12px}
+.shell .sidebar{background:color-mix(in srgb,var(--side) 78%,transparent);backdrop-filter:blur(20px) saturate(1.15);-webkit-backdrop-filter:blur(20px) saturate(1.15);border-top-right-radius:16px}
+.solar-mode-menu{width:min(250px,calc(100vw - 28px));padding:5px;border-radius:17px}
+.solar-mode-item{padding:7px 10px;gap:8px;border-radius:12px}
+.solar-mode-item strong{font-size:16px;line-height:1.3}
+.solar-mode-item small{font-size:11px;line-height:1.3;margin-top:1px}
+.solar-mode-item svg{width:16px;height:16px}
+.solar-scene .composer-welcome,.work-active .solar-scene .composer-welcome{bottom:50%;transform:translate(-50%,50%)}
+.solar-scene .composer .animated-input .field{caret-color:transparent}
+.solar-scene .composer .animated-caret{display:block;max-height:18px;background:var(--ink);animation:caret-breathe 1100ms ease-in-out infinite}
+.solar-scene .generation-status>button{justify-content:flex-start;min-height:30px;height:auto;gap:7px;font-size:14px;color:var(--muted);padding:0 0 6px}
+.solar-scene .generation-status>button .tool-count{display:none}
+.solar-scene .generation-status .tool-elapsed{font-size:13px;color:var(--muted)}
+.solar-scene .generation-status>div{border-top:1px solid var(--line);padding:14px 0 12px;margin:0}
+.solar-scene .generation-status>div>div{padding-left:0;height:auto!important;max-height:none;overflow:visible}
+.solar-scene .generation-status>div>div>div{height:auto;min-height:28px;line-height:1.65;align-items:flex-start;padding:3px 0;color:var(--text)}
+.solar-scene .generation-status>div>div>div svg{margin-top:5px;color:var(--muted)}
+.solar-scene .generation-status .absolute{display:none}
+.ai-text-loading{display:flex;align-items:center;gap:9px;min-height:28px;margin-bottom:12px;font-size:14px;color:var(--muted)}
+.ai-loading-label{display:inline-block;background-image:linear-gradient(90deg,var(--muted) 0%,var(--text) 50%,var(--muted) 100%);background-size:200% 100%;background-clip:text;-webkit-background-clip:text;color:transparent;font-weight:500}
+.normal-loading-dots{display:inline-flex;gap:3px;align-items:center;height:16px}
+.normal-loading-dots i{width:4px;height:4px;border-radius:50%;background:var(--muted);animation:solar-dot 1.2s ease-in-out infinite}
+.normal-loading-dots i:nth-child(2){animation-delay:.15s}.normal-loading-dots i:nth-child(3){animation-delay:.3s}
+@keyframes solar-dot{0%,70%,100%{opacity:.35;transform:translateY(0)}35%{opacity:1;transform:translateY(-2px)}}
+@media(max-width:799px){.shell,.shell.collapsed{grid-template-columns:44px 0 minmax(0,1fr)}.shell .header,.shell .workspace:has(.chat-pane:not([hidden])) .header{height:44px}.shell .header .icon-button{width:36px;height:36px}.shell .solar-mode-trigger.wordmark{height:36px}.shell .rail-button{height:44px}.shell .sidebar{left:44px}.solar-scene .composer .send,.solar-scene .composer .round.plus{min-height:44px}}
+@media(prefers-reduced-motion:reduce){.solar-scene .composer .animated-caret{display:none}.solar-scene .composer .animated-input .field{caret-color:var(--ink)}.normal-loading-dots i{animation:none}.ai-loading-label{background:none;color:var(--muted)}}
+
+.solar-scene[data-mode="chat"] .response-body{border-top:0;padding-top:0}
+
+.shell .chat-pane{border-top-left-radius:16px;overflow:hidden}
+.solar-scene .generation-status>button>span{font-size:14px}
+.solar-scene .generation-status>button>.tool-elapsed{font-size:13px}

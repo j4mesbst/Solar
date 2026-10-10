@@ -9,7 +9,6 @@ import {
   type ComponentType,
   type ReactNode,
 } from "react";
-import AnimatedShinyText from "./animated-text-01";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -183,7 +182,7 @@ function NestedToolRow({
 }) {
   const Icon = tool.icon ?? CATEGORY_ICONS[tool.category ?? "generic"];
   return (
-    <div className="flex items-center gap-2 h-7 text-sm text-neutral-700 dark:text-neutral-300">
+    <div className="flex items-center gap-2 min-h-7 text-sm text-neutral-700 dark:text-neutral-300">
       <Icon
         className={cn(
           "w-3.5 h-3.5 shrink-0",
@@ -194,7 +193,7 @@ function NestedToolRow({
       />
       <span
         className={cn(
-          "truncate",
+          "whitespace-normal",
           isShimmer && "an-tg-shimmer",
           tool.isError && "text-red-500",
         )}
@@ -322,15 +321,15 @@ export const ToolGroup = memo(function ToolGroup({
             "shrink-0",
           )}
         >
-          {isPending ? <AnimatedShinyText>{headerLabel}</AnimatedShinyText> : headerLabel}
+          {headerLabel}
         </span>
         {subtitle && (
-          <span className="text-neutral-500 dark:text-neutral-400 truncate min-w-0 flex-1">
+          <span className="tool-count text-neutral-500 dark:text-neutral-400 truncate min-w-0">
             {subtitle}
           </span>
         )}
         {showElapsedDisplay && (
-          <span className="font-normal tabular-nums shrink-0 text-neutral-400 dark:text-neutral-500">
+          <span className="tool-elapsed font-normal tabular-nums shrink-0 text-neutral-400 dark:text-neutral-500">
             {elapsedTime}
           </span>
         )}
@@ -360,7 +359,7 @@ export const ToolGroup = memo(function ToolGroup({
               <NestedToolRow
                 key={idx}
                 tool={tool}
-                isShimmer={isPending && idx === visibleCount - 1}
+                isShimmer={isPending && tool.category === "command" && idx === visibleCount - 1}
               />
             ))}
           </div>

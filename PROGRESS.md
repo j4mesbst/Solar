@@ -323,3 +323,14 @@ Contract feature tests passed for memory-only temporary messages/drafts, no disk
 - Outils raccordés aux fichiers joints, à la recherche Web et aux propositions de modifications Code. Terminal et calculateur dédié affichent Bientôt ; aucune capacité inexistante n'est annoncée active.
 - Supabase : organisation Solar confirmée (offre free), aucun projet visible. L'appel requis get_cost retourne UNAVAILABLE (« MCP tool get_cost was not returned by tools/list ») : le projet n'a pas été créé, aucune facturation ni activation publique n'est annoncée. L'inscription/connexion existante reste prête à recevoir l'URL et la publishable key du projet commun. Version supabase-js épinglée avec lockfile. Un accès au tableau de bord ou la création du projet par le mainteneur est nécessaire.
 - Vérifications : contrats fonctionnalités/chat/fournisseurs/évolution et build TS/Vite ; tests navigateur scène (WebGL, chute/FLIP/relance, Stop, menu clavier, brouillon Code, fichiers, fallback sans WebGL, thèmes/mobile/mouvement réduit), connexions et comptes simulés, évolution Work/artefacts. Captures inspectées. Pas de compte Supabase réel créé, pas de test natif macOS dans cet environnement.
+
+### 10 octobre 2026 — Navigation compacte et génération par mode
+
+- Rail réduit à 44 px, en-tête desktop de 64 à 24 px, raccord arrondi et historique translucide/flouté ; cibles mobiles préservées.
+- Menu Solar/Solar Code compact, chatbox Code centrée avec sa tablette de projet, curseur animé monochrome rétabli.
+- Code : étapes réellement observées sous une séparation, durée sur la ligne du statut ; brillance réservée aux commandes actives, sans inventer un terminal ni montrer de raisonnement privé.
+- Solar : composant AITextLoading fourni adapté aux phases réelles, petits points, fondu du texte ; suppression du panneau et des pastilles de sources. Arrêt disponible dans le bouton d’envoi.
+- Rafraîchissement du flux normal à 32 ms et suppression des 600 ms d’attente supplémentaires après la descente initiale. Ultra conserve ses instructions et son budget ; le calcul du fournisseur reste hors du contrôle de Solar.
+- Dépendance motion épinglée ; contrôle visuel et contrats exécutés avant publication. Comptes et connexions externes ne sont pas reconfigurés dans cette passe.
+
+- Correction du chargement d’historique pendant la création : les mises à jour du flux en mémoire priment sur une lecture antérieure du stockage. Les phases observées sont enregistrées à chaque changement, et les chemins des fichiers réellement lus sont visibles pendant l’attente du modèle.

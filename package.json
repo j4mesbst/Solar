@@ -37,6 +37,7 @@
     "lucide-react": "^0.468.0",
     "mammoth": "^1.13.0",
     "mermaid": "^12.1.0",
+    "motion": "14.1.0",
     "pdfjs-dist": "^6.4.299",
     "pptxgenjs": "^4.0.1",
     "radix-ui": "^1.7.0",
