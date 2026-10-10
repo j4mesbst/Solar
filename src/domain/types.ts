@@ -18,7 +18,7 @@ export interface Conversation {
 }
 export interface Message {
   id: string; conversationId: string; role: "user" | "assistant" | "system";
-  content: string; status: MessageStatus; createdAt: string; order: number; error?: string; modelName?: string; effort?: Effort; durationSeconds?: number; favorite?: boolean; displayText?: string; attachments?: PastedContent[]; activity?: "connecting" | "waiting" | "thinking" | "writing"; activities?: string[]; sources?: SearchSource[]; metrics?: Metrics; artifactId?: string;
+  content: string; status: MessageStatus; createdAt: string; order: number; error?: string; modelName?: string; effort?: Effort; durationSeconds?: number; favorite?: boolean; displayText?: string; attachments?: PastedContent[]; activity?: "connecting" | "waiting" | "thinking" | "writing" | "searching"; activities?: string[]; sources?: SearchSource[]; metrics?: Metrics; artifactId?: string;
 }
 export interface Palette { accent: string; background: string; surface: string; text: string; sidebar: string; userBubble: string; border: string; selection: string; }
 export interface AppSettings { theme: "system" | "dark" | "light"; defaultModelId?: string; sendOnEnter?: boolean; web?: WebSettings; smart?: boolean; performanceProfile?: PerformanceProfile; onboardingComplete?: boolean; appearance?: { light?: Partial<Palette>; dark?: Partial<Palette>; radius?: number; font?: "system" | "rounded" | "serif" }; }

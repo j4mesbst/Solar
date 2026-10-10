@@ -1,0 +1,17 @@
+/* Reference-led Solar tokens: native typography, pill controls, quiet surfaces. */
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-primary: var(--button);
+  --color-primary-foreground: var(--button-text);
+  --color-secondary: var(--hover);
+  --color-secondary-foreground: var(--text);
+  --color-muted: var(--surface);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--hover);
+  --color-accent-foreground: var(--text);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--accent, #528bea);
+  --color-destructive: var(--error);
+}

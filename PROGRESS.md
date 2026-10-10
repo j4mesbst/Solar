@@ -1,3 +1,53 @@
+# Compte rendu — Refonte à partir des quatre captures (10 octobre 2026)
+
+La version fonctionnelle précédente a été publiée sur `j4mesbst/Solar` dans le commit `422b923`. Le dépôt distant n’avait aucun changement supplémentaire à intégrer. Le correctif des icônes natives a ensuite été publié (`65dc8eb`). L’ancienne mention de publication bloquée, plus bas, est historique : l’autorisation explicite a été reçue.
+
+## Réalisé
+
+- Paramètres : lignes arrondies inspirées de la première capture, recherche en capsule, icônes nettes, composants partagés shadcn, contenu sur toute la largeur, thèmes et personnalisation conservés.
+- Plugins : navigation Personnaliser, titres et recherche comme la référence, onglets Public/Personnel, grille à deux colonnes, douze connexions grisées avec `(bientôt)`. Recherche réelle et onglets clavier ; installation volontairement indisponible. Aucun faux plugin installé.
+- Skills : même direction visuelle, recherche et toolbar ; Recommandés en haut et Installés en dessous, deux espaces vides, aucun skill prérempli.
+- Chatbox : plus courte et plus haute, coins de 30px, nouveau chat centré à 690px max, conversation à 640px max ; plus pour les fichiers, globe relié au moteur Web configuré, modèle/status, effort et flèche circulaire précise. Feedback au clic, Stop et brouillon pendant génération conservés. Le bouton Web nécessite la configuration et le consentement existants ; il ouvre les paramètres si nécessaire.
+- Défilement : Revenir en bas évite le conflit de scroll fluide pendant un flux ; ResizeObserver suit les changements de hauteur du rendu Markdown uniquement lorsque le suivi est actif. La lecture vers le haut reste libre.
+- Statut : bandeau d’activité avec durée et Stop ; composant `animated-text-01.tsx` reprenant la brillance fournie. Les libellés suivent les événements réels et le type de réponse demandé. Le raisonnement privé n’est jamais affiché. Le caret animé est limité à 18px.
+- Structure : composants shadcn Button/Input/Tabs/Badge officiels dans `src/components/ui`, tokens liés aux palettes Solar, alias `@/`, `components.json` et utilitaire `cn`. Réemploi dans les paramètres, formulaires, apparence, onboarding et composer.
+- Correctif macOS : le premier workflow a révélé un fichier `icons/icon.png` absent. Icônes PNG/ICO/ICNS produites à partir d’un SVG sobre, fichiers ajoutés et configuration corrigée. Aucun logo solaire ajouté au chat.
+
+## Trente phrases disponibles
+
+| Opération réelle | Variantes |
+|---|---|
+| Connexion | Connecting to your model · Starting the conversation · Sending your message |
+| Attente | Waiting for your model · Preparing a response · Your model is getting ready |
+| Réflexion signalée | Solar is thinking · Thinking through your question · Working through the details |
+| Recherche Web réelle | Searching the web · Looking for current sources · Retrieving web results |
+| Rédaction | Writing your response · Putting the answer together · Generating a response |
+| Code demandé | Generating code · Writing the implementation · Building your code response |
+| Explication | Writing an explanation · Explaining the key ideas · Developing an example |
+| Résumé | Writing a summary · Summarizing your content · Putting the key points together |
+| Réécriture | Rewriting your text · Refining the wording · Drafting your revised text |
+| Artefact demandé | Creating an artifact · Building your artifact · Generating your artifact |
+
+Les phrases ne défilent pas artificiellement. Les variantes de rédaction sont choisies de façon stable par réponse ; les phases techniques privilégient un libellé constant. « Generating code » n’est pas utilisé pour une simple explication de code.
+
+## Validation
+
+- Build TypeScript/Vite et quatre suites de contrats validés.
+- Playwright : nouvelle suite redesign (proportions, bouton Web et contexte réellement transmis, galerie/search/tabs/disabled, Skills vides, paramètres/search, clair/sombre, mobile), suite Thinking avec serveur SSE différé, smoke, compact, customization, polish, référence, enhancements et evolution validés : neuf suites navigateur au total après ajustement des dimensions.
+- Captures inspectées visuellement ; conflit de couleur du bouton Ajouter corrigé ; labels accessibles des navigations et des deux boutons Stop distingués. Aucune erreur JavaScript dans la nouvelle suite.
+- Réduction des mouvements, clavier Radix, labels des icônes, absence de débordement mobile et hauteur tactile vérifiés.
+- Frontend de la version précédente également validé par GitHub Actions. La première compilation macOS a échoué sur l’icône absente ; après le correctif, les jobs frontend et native-macos sont tous deux verts (run 38042138605). Compilation native et tests Rust validés sur macos-14. Les dialogues et accès disque interactifs natifs nécessitent toujours un essai réel sur Mac.
+
+## Dépendances et limites
+
+Ajouts : `radix-ui`, `class-variance-authority`, `tw-animate-css`. Logos sélectionnés depuis Simple Icons (SVG locaux, licence conservée), sans chargement réseau à l’ouverture. Pas d’installation, de compte ni de clés supplémentaires pour le design. Les grandes bibliothèques d’export/diagramme restent chargées à la demande ; Vite signale toujours certains chunks volumineux.
+
+Skills utilisés : frontend-design, ui-ux-pro-max et les règles de design du chat déjà chargées. Les autres skills demandés, shadcn MCP et Context7 n’étaient pas accessibles dans cette session ; cela a été signalé. Composants récupérés dans le registre officiel shadcn et vérification réelle avec Playwright.
+
+Fichiers principaux : `src/ui/App.tsx`, `src/styles.css`, `src/redesign-tokens.css`, `src/components/ui/extension-directory.tsx`, `animated-text-01.tsx`, les quatre primitives shadcn, `src/services/activityLabels.ts`, `components.json`, les aliases TypeScript/Vite, les tests navigateur, les SVG locaux et `src-tauri/icons`.
+
+---
+
 # Solar — Compte rendu du 10 octobre 2026
 
 ## Implémenté

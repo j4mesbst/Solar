@@ -1,3 +1,4 @@
+import { Button } from "./button";
 import { useEffect, useState } from "react";
 import type { AppSettings, Model } from "../../domain/types";
 import type { Hardware, Metrics } from "../../domain/extensions";
@@ -137,13 +138,13 @@ export function WebSettingsPanel({
               onChange={(e) => setSecret(e.target.value)}
             />
           </label>
-          <button
+          <Button
             className="small-button"
             disabled={!secret.trim()}
             onClick={() => void saveKey()}
           >
             Enregistrer la clé
-          </button>
+          </Button>
         </div>
       )}
       <label className="cloud-consent">

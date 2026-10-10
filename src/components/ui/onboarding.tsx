@@ -1,3 +1,4 @@
+import { Button } from "./button";
 import { appearanceStyle } from "../../services/appearance";
 import { resolveTheme } from "../../services/theme";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -138,9 +139,9 @@ export function Onboarding({
               <br />
               Local ou connecté, sans compte obligatoire.
             </p>
-            <button className="primary-button" onClick={() => setStep(1)}>
+            <Button className="primary-button" onClick={() => setStep(1)}>
               Commencer
-            </button>
+            </Button>
             <button className="text-button" onClick={() => void finish()}>
               Configurer plus tard
             </button>
@@ -170,7 +171,7 @@ export function Onboarding({
                 </label>
               ))}
             </div>
-            <button
+            <Button
               className="primary-button"
               onClick={() => {
                 setStep(2);
@@ -178,7 +179,7 @@ export function Onboarding({
               }}
             >
               Continuer
-            </button>
+            </Button>
             <button className="text-button" onClick={() => setStep(3)}>
               Ignorer cette étape
             </button>
@@ -199,13 +200,13 @@ export function Onboarding({
                   {chosen
                     .filter((n) => n !== "Ollama")
                     .map((name) => (
-                      <button
+                      <Button
                         key={name}
                         className="small-button"
                         onClick={() => setEditing(name)}
                       >
                         Configurer {name}
-                      </button>
+                      </Button>
                     ))}
                 </div>
                 {renderProviders(p=>{setExistingForm(p);setEditing(undefined);})}
@@ -218,13 +219,13 @@ export function Onboarding({
                   Ollama fait tourner des modèles sur ton Mac. Il doit être
                   démarré pour que Solar puisse les détecter.
                 </p>
-                <button
+                <Button
                   className="small-button"
                   disabled={busy}
                   onClick={() => void detect()}
                 >
                   Oui · détecter Ollama
-                </button>
+                </Button>
                 <a
                   className="small-button"
                   href="https://ollama.com/download/mac"
@@ -238,9 +239,9 @@ export function Onboarding({
                 </p>
               </section>
             )}
-            <button className="primary-button" onClick={() => setStep(3)}>
+            <Button className="primary-button" onClick={() => setStep(3)}>
               Continuer
-            </button>
+            </Button>
           </>
         ) : step === 3 ? (
           <>
@@ -271,13 +272,13 @@ export function Onboarding({
                       <br />
                       {m.use} · {m.speed} selon le matériel
                     </p>
-                    <button
+                    <Button
                       className="small-button"
                       disabled={busy}
                       onClick={() => void pull(m.name)}
                     >
                       Télécharger avec Ollama
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </>
@@ -302,22 +303,22 @@ export function Onboarding({
                   </>
                 )}
                 {busy && (
-                  <button
+                  <Button
                     className="small-button"
                     onClick={() => controller.current?.abort()}
                   >
                     Annuler
-                  </button>
+                  </Button>
                 )}
               </div>
             )}
-            <button
+            <Button
               className="primary-button"
               disabled={busy}
               onClick={() => setStep(4)}
             >
               Continuer
-            </button>
+            </Button>
           </>
         ) : (
           <>
@@ -331,9 +332,9 @@ export function Onboarding({
                 ? "Choisis un modèle et commence à créer."
                 : "Ajoute un fournisseur dans les paramètres pour commencer à discuter."}
             </p>
-            <button className="primary-button" onClick={() => void finish()}>
+            <Button className="primary-button" onClick={() => void finish()}>
               Commencer à discuter
-            </button>
+            </Button>
           </>
         )}
         {step > 0 && step < 4 && (

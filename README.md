@@ -54,11 +54,11 @@ After installing Rust and the Xcode command-line tools:
 npm run tauri dev
 ```
 
-The native app uses Tauri Store and Keychain, and a native HTTP client for configured provider requests. Native builds and real provider credentials must be verified on macOS; they are not claimed to have been tested in the Linux workspace.
+The native app uses Tauri Store and Keychain, and a native HTTP client for configured provider requests. Native compilation and Rust tests have passed on macOS GitHub Actions. Interactive native workflows and real provider credentials still require verification on a Mac.
 
 ## Ollama
 
-An existing running local Ollama instance is detected automatically. Solar does not install Ollama or download models. Custom configured Ollama URLs are retained. Default local and GonkaRouter requests use fixed Vite proxies in browser development; other custom endpoints may require browser CORS configuration. Native requests use the HTTP plugin.
+An existing running local Ollama instance is detected automatically. Solar links to the Ollama installer and can download recommended models only when requested in onboarding. Custom configured Ollama URLs are retained. Default local and GonkaRouter requests use fixed Vite proxies in browser development; other custom endpoints may require browser CORS configuration. Native requests use the HTTP plugin.
 
 See `SOLAR_SPEC.md`, `ARCHITECTURE.md`, `DESIGN.md`, `ROADMAP.md` and `PROGRESS.md`.
 
@@ -91,3 +91,13 @@ npm run test:ui:thinking
 These use Playwright with controlled provider responses. The Work UI test uses a controlled directory handle; native disk writes and dialogs require macOS verification. `.github/workflows/validation.yml` runs frontend contracts/build and native macOS Cargo tests after an authorized publication. No macOS/Rust test is claimed to have run in the Linux editing environment.
 
 See [PROGRESS.md](PROGRESS.md) for the current implemented/partial/future checklist, changed files, dependencies and publication status.
+
+### Reference interface redesign
+
+Plugins now has a searchable, themed directory of upcoming connections; all installation actions are disabled. Skills has empty Recommended/Installed sections. These pages do not install tools. The composer has attachment, configured Web search, model and effort controls, with genuine phase status and a Stop action.
+
+Shared primitives use shadcn/ui (New York v4), Tailwind 4 and Radix. `components.json`, the `@/` alias and `src/lib/utils.ts` are configured for future additions. The application icons are checked in under `src-tauri/icons` so a clean native checkout can compile. Regenerate them with `npm run tauri -- icon src-tauri/icons/source.svg`. Selected plugin SVGs are local Simple Icons assets; see `public/plugin-icons/LICENSE.txt`.
+
+The reference-layout browser check is `npm run test:ui:redesign`; it covers both themes, narrow windows, gallery search/tabs, disabled integrations, empty Skills, Web search and composer geometry. As with the existing UI checks, set `SOLAR_UI_NODE_MODULES` to a Playwright installation and `SOLAR_UI_CHROMIUM` when using an external Chromium binary.
+
+Native validation: after adding the required application icons, GitHub Actions run `38042138605` passed both frontend and macOS compilation/Rust tests. Interactive native dialogs and disk workflows still require a hands-on Mac check.
