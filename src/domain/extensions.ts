@@ -1,7 +1,7 @@
 export type SearchMode = "auto" | "on" | "off";
 export interface WebSettings {
   mode: SearchMode;
-  provider: "searxng" | "brave" | "ollama";
+  provider: "duckduckgo" | "searxng" | "brave" | "ollama";
   endpoint?: string;
   consent?: boolean;
 }

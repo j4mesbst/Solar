@@ -4,6 +4,7 @@ import type { AppSettings, Model } from "../../domain/types";
 import type { Hardware, Metrics } from "../../domain/extensions";
 import { detectHardware } from "../../services/performance";
 import { secretVault } from "../../services/nativeVault";
+import { effectiveWebSettings } from "../../services/solarWeb";
 import { solarStore } from "../../services/store";
 export function WebSettingsPanel({
   settings,
@@ -12,11 +13,7 @@ export function WebSettingsPanel({
   settings: AppSettings;
   onSave: (s: AppSettings) => Promise<void>;
 }) {
-  const web = settings.web ?? {
-    mode: "auto",
-    provider: "searxng",
-    consent: false,
-  };
+  const web = effectiveWebSettings(settings.web);
   const [secret, setSecret] = useState("");
   const [configured, setConfigured] = useState(false);
   const [error, setError] = useState("");
@@ -75,7 +72,7 @@ export function WebSettingsPanel({
         <div>
           <h3>Moteur</h3>
           <p>
-            SearXNG peut fonctionner sur ta propre instance sans clé payante.
+            DuckDuckGo fonctionne sans clé. SearXNG utilise ta propre instance.
             Brave et Ollama nécessitent leur clé dédiée.
           </p>
         </div>
@@ -89,6 +86,7 @@ export function WebSettingsPanel({
             })
           }
         >
+          <option value="duckduckgo">DuckDuckGo · sans clé</option>
           <option value="searxng">SearXNG</option>
           <option value="brave">Brave Search</option>
           <option value="ollama">Ollama Web Search</option>
@@ -124,7 +122,7 @@ export function WebSettingsPanel({
             navigateur, elle doit autoriser CORS.
           </small>
         </label>
-      ) : (
+      ) : web.provider !== "duckduckgo" ? (
         <div className="advanced-field">
           <label>
             Clé de recherche
@@ -146,7 +144,7 @@ export function WebSettingsPanel({
             Enregistrer la clé
           </Button>
         </div>
-      )}
+      ) : <p className="settings-note">La recherche passe par DuckDuckGo. Si le moteur demande une vérification humaine, sélectionne un moteur API ou ta propre instance. Dans un site statique, un serveur proxy est nécessaire ; npm run dev et l’application macOS le prennent en charge.</p>}
       <label className="cloud-consent">
         <input
           type="checkbox"

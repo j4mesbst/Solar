@@ -1,3 +1,31 @@
+# Compte rendu — ajustements du 10 octobre 2026
+
+## Changements livrés
+
+- Suppression de la colonne Personnaliser. Catalogues sur toute la largeur, logos colorés, + indisponibles grisés uniquement.
+- Ajouter actif dans les deux pages : raccourcis HTTPS personnels enregistrés pour les plugins ; création/import Markdown, activation et suppression de skills persistants. Les skills activés alimentent les prochains messages. Les raccourcis ne connectent pas les API Gmail/Adobe/etc.
+- Chatbox à surface unie, sans bordure ni changement de bordure au focus ; icônes affinées, modèle/effort compacts, icônes d’activité colorées et arrondies.
+- Chat/Work choisi dans une capsule centrée sur les nouvelles conversations.
+- Réponse en cours et secondes centrées et agrandies, animation shiny, étapes observées développées sous le séparateur (fichiers, sources, connexion, réception). Aucun raisonnement interne privé n’est affiché ni inventé.
+- Artefacts : carte titrée avec version et Ouvrir, aperçu/édition/export existants ; récupération des sorties Markdown/JSON ordinaires complètes ; aperçu HTML interactif isolé sans accès réseau/stockage de Solar.
+- Work : vérifications avant d’effacer le brouillon ; import de dossier pour les navigateurs sans accès natif, lecture/analyse des fichiers cochés et export des modifications. Écriture directe/annulation conservées pour les dossiers autorisés et l’application native.
+- Web : correction du défaut SearXNG non configuré, recherche DuckDuckGo sans clé via proxy Vite ou HTTP natif, sources réelles transmises au modèle. Le globe active directement la recherche avec autorisation explicite. Erreurs lisibles.
+- Apparence : import PNG/JPEG/WebP redimensionné et persistant ; transparence séparée barre des tâches/chat, rail plus doux que le noir/blanc central ; configuration macOS transparente et vibrancy.
+
+## Limites à connaître
+
+- DuckDuckGo a renvoyé une vérification humaine lors de l’essai réseau depuis cet environnement. Elle n’est pas contournée. Brave/Ollama avec clé ou SearXNG configuré restent des alternatives ; le pipeline est vérifié avec des réponses réseau contrôlées, sans prétendre que l’essai externe a réussi.
+- Un site Web statique nécessite un proxy pour la recherche sans clé. npm run dev fournit ce proxy ; la version native utilise le plugin HTTP.
+- Work importé en lecture seule ne modifie pas directement le disque : il propose un export. L’application macOS et les navigateurs avec autorisation de dossier disposent des écritures et de l’annulation.
+- Les trois fonds proposés par James sont encore attendus ; aucun fond de remplacement n’a été inventé.
+- La transparence native repose sur la vibrancy Tauri et l’API privée macOS, pas sur une reproduction complète du matériau Liquid Glass. Une distribution App Store nécessite une autre approche. Le rendu du bureau/dock réel reste à vérifier sur le Mac.
+
+## Vérification
+
+Compilation production et TypeScript réussis. Les quatre suites de contrats stockage/chat/fournisseurs/évolution passent, ainsi que six suites Playwright : redesign, évolution, progression, améliorations, polish et refinement. Les tests couvrent ajouts persistants et consignes des skills, Web/sources, artefacts/aperçu HTML, Work/import/export, thèmes/mobile, progression, défilement, fonds et transparence. Le résultat final est indiqué dans la livraison.
+
+---
+
 # Compte rendu — Refonte à partir des quatre captures (10 octobre 2026)
 
 La version fonctionnelle précédente a été publiée sur `j4mesbst/Solar` dans le commit `422b923`. Le dépôt distant n’avait aucun changement supplémentaire à intégrer. Le correctif des icônes natives a ensuite été publié (`65dc8eb`). L’ancienne mention de publication bloquée, plus bas, est historique : l’autorisation explicite a été reçue.

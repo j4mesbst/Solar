@@ -251,25 +251,13 @@ export const ToolGroup = memo(function ToolGroup({
   const [expanded, setExpanded] = useState(
     defaultOpen ?? (isPending && hasNestedTools),
   );
+  useEffect(()=>{if(!isPending)setExpanded(false);},[isPending]);
   const [visibleCount, setVisibleCount] = useState(
     isPending ? 0 : nestedTools.length,
   );
   const listRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (!isPending || nestedTools.length === 0) {
-      setVisibleCount(nestedTools.length);
-      return;
-    }
-    let index = 1;
-    setVisibleCount(Math.min(index, nestedTools.length));
-    const interval = setInterval(() => {
-      index += 1;
-      setVisibleCount(Math.min(index, nestedTools.length));
-      if (index >= nestedTools.length) clearInterval(interval);
-    }, 450);
-    return () => clearInterval(interval);
-  }, [isPending, nestedTools.length]);
+  useEffect(() => { setVisibleCount(nestedTools.length); }, [nestedTools.length]);
 
   useEffect(() => {
     if (!isPending || !listRef.current) return;

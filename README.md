@@ -101,3 +101,12 @@ Shared primitives use shadcn/ui (New York v4), Tailwind 4 and Radix. `components
 The reference-layout browser check is `npm run test:ui:redesign`; it covers both themes, narrow windows, gallery search/tabs, disabled integrations, empty Skills, Web search and composer geometry. As with the existing UI checks, set `SOLAR_UI_NODE_MODULES` to a Playwright installation and `SOLAR_UI_CHROMIUM` when using an external Chromium binary.
 
 Native validation: after adding the required application icons, GitHub Actions run `38042138605` passed both frontend and macOS compilation/Rust tests. Interactive native dialogs and disk workflows still require a hands-on Mac check.
+
+
+### Derniers réglages
+
+- Plugins/Skills : Ajouter permet de créer des raccourcis HTTPS personnels ou d’importer des instructions Markdown. Les skills activés sont transmis au modèle ; les raccourcis ne constituent pas une connexion API. Les applications du catalogue restent à venir.
+- Web : le globe autorise la recherche vers le moteur choisi. DuckDuckGo est disponible sans clé dans npm run dev et dans l’application native. Les vérifications humaines ne sont pas contournées ; Brave, Ollama Web Search et SearXNG configuré restent disponibles. Une version Web statique nécessite un proxy.
+- Work : ouvre un dossier et coche les fichiers avant de transmettre le contexte. Sans accès direct aux dossiers (Safari), l’import est en lecture seule et les propositions s’exportent en JSON. L’application macOS permet d’appliquer et d’annuler les modifications après validation.
+- Apparence : importe un fond PNG/JPEG/WebP et règle séparément la transparence de la barre des tâches et du chat. Le fond est redimensionné et enregistré localement. La configuration macOS ajoute une fenêtre transparente avec vibrancy ; l’API privée macOS impose une adaptation pour une distribution App Store.
+- Vérification complémentaire : node scripts/ui-refinement.cjs avec les mêmes variables Playwright que les autres suites UI.

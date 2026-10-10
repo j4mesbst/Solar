@@ -4,6 +4,7 @@ export interface WorkProject {
   token: string;
   name: string;
   files: string[];
+  readOnly?: boolean;
 }
 type DirectoryHandle = {
   kind: "directory";
@@ -23,6 +24,7 @@ type FileHandle = {
   }>;
 };
 const handles = new Map<string, DirectoryHandle>();
+const imported = new Map<string, Map<string, File>>();
 const native = () =>
   Boolean(
     (window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__,
@@ -48,10 +50,12 @@ export async function openProject(): Promise<WorkProject | null> {
   const picker = (
     window as Window & { showDirectoryPicker?: () => Promise<DirectoryHandle> }
   ).showDirectoryPicker;
-  if (!picker)
-    throw new Error(
-      "L’accès aux dossiers Work nécessite l’application macOS ou un navigateur compatible avec la sélection de dossiers.",
-    );
+  if (!picker) return new Promise((resolve,reject)=>{
+    const input=document.createElement("input");input.type="file";input.multiple=true;input.setAttribute("webkitdirectory","");input.style.display="none";document.body.append(input);
+    input.addEventListener("cancel",()=>{input.remove();resolve(null);},{once:true});
+    input.onchange=()=>{try{const entries=new Map<string,File>();let name="Projet";for(const file of Array.from(input.files??[])){const relative=file.webkitRelativePath;name=relative.split("/")[0]||name;const path=relative.split("/").slice(1).join("/");if(allowedPath(path)&&file.size<=512000&&entries.size<2000)entries.set(path,file);}const token=crypto.randomUUID();imported.clear();imported.set(token,entries);resolve({token,name,files:[...entries.keys()].sort(),readOnly:true});}catch(e){reject(e);}finally{input.remove();}};
+    input.click();
+  });
   const root = await picker();
   const files: string[] = [];
   async function scan(dir: DirectoryHandle, prefix: string, depth: number) {
@@ -88,7 +92,8 @@ export async function readProjectFile(project: WorkProject, path: string) {
       token: project.token,
       path,
     });
-  const file = await (await fileHandle(project, path)).getFile();
+  const file = project.readOnly ? imported.get(project.token)?.get(path) : await (await fileHandle(project, path)).getFile();
+  if(!file)throw new Error("Importe le dossier à nouveau.");
   if (file.size > 512000) throw new Error("Fichier trop volumineux");
   const data = await file.text();
   if (data.includes("\0")) throw new Error("Fichier binaire");
@@ -122,6 +127,7 @@ export async function applyOperation(
   operation: WorkOperation,
   undo = false,
 ) {
+  if(project.readOnly)throw new Error("Ce dossier a été importé en lecture seule. Exporte les modifications ou utilise l’application macOS pour les appliquer.");
   if (native()) {
     const { invoke } = await import("@tauri-apps/api/core");
     return invoke<boolean>(undo ? "work_undo" : "work_apply", {

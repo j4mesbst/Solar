@@ -16,6 +16,7 @@ import {
   saveOperation,
   type WorkProject,
 } from "../../services/workProject";
+import { downloadBlob } from "../../services/artifacts";
 import { extensionStore } from "../../services/extensionStore";
 export interface WorkContext {
   instruction: string;
@@ -69,6 +70,7 @@ export function WorkSurface({
   bridge.current = {
     async prepare(id, signal) {
       if (!project) throw new Error("Sélectionne un dossier de travail.");
+      if (!selected.length) throw new Error("Coche les fichiers à analyser dans le panneau Projet.");
       if (provider?.protocol !== "ollama" && !cloudConsent)
         throw new Error(
           "Autorise l’envoi des fichiers sélectionnés à ton fournisseur cloud dans le panneau Work.",
@@ -201,6 +203,7 @@ export function WorkSurface({
                 et fichiers privés exclus. Coche ceux que tu souhaites
                 transmettre au modèle.
               </p>
+              {project.readOnly && <p className="settings-note">Dossier importé en lecture seule. Les propositions peuvent être exportées ; l’application macOS permet de les appliquer directement.</p>}
               {provider?.protocol !== "ollama" && (
                 <label className="cloud-consent">
                   <input
@@ -307,7 +310,7 @@ export function WorkSurface({
                 <div className="artifact-tools">
                   <button
                     className="small-button"
-                    disabled={busy}
+                    disabled={busy || project?.readOnly}
                     onClick={() => void run(op)}
                   >
                     <Check size={13} />
@@ -333,6 +336,7 @@ export function WorkSurface({
                   </button>
                 </div>
               )}
+              {op.status === "proposed" && project?.readOnly && <button className="small-button" onClick={()=>void downloadBlob(new Blob([JSON.stringify({changes:op.changes.map(c=>({path:c.path,content:c.after}))},null,2)],{type:"application/json"}),"solar-modifications.json").catch(e=>setError(String(e)))}>Exporter les modifications</button>}
               {op.status === "applied" && (
                 <button
                   className="small-button"

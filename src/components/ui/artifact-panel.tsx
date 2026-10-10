@@ -178,6 +178,7 @@ export function ArtifactPanel({
                 ))}
               </>
             )}
+            {artifact.kind === "code" && artifact.language === "html" && <iframe className="artifact-html-preview" title="Aperçu HTML de l’artefact" sandbox="allow-scripts" srcDoc={`<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'none'; form-action 'none'">${artifact.content??""}`}/>}
             {artifact.kind === "code" && (
               <>
                 <button

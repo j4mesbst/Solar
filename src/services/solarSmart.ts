@@ -21,6 +21,7 @@ export function artifactIntent(text: string): ArtifactKind | undefined {
     return "table";
   if (/diagramme|organigramme|sch[eé]ma|mermaid/i.test(text)) return "diagram";
   if (/document|rapport|docx|pdf/i.test(text)) return "document";
+  if (/artefact|artifact|site web|page web|interface.*html|application.*html/i.test(text)) return "code";
   if (/fichier.*(?:python|code|html|\.py|\.js|\.ts)|artefact.*code/i.test(text))
     return "code";
 }

@@ -296,3 +296,25 @@ export function artifactFormats(a: Artifact) {
               )[a.language ?? ""] ?? "txt",
             ];
 }
+
+// Accept common, complete Markdown outputs when a provider ignores the structured envelope.
+// A malformed explicit JSON envelope is never silently treated as another artifact.
+export function parseRequestedArtifact(text:string,id:string,kind:ArtifactKind,existing?:Artifact):Artifact {
+  if(text.includes("```solar-artifact"))return parseArtifact(text,id,existing);
+  const jsonBlock=text.match(/```json\s*([\s\S]*?)```/);const candidate=jsonBlock?.[1]??(text.trim().startsWith("{")?text.trim():undefined);
+  if(candidate){try{const value=JSON.parse(candidate);if(value?.kind===kind)return validateArtifact(value,id,existing);}catch{/* Ordinary code may itself be JSON; validated Markdown fallback follows. */}}
+  const title=existing?.title??text.match(/^#{1,3}\s+(.+)$/m)?.[1]?.slice(0,120)??text.match(/<(?:title|h1)[^>]*>([^<]{1,120})<\//i)?.[1]??({code:"Code",slides:"Présentation",document:"Document",table:"Tableau",diagram:"Diagramme"}[kind]);
+  if(kind==="code"||kind==="diagram"){
+    const blocks=[...text.matchAll(/```([\w+-]*)\s*\n([\s\S]*?)```/g)];const block=blocks.find(b=>kind!=="diagram"||b[1]==="mermaid");
+    if(!block)throw new Error("Le modèle n’a pas fourni de contenu complet pour cet artefact. Réessaie.");
+    return validateArtifact({title,kind,language:block[1]||"txt",content:block[2]},id,existing);
+  }
+  if(kind==="document"||kind==="slides"){
+    const parts=text.trim().split(/^#{1,3}\s+/m).filter(Boolean);const sections=parts.map(part=>{const line=part.indexOf("\n");return {title:line<0?title:part.slice(0,line).slice(0,180),body:line<0?part:part.slice(line+1).trim()};}).filter(s=>s.body);
+    if(!sections.length||text.trim().length<30)throw new Error("Le contenu de l’artefact est incomplet.");
+    return validateArtifact({title,kind,[kind==="slides"?"slides":"sections"]:sections},id,existing);
+  }
+  const lines=text.split("\n").filter(l=>/^\s*\|/.test(l));const cells=(line:string)=>line.trim().replace(/^\||\|$/g,"").split("|").map(c=>c.trim());
+  if(lines.length<3||!/^[:|\s-]+$/.test(lines[1]))throw new Error("Le modèle n’a pas fourni de tableau exploitable.");
+  return validateArtifact({title,kind,columns:cells(lines[0]),rows:lines.slice(2).map(cells)},id,existing);
+}
