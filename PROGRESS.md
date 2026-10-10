@@ -334,3 +334,12 @@ Contract feature tests passed for memory-only temporary messages/drafts, no disk
 - Dépendance motion épinglée ; contrôle visuel et contrats exécutés avant publication. Comptes et connexions externes ne sont pas reconfigurés dans cette passe.
 
 - Correction du chargement d’historique pendant la création : les mises à jour du flux en mémoire priment sur une lecture antérieure du stockage. Les phases observées sont enregistrées à chaque changement, et les chemins des fichiers réellement lus sont visibles pendant l’attente du modèle.
+
+## Dernière passe — en-tête et deux premiers messages (10 octobre 2026)
+- Menu Solar/Solar Code déplacé à la place du titre Conversations dans l’historique ouvert.
+- En-tête composé d’un bouton latéral arrondi, d’une séparation et du titre natif de la conversation.
+- Composant Kokonut AI Text Loading réintégré : texte brillant, transitions verticales, phases Preparing/Waiting/Thinking/Analyzing/Generating selon les événements reçus ; suppression des trois points.
+- Correction du transfert du brouillon au premier envoi et de l’effacement asynchrone : les modifications plus récentes restent conservées.
+- Protection de l’animation d’entrée pour ne pas la relancer au deuxième envoi rapide.
+- Vérification dédiée par navigateur avec sauvegarde retardée, deux premières réponses rapides, historique et brouillon suivant ; contrôles clavier, petit écran et mouvement réduit.
+- Validation terminée : compilation TypeScript/Vite, contrats providers/chat/features/evolution et suites Playwright first-turns, solar-scene et connections réussis. Rendus clair/sombre et mobile inspectés. Les sauvegardes retardées testent également la saisie pendant l’effacement du brouillon. Les tests de fournisseurs et de comptes utilisent des fixtures ; aucune configuration de service externe n’est modifiée dans cette passe.

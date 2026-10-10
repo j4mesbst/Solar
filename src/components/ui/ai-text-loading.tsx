@@ -1,39 +1,34 @@
 "use client";
 
-/** Adapted from AI Text Loading by @kokonutui, v1.0.0 (MIT).
+/** AI Text Loading by @kokonutui, v1.0.0, MIT.
  * https://github.com/kokonut-labs/kokonutui
- * Compact app sizing; labels come from observed provider phases.
+ * Phase labels are supplied by Solar; reduced motion keeps text readable.
  */
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-
-interface AITextLoadingProps {
-  texts?: string[];
-  className?: string;
-  interval?: number;
-}
-const DEFAULT_TEXTS = ["Solar prépare la réponse…"];
+interface AITextLoadingProps { texts?: string[]; className?: string; interval?: number }
+const DEFAULT_TEXTS = ["Thinking...", "Processing...", "Analyzing...", "Computing...", "Almost..."];
 export default function AITextLoading({ texts = DEFAULT_TEXTS, className, interval = 1500 }: AITextLoadingProps) {
-  const [index, setIndex] = useState(0);
+  const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const reduced = useReducedMotion();
   const labels = texts.length ? texts : DEFAULT_TEXTS;
   useEffect(() => {
-    if (labels.length < 2) return;
-    const timer = setInterval(() => setIndex(i => (i + 1) % labels.length), interval);
+    const timer = setInterval(() => setCurrentTextIndex(prev => (prev + 1) % labels.length), interval);
     return () => clearInterval(timer);
   }, [interval, labels.length]);
-  const text = labels[index % labels.length];
-  return <div className={cn("ai-text-loading", className)} role="status">
-    <span className="normal-loading-dots" aria-hidden="true"><i/><i/><i/></span>
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.span key={text} className="ai-loading-label"
-        initial={{ opacity: 0, y: reduced ? 0 : 6 }}
-        animate={{ opacity: 1, y: 0, ...(reduced ? {} : { backgroundPosition: ["200% center", "-200% center"] }) }}
-        exit={{ opacity: 0, y: reduced ? 0 : -4 }}
-        transition={{ opacity: { duration: .2 }, y: { duration: .2 }, backgroundPosition: { duration: 2.5, ease: "linear", repeat: Infinity } }}>
-        {text}
-      </motion.span>
-    </AnimatePresence>
+  const text = labels[currentTextIndex % labels.length];
+  return <div className="ai-text-loading flex items-center justify-center p-8" role="status" aria-live="polite">
+    <motion.div animate={{ opacity: 1 }} className="relative w-full px-4 py-2" initial={{ opacity: 0 }} transition={{ duration: reduced ? 0 : .4 }}>
+      <AnimatePresence mode="wait">
+        <motion.div key={text} className={cn("ai-loading-label flex min-w-max justify-center whitespace-nowrap bg-[length:200%_100%] bg-gradient-to-r from-neutral-950 via-neutral-400 to-neutral-950 bg-clip-text font-bold text-3xl text-transparent dark:from-white dark:via-neutral-600 dark:to-white", className)}
+          initial={{ opacity: 0, y: reduced ? 0 : 20 }}
+          animate={{ opacity: 1, y: 0, ...(reduced ? {} : { backgroundPosition: ["200% center", "-200% center"] }) }}
+          exit={{ opacity: 0, y: reduced ? 0 : -20 }}
+          transition={{ opacity: { duration: reduced ? 0 : .3 }, y: { duration: reduced ? 0 : .3 }, backgroundPosition: { duration: 2.5, ease: "linear", repeat: Infinity } }}>
+          {text}
+        </motion.div>
+      </AnimatePresence>
+    </motion.div>
   </div>;
 }

@@ -5,6 +5,8 @@ import type { Draft } from "../domain/types";
 const blank = (id: string): Draft => ({ conversationId: id, text: "", attachments: [], updatedAt: new Date().toISOString() });
 export function useDraft(id: string) {
   const [drafts, setDrafts] = useState<Record<string, Draft>>({}); const draftRef = useRef(drafts); const [error, setError] = useState("");
+  const aliases = useRef(new Map<string,string>());
+  const resolve = (key: string) => aliases.current.get(key) ?? key;
   const loaded = useRef(new Set<string>()); const pending = useRef(new Map<string, Draft>()); const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const flush = useCallback(async (key?: string) => {
     const entries = key ? [[key, pending.current.get(key)] as const] : [...pending.current.entries()];
@@ -23,6 +25,7 @@ export function useDraft(id: string) {
     return () => { disposed = true; unlisten?.(); window.removeEventListener("pagehide", save); document.removeEventListener("visibilitychange", visibility); for (const timer of timers.current.values()) clearTimeout(timer); void flush(); };
   }, [flush]);
   const update = (patch: Partial<Pick<Draft, "text" | "attachments">>, key = id) => {
+    key = resolve(key);
     const value = { ...(draftRef.current[key] ?? blank(key)), ...patch, updatedAt: new Date().toISOString() };
     const next = { ...draftRef.current, [key]: value }; draftRef.current = next; setDrafts(next); pending.current.set(key, value);
     clearTimeout(timers.current.get(key)); timers.current.set(key, setTimeout(() => void flush(key), 250));
@@ -31,10 +34,13 @@ export function useDraft(id: string) {
     const value = draftRef.current[key];
     if (value && (value.text !== snapshot.text || JSON.stringify(value.attachments) !== JSON.stringify(snapshot.attachments))) return;
     clearTimeout(timers.current.get(key)); pending.current.delete(key);
-    await solarStore.deleteDraft(key); const next = { ...draftRef.current, [key]: blank(key) }; draftRef.current = next; setDrafts(next);
+    await solarStore.deleteDraft(key);
+    if (draftRef.current[key] !== value) { await flush(key); return; }
+    const next = { ...draftRef.current, [key]: blank(key) }; draftRef.current = next; setDrafts(next);
     if (localStorage.getItem(scopedKey("solar.draft-recovery.v3"))) localStorage.setItem(scopedKey("solar.draft-recovery.v3"), JSON.stringify(Object.values(next).filter(draft => !draft.conversationId.startsWith("temp:"))));
   };
-  const transfer = async (from: string, to: string) => { const value = draftRef.current[from]; if (!value) return; update({ text: value.text, attachments: value.attachments }, to); await flush(to); await clearSent(from, value); };
-  const appendAttachments = (items: Draft["attachments"]) => update({ attachments: [...(draftRef.current[id]?.attachments ?? []), ...items] });
-  return { appendAttachments, draft: drafts[id] ?? blank(id), ready: Boolean(drafts[id]), update, clearSent, transfer, flush, error };
+  const transfer = async (from: string, to: string) => { const value = draftRef.current[from]; if (!value) return; update({ text: value.text, attachments: value.attachments }, to); aliases.current.set(from, to); clearTimeout(timers.current.get(from)); pending.current.delete(from); const next = { ...draftRef.current, [from]: blank(from) }; draftRef.current = next; setDrafts(next); await solarStore.deleteDraft(from); await flush(to); };
+  const reset = useCallback((key: string) => { aliases.current.delete(key); clearTimeout(timers.current.get(key)); pending.current.delete(key); const next = { ...draftRef.current, [key]: blank(key) }; draftRef.current = next; setDrafts(next); void solarStore.deleteDraft(key).then(() => flush(key)); }, [flush]);
+  const appendAttachments = (items: Draft["attachments"]) => update({ attachments: [...(draftRef.current[resolve(id)]?.attachments ?? []), ...items] });
+  return { appendAttachments, draft: drafts[resolve(id)] ?? blank(id), ready: Boolean(drafts[resolve(id)]), reset, update, clearSent, transfer, flush, error };
 }
