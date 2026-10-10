@@ -23,7 +23,9 @@
     "test:ui:redesign": "node scripts/ui-redesign.cjs",
     "test:ui:connections": "node scripts/ui-connections.cjs",
     "test:ui:scene": "node scripts/ui-solar-scene.cjs",
-    "test:ui:first-turns": "node scripts/ui-first-turns.cjs"
+    "test:ui:first-turns": "node scripts/ui-first-turns.cjs",
+    "test:skills": "node --experimental-strip-types scripts/skills-contract.test.mjs",
+    "test:ui:skills": "node scripts/ui-skills-polish.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.117.3",

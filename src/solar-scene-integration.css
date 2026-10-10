@@ -54,11 +54,11 @@ html:has(.shell.dark),html:has(.shell.dark) body{background:#000}
 .solar-scene .message .user-bubble,.solar-scene .message.assistant .message-content{animation:rise .7s var(--spring) backwards}
 
 /* Compact chrome and mode-specific generation, October 2026. */
-.shell{grid-template-columns:44px 224px minmax(0,1fr)}
-.shell.collapsed{grid-template-columns:44px 0 minmax(0,1fr)}
-.shell .app-rail{padding:8px 4px 10px;gap:8px}
-.shell .rail-button{width:32px;height:34px;border-radius:12px}
-.shell .rail-button svg{width:19px;height:19px}
+.shell{grid-template-columns:64px 224px minmax(0,1fr)}
+.shell.collapsed{grid-template-columns:64px 0 minmax(0,1fr)}
+.shell .app-rail{padding:16px 8px 12px;gap:8px}
+.shell .rail-button{width:48px;height:48px;border-radius:16px}
+.shell .rail-button svg{width:28.5px;height:28.5px}
 .shell .workspace{border-top-left-radius:16px;overflow:hidden}
 .shell .header,.shell .workspace:has(.chat-pane:not([hidden])) .header{height:52px;padding:0 12px;gap:8px;overflow:visible}
 .shell .header-start{padding-left:0;gap:6px}
@@ -87,9 +87,9 @@ html:has(.shell.dark),html:has(.shell.dark) body{background:#000}
 .solar-scene .generation-status>div>div>div{height:auto;min-height:28px;line-height:1.65;align-items:flex-start;padding:3px 0;color:var(--text)}
 .solar-scene .generation-status>div>div>div svg{margin-top:5px;color:var(--muted)}
 .solar-scene .generation-status .absolute{display:none}
-.ai-text-loading{padding:32px;min-height:104px;margin-bottom:12px}
-.ai-loading-label{background-image:linear-gradient(90deg,var(--text) 0%,var(--muted) 50%,var(--text) 100%);background-size:200% 100%;background-clip:text;-webkit-background-clip:text;color:transparent;font-weight:700;font-size:30px;line-height:1.2}
-@media(max-width:799px){.shell,.shell.collapsed{grid-template-columns:44px 0 minmax(0,1fr)}.shell .header,.shell .workspace:has(.chat-pane:not([hidden])) .header{height:52px}.shell .header .icon-button{width:36px;height:36px}.shell .solar-mode-trigger.wordmark{height:36px}.shell .rail-button{height:44px}.shell .sidebar{left:44px}.solar-scene .composer .send,.solar-scene .composer .round.plus{min-height:44px}}
+.ai-text-loading{padding:0;min-height:28px;margin:0 0 12px;justify-content:flex-start}
+.ai-loading-label{background-image:linear-gradient(90deg,var(--text) 0%,var(--muted) 50%,var(--text) 100%);background-size:200% 100%;background-clip:text;-webkit-background-clip:text;color:transparent;font-weight:500;font-size:16px;line-height:1.6}
+@media(max-width:799px){.shell,.shell.collapsed{grid-template-columns:64px 0 minmax(0,1fr)}.shell .header,.shell .workspace:has(.chat-pane:not([hidden])) .header{height:52px}.shell .header .icon-button{width:36px;height:36px}.shell .solar-mode-trigger.wordmark{height:36px}.shell .rail-button{height:44px}.shell .sidebar{left:64px}.solar-scene .composer .send,.solar-scene .composer .round.plus{min-height:44px}}
 @media(prefers-reduced-motion:reduce){.solar-scene .composer .animated-caret{display:none}.solar-scene .composer .animated-input .field{caret-color:var(--ink)}.ai-loading-label{background:none;color:var(--muted)}}
 
 .solar-scene[data-mode="chat"] .response-body{border-top:0;padding-top:0}
@@ -97,3 +97,33 @@ html:has(.shell.dark),html:has(.shell.dark) body{background:#000}
 .shell .chat-pane{border-top-left-radius:16px;overflow:hidden}
 .solar-scene .generation-status>button>span{font-size:14px}
 .solar-scene .generation-status>button>.tool-elapsed{font-size:13px}
+
+/* Monochrome composer; preserve the shape without a contrasting outline. */
+.solar-scene .composer.bar,.solar-scene .composer.bar:focus-within,.work-active .solar-scene .composer-welcome .composer.bar{background:#000;border:0;box-shadow:none;backdrop-filter:none;--ink:#fff;--ink-2:#b4b4bc;--chip-bg:#ffffff0d;--send-bg:#fff;--send-ink:#000;--send-off-bg:#ffffff18;--send-off-ink:#a5a5aa}
+.shell[data-theme="light"] .solar-scene .composer.bar,.shell[data-theme="light"] .solar-scene .composer.bar:focus-within{background:#fff;--ink:#151515;--ink-2:#62626b;--chip-bg:#00000006;--send-bg:#000;--send-ink:#fff;--send-off-bg:#0000000d;--send-off-ink:#62626b}
+.solar-scene .composer .tools-btn{background:var(--chip-bg);color:var(--ink);border:0;box-shadow:none}
+.solar-scene .composer .tools-btn svg{color:var(--ink)}
+.solar-scene .composer .model-control{border:0!important}
+.recommended-skills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0 32px}
+.recommended-skill{display:flex;align-items:center;gap:14px;border-radius:22px;padding:20px;background:var(--hover)}
+.recommended-skill>div:nth-child(2){flex:1;min-width:0}.recommended-skill h3{font-size:15px;font-weight:550;margin:0 0 6px}.recommended-skill p{font-size:13px;line-height:1.6;color:var(--muted);margin:0}
+.skill-mark{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;flex-shrink:0;background:var(--surface)}
+.recommended-skill button{border-radius:12px;flex-shrink:0}.personal-entry p{max-width:480px}
+.account-dialog{--surface:#000;--text:#f4f4f5;--muted:#a4a4ab;--line:#262628;--bg:#000;background:var(--surface);padding:32px;border:1px solid var(--line);border-radius:30px;width:min(440px,calc(100vw - 32px));color:var(--text);box-shadow:0 24px 90px #0004}
+.shell[data-theme="light"]~.account-dialog{--surface:#fff;--text:#161618;--muted:#65656e;--line:#e8e8eb;--bg:#fff}
+.account-dialog::backdrop{background:#0007;backdrop-filter:blur(12px)}
+.account-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:36px}.account-wordmark{font-size:25px;font-weight:620;letter-spacing:-.045em}.account-top button{border-radius:50%;color:var(--muted);background:transparent}
+.account-intro{margin-bottom:12px}.account-eyebrow{font-size:12px;color:var(--muted);display:block;margin-bottom:10px}.account-dialog h2{font-size:28px;font-weight:500;letter-spacing:-.035em;line-height:1.2;margin:0}.account-dialog form>p{font-size:14px;margin-bottom:28px}
+.account-dialog label{font-size:12px;font-weight:500;margin-top:20px}.account-dialog input{height:48px;border-radius:14px;padding:0 15px;background:var(--bg);color:var(--text);border:1px solid var(--line);box-shadow:none;font-size:16px}
+.account-dialog input:focus-visible{outline:2px solid var(--muted);outline-offset:2px}
+.account-password-tools{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)}.account-password-tools button{display:flex;align-items:center;gap:6px;padding:8px 0;background:transparent;color:var(--muted)}
+.account-dialog .dialog-actions{margin-top:24px}.account-dialog .account-submit{width:100%;height:48px;border-radius:14px;display:flex;justify-content:space-between;padding:0 18px;background:var(--text);color:var(--bg);font-size:14px;box-shadow:none}
+.account-links{margin-top:16px;justify-content:center}.account-links button{font-size:12px;color:var(--muted);background:transparent;border-radius:10px}.account-footnote{display:flex;align-items:flex-start;gap:8px;padding-top:24px;margin-top:24px;border-top:1px solid var(--line);color:var(--muted);font-size:11px;line-height:1.5}.account-footnote svg{flex-shrink:0;margin-top:1px}
+.account-dialog .form-error{margin-top:16px;color:var(--error,#e78e8e)}
+@media(max-width:1000px){.recommended-skills{grid-template-columns:1fr}}
+@media(max-width:480px){.recommended-skill{padding:16px;gap:10px}.recommended-skill .skill-mark{display:none}.account-dialog{padding:24px}.account-top{margin-bottom:28px}.account-dialog h2{font-size:26px}}
+.solar-scene .composer .model-ready-dot.ready,.solar-scene .composer .model-ready-dot.preparing{background:var(--ink);box-shadow:none}
+.solar-scene .composer .model-ready-dot.preparing{animation:monochrome-ready 1.5s ease-in-out infinite}
+@keyframes monochrome-ready{50%{opacity:.35;transform:scale(.8)}}
+@media(prefers-reduced-motion:reduce){.solar-scene .composer .model-ready-dot.preparing{animation:none}}
+.solar-scene .composer.bar::before{box-shadow:none;content:none}

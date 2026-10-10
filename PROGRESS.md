@@ -343,3 +343,13 @@ Contract feature tests passed for memory-only temporary messages/drafts, no disk
 - Protection de l’animation d’entrée pour ne pas la relancer au deuxième envoi rapide.
 - Vérification dédiée par navigateur avec sauvegarde retardée, deux premières réponses rapides, historique et brouillon suivant ; contrôles clavier, petit écran et mouvement réduit.
 - Validation terminée : compilation TypeScript/Vite, contrats providers/chat/features/evolution et suites Playwright first-turns, solar-scene et connections réussis. Rendus clair/sombre et mobile inspectés. Les sauvegardes retardées testent également la saisie pendant l’effacement du brouillon. Les tests de fournisseurs et de comptes utilisent des fixtures ; aucune configuration de service externe n’est modifiée dans cette passe.
+
+## Interface monochrome et six skills — 10 octobre 2026
+- Chargement normal réduit à 16px, aligné à gauche, avec alternatives descriptives toutes les 10 secondes selon les étapes réellement observées.
+- Bouton de retour en bas supprimé ; le contrôle du défilement reste disponible dans la conversation.
+- Chatbox blanche/noire unie, sans bordure contrastée ni couleur verte ; statut accessible et indicateurs monochromes conservés.
+- Barre des icônes agrandie à 64px ; icônes ×1,5 et placement abaissé. Indication Entrée/Maj+Entrée retirée en Solar Code.
+- Compte : fenêtre minimaliste refaite, champs espacés, bouton principal pleine largeur et affichage/masquage du mot de passe. Flux Supabase conservés.
+- Six skills proposés et installables : Artefact Pro, Code Max, Recherche Pro, Clarté Plus, Document Expert et Data Analyst. Installation, activation, suppression et sauvegarde par compte ; injection dans la demande seulement pour les tâches pertinentes.
+- Réponses : consignes de résultat précis, respect du projet et revue interne ciblée ; rafraîchissement du texte en Solar Code à 32ms comme Solar. Aucun appel de revue supplémentaire ni réduction arbitraire de l’effort. La latence et la qualité finale dépendent aussi du modèle/fournisseur ; les skills sont des instructions, pas de nouveaux outils.
+- Vérifications réussies : build TypeScript/Vite, contrats skills/providers/chat/features/evolution, suites Playwright skills-polish, first-turns, connections, evolution et solar-scene. Contrôle visuel clair/sombre/mobile ; installation/rechargement/désactivation/suppression des skills et présence réelle de leurs instructions dans la requête ; rotation à 10 secondes avec horloge contrôlée ; artefacts exportables et propositions Work approuvées/annulées. Les comptes sont vérifiés avec des fixtures Supabase ; l’activation réelle requiert toujours la configuration Supabase de l’installation.
