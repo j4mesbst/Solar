@@ -1,6 +1,6 @@
 import { useEffect,useState } from "react";
-import { CheckCircle2, Square, PenLine } from "lucide-react";
-import AnimatedShinyText from "./animated-text-01";
+import { CheckCircle2, Square } from "lucide-react";
+
 export type ComposerPhase="idle"|"thinking"|"writing"|"done"|"stopped";
 const thinkingFr=["Solar réfléchit","Réflexion en cours","La réponse prend forme","Traitement de ta demande","Réflexion sur ta question","Préparation de la réponse","Ton message est en cours de traitement","Réponse en préparation","Le modèle réfléchit","Préparation en cours","Traitement du contexte","La réflexion se poursuit","Le modèle prépare sa réponse","Ta demande est prise en compte","Préparation du contenu"];
 const writingFr=["Solar écrit","Rédaction en cours","La réponse s’écrit","Réception du texte","La réponse arrive","Le texte prend forme","La rédaction se poursuit","Le modèle rédige","Contenu en cours de génération","La réponse se construit"];
@@ -14,5 +14,5 @@ export function ComposerStatus({phase,model,elapsed,onStop,activity,lang="fr"}:{
  const busy=phase==="thinking"||phase==="writing";
  const phrase=phase==="done"?(lang==="fr"?"Réponse prête":"Answer ready"):phase==="stopped"?(lang==="fr"?"Génération arrêtée":"Stopped"):phase==="thinking"&&activity&&activity!=="thinking"?({searching:"Recherche Internet en cours",connecting:"Connexion au fournisseur",waiting:"En attente du modèle"}[activity]??"Préparation de la demande"):phrases[index%phrases.length];
  const sub=phase==="done"?`Terminé en ${elapsed} s`:phase==="stopped"?`Arrêté après ${elapsed} s`:`${model} · ${elapsed} s`;
- return <div className="sc-banner-wrap" data-open={open} aria-hidden={!open} {...(open?{}:{inert:""})}><div className="sc-banner-clip"><div className="sc-banner"><div className="sc-glyph" data-state={phase==="idle"?"thinking":phase} aria-hidden="true"><span className="sc-dots"><i/><i/><i/></span><PenLine className="sc-g-write"/><CheckCircle2 className="sc-g-done"/><Square className="sc-g-stop"/></div><div className="sc-texts"><p className="sc-b-title" role="status"><AnimatedShinyText key={phrase} className="sc-swap">{phrase}</AnimatedShinyText></p><p className="sc-b-sub">{sub}</p></div><button type="button" className="sc-stop" data-show={busy} disabled={!busy} onClick={onStop}>Stop</button></div></div></div>;
+ return <div className="sc-banner-wrap banner-wrap" data-open={open} aria-hidden={!open} {...(open?{}:{inert:""})}><div className="sc-banner-clip banner-clip"><div className="sc-banner banner"><div className="sc-glyph glyph" data-state={phase==="idle"?"thinking":phase} aria-hidden="true"><span className="sc-dots dots"><i/><i/><i/></span><CheckCircle2 className="sc-g-done g-done"/><Square className="sc-g-stop g-stop"/></div><div className="sc-texts texts"><p className="sc-b-title b-title" role="status"><span key={phrase} className={`animated-shiny-text swap ${busy?"shimmer":""}`}>{phrase}</span></p><p className="sc-b-sub b-sub">{sub}</p></div><button type="button" className="sc-stop stop" data-show={busy} disabled={!busy} onClick={onStop}>Stop</button></div></div></div>;
 }

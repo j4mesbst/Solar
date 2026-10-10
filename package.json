@@ -21,10 +21,11 @@
     "test:ui:evolution": "node scripts/ui-evolution.cjs",
     "test:ui:thinking": "node scripts/ui-thinking.cjs",
     "test:ui:redesign": "node scripts/ui-redesign.cjs",
-    "test:ui:connections": "node scripts/ui-connections.cjs"
+    "test:ui:connections": "node scripts/ui-connections.cjs",
+    "test:ui:scene": "node scripts/ui-solar-scene.cjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.117.3",
+    "@supabase/supabase-js": "2.117.3",
     "@tauri-apps/api": "^2.8.0",
     "@tauri-apps/plugin-http": "^2.8.1",
     "@tauri-apps/plugin-store": "^2.2.0",

@@ -1,7 +1,8 @@
 import { StrictMode, Suspense, lazy } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
-import "./solar-chatbox.css";
+import "./solar-composer-reference.css";
+import "./solar-scene-integration.css";
 import { authClient } from "./services/auth";
 import { initializeAccountScope } from "./services/accountScope";
 const App=lazy(()=>import("./ui/App").then(module=>({default:module.App})));

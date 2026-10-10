@@ -40,3 +40,9 @@ Le token OAuth Gmail reste en mémoire pour la session et peut expirer : l'utili
 ## Vérification
 
 Les tests Playwright vérifient les interfaces avec des réponses API contrôlées : refus d'un jeton, validation d'identité, recherche, import sans envoi, signup avec confirmation, login/logout et isolation locale. Une vérification réelle de Google et Supabase exige les projets et autorisations du mainteneur. Aucune connexion réelle n'est héritée des plugins GitHub/Gmail de ChatGPT.
+
+## État de l’activation du 10 octobre
+
+Le connecteur est relié à l'organisation **Solar**, sur l'offre free, mais `list_projects` renvoie une liste vide. La création automatique est bloquée avant tout changement : l'outil de vérification du coût `get_cost`, requis pour créer un projet, répond `UNAVAILABLE`. Aucun projet, utilisateur de test ou frais n'a été créé par ce parcours.
+
+Créer le projet commun depuis le [tableau de bord Supabase](https://supabase.com/dashboard), organisation Solar, région France ; transmettre ensuite son identifiant. Solar pourra utiliser son URL et sa publishable key publique dans la compilation distribuée. L'inscription réelle sera vérifiée sur ce projet après sa création et la configuration de l'e-mail. La connexion du plugin Supabase à ChatGPT ne configure pas automatiquement le service Auth de l'application.

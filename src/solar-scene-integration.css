@@ -1,0 +1,54 @@
+/* Application layout bridge. Motion lives in the supplied, scoped reference CSS. */
+html:has(.shell.dark),html:has(.shell.dark) body{background:#000}
+.solar-mode-trigger.wordmark{height:43px;padding:0 12px;gap:11px;font-size:28px;font-weight:620;letter-spacing:-.045em;border-radius:17px;background:transparent;color:var(--text)}
+.solar-mode-trigger:hover,.solar-mode-trigger[data-state=open]{background:var(--hover)}
+.solar-mode-trigger svg{width:17px;height:17px;color:var(--muted);transition:transform .22s ease}
+.solar-mode-trigger[data-state=open] svg{transform:rotate(180deg)}
+.solar-mode-menu{width:min(370px,calc(100vw - 28px));padding:9px;border:1px solid var(--line);border-radius:27px;background:var(--surface);color:var(--text);box-shadow:0 14px 45px #0002;z-index:80;animation:solar-menu-in .18s ease-out;transform-origin:var(--radix-dropdown-menu-content-transform-origin)}
+.solar-mode-item{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 15px;border-radius:19px;outline:none;cursor:pointer}
+.solar-mode-item[data-highlighted]{background:var(--hover)}
+.solar-mode-item strong{display:block;font-weight:500;font-size:23px;letter-spacing:-.025em;line-height:1.3}
+.solar-mode-item small{display:block;color:var(--muted);font-size:16px;line-height:1.45;margin-top:2px}
+@keyframes solar-menu-in{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+.solar-scene.scene{display:flex;flex-direction:row;background:var(--chat-bg);height:100%;isolation:isolate;color:var(--ink)}
+.solar-scene .conversation-area{z-index:1;overflow:hidden}
+.solar-scene.sky-pending .chat-scroll{visibility:hidden;pointer-events:none}
+.solar-scene .welcome{display:none}
+.solar-scene .composer-wrap,.work-active .solar-scene .composer-wrap{width:min(640px,calc(100% - 32px));padding-bottom:28px;z-index:2}
+.solar-scene .composer-welcome,.work-active .solar-scene .composer-welcome{position:absolute;bottom:calc(50% - 57px);left:50%;transform:translateX(-50%);padding-bottom:0;width:min(640px,calc(100% - 32px))}
+.solar-scene .composer.bar,.solar-scene .composer.bar:focus-within,.work-active .solar-scene .composer-welcome .composer.bar{padding:0;min-height:0;border:1px solid var(--glass-border);border-radius:28px;background:var(--glass);box-shadow:var(--shadow);backdrop-filter:blur(22px) saturate(1.5);-webkit-backdrop-filter:blur(22px) saturate(1.5)}
+.solar-scene .composer.bar:focus-within{border-color:var(--glass-border-strong)}
+.solar-scene .composer-input-row{display:block;min-height:0;padding:0}
+.solar-scene .composer-input-row .field,.solar-scene .composer-welcome .composer-input-row .field,.work-active .solar-scene .composer-welcome .field{width:100%;min-height:52px;padding:16px 22px 6px;line-height:1.5;font-size:17px;max-height:200px;color:var(--ink);caret-color:var(--caret)}
+.solar-scene .composer-inline-actions.toolbar{padding:6px 12px 12px;gap:8px}
+.solar-scene .composer .round.plus{width:38px;height:38px;min-width:38px;padding:0;border-radius:50%;background:var(--chip-bg);color:var(--ink-2)}
+.solar-scene .round.plus svg{width:18px;height:18px;stroke-width:1.8}
+.solar-scene .composer .send{width:42px;height:42px;min-width:42px;margin-left:0;padding:0;border-radius:50%;background:var(--send-off-bg);color:var(--send-off-ink);opacity:1}
+.solar-scene .composer .send[data-ready=true]{background:var(--send-bg);color:var(--send-ink)}
+.solar-scene .composer .send svg{width:20px;height:20px;stroke-width:2.2}
+.solar-scene .composer-runtime-controls{margin-left:auto;gap:6px;min-width:0}
+.solar-scene .composer-runtime-controls .model-control{height:34px;font-size:12px;max-width:180px;border-radius:12px;background:var(--chip-bg);color:var(--ink);padding:0 9px}
+.solar-scene .effort-trigger{color:var(--ink-2)}
+.solar-scene .banner .animated-shiny-text{font-size:15px;line-height:1.3}
+.solar-scene .banner .glyph{overflow:visible}
+.solar-scene .composer .stop{width:auto;min-width:0;margin:0;height:34px;padding:0 16px;background:var(--chip-bg);color:var(--ink);border-radius:12px}
+.solar-scene .hint{color:var(--ink-2)}
+.solar-scene .paste-chips{padding:14px 16px 0;gap:8px}
+.solar-scene .paste-chip{border-radius:999px;background:var(--chip-bg);border:1px solid var(--glass-border);animation:chipIn .5s var(--pop) backwards}
+.solar-scene .tools-btn{white-space:nowrap}
+.solar-scene .composer-tools{position:static}
+.solar-scene .composer-tools .pop{left:12px;bottom:calc(100% + 10px)}
+.solar-scene .pitem:disabled{opacity:.45!important;cursor:default}
+@media(max-width:480px){.solar-mode-trigger.wordmark{font-size:25px}.solar-mode-menu{width:min(340px,calc(100vw - 28px))}.solar-scene .composer-runtime-controls .model-control{max-width:105px;font-size:11px}.solar-scene .composer-inline-actions.toolbar{gap:5px;padding:4px 10px 10px}.solar-scene .composer .tools-btn{padding:0 9px;font-size:12px}.solar-scene .effort-trigger{font-size:11px}.solar-scene .composer-wrap,.work-active .solar-scene .composer-wrap{padding-bottom:16px}}
+@media(prefers-reduced-motion:reduce){.solar-mode-menu{animation:none}.solar-mode-trigger svg{transition:none}}
+.solar-scene{--bg:var(--chat-bg)}
+.solar-scene .message-list{background:transparent}
+.solar-scene.scene.nogl{background:linear-gradient(180deg,var(--fb-a),var(--fb-b))}
+.shell .solar-scene.scene{--bg:var(--chat-bg)}
+.solar-scene .composer .paste-chips{display:flex;flex-wrap:wrap}
+.solar-scene .composer .paste-chip{width:auto;min-width:0;max-width:100%;height:36px;padding:0 6px 0 7px;gap:8px}
+.solar-scene .composer .paste-chip small{display:none}
+.solar-scene .composer .paste-chip>button:first-child{min-width:0;padding:0;font-size:13px}
+.solar-scene .composer .paste-chip>button>span{max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.solar-scene .composer .paste-chip.leaving{opacity:0;transform:scale(.88)}
+.solar-scene .message .user-bubble,.solar-scene .message.assistant .message-content{animation:rise .7s var(--spring) backwards}
