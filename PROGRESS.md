@@ -1,3 +1,18 @@
+# Compte rendu — barre native et navigation (11 octobre 2026)
+
+## Changements effectués
+
+- La fenêtre macOS emploie désormais une barre de titre intégrée (`Overlay`) : Solar et le titre de la conversation sont placés dans la barre supérieure de l’application, à la place de la bande système opaque.
+- Cette barre est déplaçable, translucide et légèrement floutée ; les boutons restent explicitement interactifs. La barre de navigation et l’historique adoptent le même matériau discret, sans compromettre les thèmes ni le fond choisi.
+- Les icônes de navigation sont ramenées à 18 px avec un trait plus fin et des zones actives plus compactes, pour un rendu plus calme et professionnel.
+
+## Vérification et limite
+
+- Les suites `test:features`, `test:chat`, `test:providers` et `test:evolution` passent. La compilation TypeScript/Vite a été lancée avec succès jusqu’à la génération de `dist`; le contrôle de l’aspect final de la barre et la reconstruction du DMG exigent macOS arm64.
+- Cet environnement est Linux et ne contient ni Rust/Cargo ni les outils Apple (`hdiutil`, `codesign`). Aucun DMG factice n’a été produit. Le workflow GitHub `Solar macOS installer` construit, monte, vérifie et lance le véritable `Solar-macOS-arm64.dmg` sur macOS 15 après publication sur `main`.
+
+---
+
 # Compte rendu — ajustements du 10 octobre 2026
 
 ## Changements livrés

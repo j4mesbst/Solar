@@ -1,6 +1,6 @@
 // Icons are split into independently choreographed vector parts. No whole-icon spin.
 export function RailIcon({ name }: { name?: string }) {
-  const common = { viewBox: "0 0 24 24", width: 21, height: 21, fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true as const };
+  const common = { viewBox: "0 0 24 24", width: 18, height: 18, fill: "none", stroke: "currentColor", strokeWidth: 1.65, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true as const };
   if (name === "Accueil") return <svg {...common} className="motion-home"><path className="icon-part roof" d="M3.5 10.5 10 4.8a3 3 0 0 1 4 0l6.5 5.7"/><path className="icon-part walls" d="M5 9.5v8.8A2.7 2.7 0 0 0 7.7 21h8.6a2.7 2.7 0 0 0 2.7-2.7V9.5"/><path className="icon-part door" d="M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/></svg>;
   if(name === "Work") return <svg {...common}><rect className="icon-part work-frame" x="3" y="5" width="18" height="15" rx="4"/><path className="icon-part work-glyph" d="m9 10-3 3 3 3m6-6 3 3-3 3"/></svg>;
   if (name === "Plugins") return <svg {...common} className="motion-blocks">{[[4,4],[13,4],[4,13],[13,13]].map(([x,y],i) => <rect key={i} className={`icon-part tile tile-${i}`} x={x} y={y} width="7" height="7" rx="2.2"/>)}</svg>;
