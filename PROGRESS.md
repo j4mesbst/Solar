@@ -367,3 +367,12 @@ Contract feature tests passed for memory-only temporary messages/drafts, no disk
 - Première tentative native : tests macOS réussis dans la validation générale ; packaging interrompu avant compilation car Cargo.lock n’était pas présent alors que --locked était demandé. Cargo.lock est maintenant généré par Cargo officiel et versionné. Détails des plugins personnels corrigés et vérifiés ; pipeline déclenché aussi par les changements de sources, avec concurrence contrôlée.
 
 - Diaporamas denses : géométrie des cartes adaptée à deux rangées, six indicateurs sans débordement dans les aperçus et les éléments PowerPoint. Contrôle des bornes XML du PPTX et rendu navigateur réussis.
+
+### Livraison macOS vérifiée — 11 octobre 2026
+- Build final : 787cfcb51d1d7e781019683c487fb7b81b61b6ce, workflow macOS 38126501178 réussi ; validation frontend/native séparée 38126501180 réussie.
+- Solar-macOS-arm64.dmg : version 0.1.0, arm64, 9 495 094 octets (9,495 Mo), identifiant fr.j4mesbst.solar.
+- SHA-256 : 532ba66268605c7264a3b10723d3d55a7fc451fc7efa2b4298ab371c50d2eb99. Archive téléchargée et intégrité ZIP/empreinte DMG vérifiées.
+- Sur macOS Apple Silicon : hdiutil verify, montage lecture seule, Solar.app et lien Applications, architecture arm64, icône, signature ad-hoc valide et ressources embarquées vérifiés. Lancement LaunchServices : processus actif après 8 secondes, fenêtre Solar observée (1024 × 681), sans serveur de développement ; volume démonté.
+- Pas de signature Developer ID ni de notarisation : macOS peut demander une autorisation dans Confidentialité et sécurité. Pas de publication de Release GitHub.
+- Inscription publique non activée : projet Supabase absent, appel get_cost UNAVAILABLE ; paramètres publics requis. Les tests de fournisseurs/Gmail/GitHub/Auth utilisent des fixtures, sans validation des identifiants réels de l’utilisateur.
+- Le Bureau du Mac de l’utilisateur est inaccessible depuis cet environnement : l’installateur est livré en téléchargement, sans prétendre y avoir été copié.
