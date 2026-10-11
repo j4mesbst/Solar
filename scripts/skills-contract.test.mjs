@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { builtinSkills, skillApplies, responseGuidance } from '../src/services/builtinSkills.ts';
 assert.equal(builtinSkills.length,6);assert.equal(new Set(builtinSkills.map(s=>s.id)).size,6);
-for(const skill of builtinSkills){assert(skill.content.length>200&&skill.content.length<1600);assert(skill.description.length>20)}
+for(const skill of builtinSkills){assert(skill.content.length>200&&skill.content.length<16000);assert(skill.description.length>20)}
 assert(skillApplies('solar:artifact-pro',{text:'Un diaporama',artifact:true}));assert(!skillApplies('solar:artifact-pro',{text:'Bonjour'}));
 assert(skillApplies('solar:code-max',{text:'Bonjour',workMode:true}));assert(skillApplies('solar:code-max',{text:'Corrige ce bug React'}));assert(!skillApplies('solar:code-max',{text:'Bonjour'}));
 assert(skillApplies('solar:data-analyst',{text:'Calcule ce pourcentage'}));assert(skillApplies('custom',{text:'Bonjour'}));

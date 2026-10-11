@@ -5,3 +5,6 @@ src-tauri/target/
 .env.*
 !.env.example
 
+
+# Generated release installer and verification files
+/artifacts/

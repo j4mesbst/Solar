@@ -42,6 +42,12 @@ export interface Metrics {
   loadMs?: number;
 }
 export type ArtifactKind = "code" | "slides" | "document" | "table" | "diagram";
+export interface SlideVisual {
+ type: "cards" | "metrics" | "process" | "chart";
+ items: {label:string;detail?:string;value?:number;display?:string}[];
+ unit?:string;
+}
+export interface ArtifactSlide {title:string;body:string;visual?:SlideVisual}
 export interface Artifact {
   id: string;
   conversationId: string;
@@ -49,7 +55,7 @@ export interface Artifact {
   kind: ArtifactKind;
   content?: string;
   language?: string;
-  slides?: { title: string; body: string }[];
+  slides?: ArtifactSlide[];
   sections?: { title: string; body: string }[];
   columns?: string[];
   rows?: string[][];

@@ -14,6 +14,11 @@ export function useSolarScene(id:string|undefined,theme:"light"|"dark") {
  },[]);
  useEffect(()=>{engine.current?.setTheme(theme);},[theme]);
  useEffect(()=>{if(target.current===id)return;target.current=id;started.current=false;clearTimeout(stopTimer.current);engine.current?.reset(!id);setRevealed(Boolean(id));setReplyRevealed(Boolean(id));},[id]);
+ useLayoutEffect(()=>{
+  const composer=composerRef.current,area=composer?.closest<HTMLElement>(".conversation-area");if(!composer||!area)return;
+  const measure=()=>area.style.setProperty("--composer-inset",`${composer.offsetHeight+24}px`);
+  const observer=new ResizeObserver(measure);observer.observe(composer);measure();return()=>{observer.disconnect();area.style.removeProperty("--composer-inset");};
+ },[revealed]);
  useLayoutEffect(()=>{if(!revealed||from.current===undefined)return;const slot=composerRef.current;if(slot&&!window.matchMedia("(prefers-reduced-motion: reduce)").matches){const r1=slot.getBoundingClientRect();slot.style.transition="none";slot.style.transform=`translateY(${from.current-r1.top}px)`;void slot.offsetHeight;slot.style.transition="transform 0.95s var(--spring)";slot.style.transform="";}from.current=undefined;},[revealed]);
  return {sceneRef,canvasRef,veilRef,composerRef,revealed,replyRevealed,begin:(conversationId:string)=>{target.current=conversationId;clearTimeout(stopTimer.current);if(!revealedRef.current&&!started.current){started.current=true;setReplyRevealed(false);engine.current?.begin();}},stop:()=>{started.current=false;engine.current?.stop();if(!revealedRef.current)stopTimer.current=setTimeout(()=>{engine.current?.reset(false);setReplyRevealed(true);flip();},1600);}};
 }

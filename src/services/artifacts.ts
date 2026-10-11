@@ -1,3 +1,4 @@
+import { validateSlideVisual } from "./slideDesign.ts";
 import type { Artifact, ArtifactKind } from "../domain/extensions";
 export function validateArtifact(
   value: unknown,
@@ -44,6 +45,7 @@ export function validateArtifact(
     result[field] = rows.map((row) => ({
       title: str(row?.title, 180),
       body: str(row?.body, 10000),
+      ...(field === "slides" ? {visual:validateSlideVisual(row?.visual)} : {}),
     }));
   }
   if (result.kind === "table") {
@@ -83,7 +85,7 @@ export function artifactInstruction(kind: ArtifactKind, existing?: Artifact) {
       ...(kind === "slides"
         ? {
             slides: [
-              { title: "Titre de la diapositive", body: "Contenu concret" },
+              { title: "Titre de la diapositive", body: "Message essentiel", visual:{type:"cards",items:[{label:"Idée 1",detail:"Explication"},{label:"Idée 2",detail:"Explication"}]} },
             ],
           }
         : kind === "document"
@@ -95,7 +97,7 @@ export function artifactInstruction(kind: ArtifactKind, existing?: Artifact) {
                 content: "Code complet",
               }),
     }) +
-    ". Respecte le nombre de diapositives demandé. Ne donne pas seulement un plan. Pour les diapositives : une couverture avec un sous-titre bref, puis des titres courts et 3 à 6 points concrets par diapositive séparés par des sauts de ligne. Rédige le contenu final, pas des instructions de création. La mise en page 16:9 et le fichier PowerPoint sont générés par Solar. " +
+    ". Respecte le nombre de diapositives demandé. Ne donne pas seulement un plan. Pour les diapositives : une couverture avec un sous-titre bref, puis des titres courts et 3 à 6 points concrets par diapositive séparés par des sauts de ligne. Rédige le contenu final, pas des instructions de création. La mise en page 16:9 et le fichier PowerPoint sont générés par Solar. Le champ visual est facultatif : type cards (2 à 6 concepts avec label/detail), metrics (label/display/detail), process (2 à 6 étapes ordonnées label/detail) ou chart (label/value numériques, unit facultative). Répartis de vrais visuels explicatifs sur les slides, pas seulement du texte. Pour chart et metrics utilise exclusivement les chiffres fournis : sinon choisis cards ou process. Les graphiques et formes seront natifs et éditables dans PowerPoint.  " +
     (existing
       ? "Modifie cet artefact existant en conservant son type et son contenu non concerné : " +
         JSON.stringify(existing)
@@ -147,22 +149,8 @@ export async function exportArtifact(
     pptx.title = a.title;
     pptx.theme = {headFontFace:"Aptos Display",bodyFontFace:"Aptos"};
     pptx.company = "Solar";
-    a.slides!.forEach((data,index) => {
-      const slide = pptx.addSlide();
-      const cover=index===0;const foreground=cover?"FFFFFF":"202024";
-      slide.background={color:cover?"171C29":"F7F8FA"};
-      slide.addShape(pptx.ShapeType.rect,{x:.72,y:.72,w:.48,h:.055,line:{color:"647AA9",transparency:100},fill:{color:"647AA9"}});
-      slide.addText(a.title,{x:.72,y:6.92,w:10.8,h:.18,fontFace:"Aptos",fontSize:9,color:cover?"AEB9CF":"687084",margin:0});
-      slide.addText(`${index+1} / ${a.slides!.length}`,{x:11.6,y:6.9,w:1,h:.22,fontSize:10,color:cover?"AEB9CF":"687084",align:"right",margin:0});
-      slide.addText(data.title,{x:.72,y:cover?1.55:1.02,w:11.8,h:cover?1.6:1.35,fontFace:"Aptos Display",fontSize:cover?38:30,bold:true,color:foreground,fit:"shrink",margin:0,valign:"middle"});
-      const lines=slideParagraphs(data.body);
-      if(cover){slide.addText(lines.join("\n\n"),{x:.76,y:3.55,w:10.9,h:2.7,fontSize:21,color:"D1D8E5",fit:"shrink",margin:0,valign:"top",paraSpaceAfter:14});}
-      else {
-        const twoColumns=lines.length>4;
-        const columns=twoColumns?[lines.slice(0,Math.ceil(lines.length/2)),lines.slice(Math.ceil(lines.length/2))]:[lines];
-        columns.forEach((items,column)=>slide.addText(items.map(text=>({text,options:{breakLine:true,bullet:{indent:18},hanging:4}})),{x:.86+column*6.05,y:2.8,w:twoColumns?5.45:11.6,h:3.7,fontFace:"Aptos",fontSize:twoColumns?20:23,color:"3D475A",fit:"shrink",margin:0,valign:"top",paraSpaceAfter:22}));
-      }
-    });
+    const { buildPresentationSlides } = await import("./presentationExport.ts");
+    buildPresentationSlides(pptx,a);
     const out = await pptx.write({ outputType: "blob" });
     return out as Blob;
   }

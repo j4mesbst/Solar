@@ -127,3 +127,51 @@ html:has(.shell.dark),html:has(.shell.dark) body{background:#000}
 @keyframes monochrome-ready{50%{opacity:.35;transform:scale(.8)}}
 @media(prefers-reduced-motion:reduce){.solar-scene .composer .model-ready-dot.preparing{animation:none}}
 .solar-scene .composer.bar::before{box-shadow:none;content:none}
+
+/* Reference rail: crisp vectors, slightly smaller chrome, transparent composer gutter. */
+.shell,.shell.collapsed{grid-template-columns:60px 224px minmax(0,1fr)}
+.shell.collapsed{grid-template-columns:60px 0 minmax(0,1fr)}
+.shell .app-rail{padding:16px 6px 12px}
+.shell .rail-button{width:48px;height:46px}
+.shell .rail-button svg{width:25px;height:25px;stroke-width:1.8}
+.shell .header,.shell .workspace:has(.chat-pane:not([hidden])) .header,.shell .side-top{height:48px}
+.conversation-title{font-size:18px}
+.solar-scene .composer-wrap{background:transparent;box-shadow:none;border:0}
+.solar-scene .conversation-area{background:transparent}
+.solar-scene .message.assistant .message-content{line-height:1.7;animation:rise .7s cubic-bezier(.22,1,.36,1) backwards}
+@media(max-width:799px){.shell,.shell.collapsed{grid-template-columns:60px 0 minmax(0,1fr)}.shell .sidebar,.shell .sidebar-scrim{left:60px}}
+@media(prefers-reduced-motion:reduce){.solar-scene .message.assistant .message-content,[data-sd-animate]{animation:none!important}}
+
+.visual-slide{container-type:inline-size;background:#f7f8fa!important;color:#202430!important;position:relative;display:flex;flex-direction:column;padding:5.5% 5.7%!important;overflow:hidden}
+.visual-slide h2{font-size:clamp(14px,4cqw,38px)!important;line-height:1.18;margin:0 0 3%!important;flex-shrink:0}
+.visual-slide .slide-subtitle{font-size:clamp(9px,1.9cqw,18px)!important;line-height:1.4;margin:0 0 4%!important;color:#606a7a}
+.visual-slide.slide-cover{background:#171c29!important;color:#fff!important;justify-content:center}
+.visual-slide.slide-cover p{font-size:clamp(12px,2.7cqw,25px)!important;color:#bbc6db}
+.slide-visual-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2%;flex:1;min-height:0;max-height:64%}
+.slide-visual-grid:has(>.slide-visual-card:nth-child(2):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}
+.slide-visual-card{background:white;border-radius:2cqw;padding:6%;min-width:0;display:flex;flex-direction:column;justify-content:flex-start}
+.slide-visual-card h3{font-size:clamp(10px,2.35cqw,23px);line-height:1.2;margin:5% 0;color:#202430}
+.slide-visual-card p{font-size:clamp(8px,1.65cqw,16px)!important;line-height:1.45;margin:0!important;color:#606a7a}
+.slide-visual-number{color:#4361a6;font-size:clamp(10px,2.2cqw,20px)}
+.visual-metrics .slide-visual-number{font-size:clamp(15px,4.4cqw,42px);letter-spacing:-.04em}
+.visual-process{grid-template-columns:repeat(var(--visual-count),minmax(0,1fr));max-height:64%}
+.visual-process .slide-visual-card{position:relative}.visual-process .slide-visual-card:not(:last-child)::after{content:"›";position:absolute;right:-11%;top:45%;font-size:3cqw;color:#4361a6;z-index:1}
+.visual-process .slide-visual-card h3{font-size:clamp(8px,1.9cqw,18px)}.visual-process .slide-visual-card p{font-size:clamp(7px,1.4cqw,14px)!important}
+.slide-chart-visual{display:flex;align-items:stretch;justify-content:space-around;gap:3%;height:60%;border-bottom:1px solid #d3d9e3;padding-top:2%}
+.slide-chart-column{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0;position:relative}
+.slide-chart-column strong,.slide-chart-column span{font-size:clamp(8px,1.6cqw,15px);color:#606a7a;text-align:center}
+.slide-chart-bar{width:65%;background:#4361a6;border-radius:1cqw 1cqw 0 0;min-height:2px;margin-top:4%;flex-shrink:0}.slide-chart-bar.negative{background:#9d5061}
+.slide-chart-column span{margin-top:5%;min-height:12%}.visual-slide .slide-footer{position:absolute;bottom:3%;right:5.7%;color:#687084;font-size:clamp(8px,1.2cqw,12px)}
+
+.extension-open{background:transparent;color:inherit;text-align:left;padding:0;border-radius:7px;cursor:pointer}.extension-open:hover{text-decoration:underline;text-underline-offset:4px}
+.extension-detail{margin:auto;width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 48px);padding:30px;border-radius:28px;border:1px solid var(--line);background:var(--bg);color:var(--text);overflow:auto;box-shadow:0 30px 100px #0005}
+.extension-detail::backdrop{background:#0007;backdrop-filter:blur(8px)}.extension-detail-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.extension-detail-controls{display:flex;align-items:center;gap:20px}.extension-detail-controls label{display:flex;align-items:center;gap:8px;font-size:13px}.extension-detail h2{font-size:27px;letter-spacing:-.03em;margin:0 0 6px}.extension-detail>small{font-size:12px;color:var(--muted)}.extension-detail>p{font-size:14px;line-height:1.6;color:var(--muted);margin:20px 0}.extension-detail-tabs{display:flex;gap:6px;margin-bottom:10px}.extension-detail-tabs button[aria-pressed=true]{background:var(--hover)}
+.extension-detail-document{background:var(--hover);padding:22px;border-radius:20px;max-height:45vh;overflow:auto;font-size:14px}.extension-detail-document pre{max-width:100%;overflow:auto}.extension-detail-document h1{font-size:22px}.extension-detail-document h2{font-size:18px}.extension-detail footer{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:24px}.extension-detail footer span{font-size:12px;color:var(--muted);max-width:250px}.extension-uninstall{color:var(--error)!important}.extension-detail .skill-mark img{width:25px;height:25px}
+@media(max-width:480px){.extension-detail{padding:20px}.extension-detail-document{padding:16px}.extension-detail footer{flex-wrap:wrap}}
+
+.extension-detail .extension-uninstall{background:transparent;box-shadow:none}
+
+/* Only the rounded composer covers the stream; transparent gutters expose the conversation. */
+.solar-scene.sky-chatting .composer-wrap{position:absolute;left:0;right:0;bottom:0;margin-inline:auto;pointer-events:none}
+.solar-scene.sky-chatting .composer-wrap>*{pointer-events:auto}
+.solar-scene.sky-chatting .chat-scroll{padding-bottom:var(--composer-inset,180px)}

@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import JSZip from 'jszip';
+import {validateArtifact,exportArtifact,artifactInstruction} from '../src/services/artifacts.ts';
+const slides=[{title:'Énergie solaire',body:'Du soleil à la prise.'},{title:'Trois étapes',body:'Une conversion progressive.',visual:{type:'process',items:[{label:'Capter',detail:'Les cellules captent la lumière.'},{label:'Convertir',detail:'L’onduleur transforme le courant.'},{label:'Utiliser',detail:'Les appareils reçoivent l’énergie.'}]}},{title:'Comparaison fournie',body:'Valeurs du jeu de données de test.',visual:{type:'chart',unit:'kWh',items:[{label:'Janvier',value:12},{label:'Février',value:24},{label:'Mars',value:18}]}},{title:'Deux leviers',body:'Des concepts avec une hiérarchie.',visual:{type:'cards',items:[{label:'Conception',detail:'Une structure lisible.'},{label:'Export',detail:'Des éléments éditables.'}]}},{title:'Indicateurs fournis',body:'Mesures du jeu de test.',visual:{type:'metrics',items:[{label:'Fichiers',display:'3',detail:'Sources fournies.'},{label:'Slides',display:'5',detail:'Un contenu final.'}]}}];
+const a=validateArtifact({kind:'slides',title:'Démo visuelle',slides},'test');assert.equal(a.slides[2].visual.items[1].value,24);
+assert.throws(()=>validateArtifact({kind:'slides',title:'Invalide',slides:[{title:'Test',body:'Test',visual:{type:'chart',items:[{label:'a',value:NaN},{label:'b',value:1}]}}]},'t'),/Valeur/);
+assert.throws(()=>validateArtifact({kind:'slides',title:'Invalide',slides:[{title:'Test',body:'Test',visual:{type:'html',items:[]}}]},'t'),/Visuel/);
+const blob=await exportArtifact(a,'pptx'),zip=await JSZip.loadAsync(await blob.arrayBuffer());
+assert.equal(Object.keys(zip.files).filter(p=>/^ppt\/slides\/slide\d+\.xml$/.test(p)).length,5);
+const chart=await zip.file('ppt/charts/chart1.xml').async('string');assert(chart.includes('Février')&&chart.includes('<c:v>24</c:v>'));
+const process=await zip.file('ppt/slides/slide2.xml').async('string');assert(process.includes('Capter'));assert((process.match(/<p:sp>/g)||[]).length>10);
+assert(artifactInstruction('slides').includes('éditables'));assert.equal(zip.file('ppt/media/image1.png'),null);
+console.log('visual-slides: ok (validated schema, editable charts/shapes, five-slide PPTX, no flattened screenshot)');

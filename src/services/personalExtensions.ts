@@ -1,4 +1,4 @@
-import { skillApplies, type SkillTask } from "./builtinSkills.ts";
+import { builtinSkills, skillApplies, type SkillTask } from "./builtinSkills.ts";
 import { scopedKey } from "./accountScope.ts";
 export interface PersonalExtension {id:string; kind:"plugins"|"skills"; name:string; content:string; enabled:boolean}
 const key=scopedKey("solar.personal-extensions.v1");
@@ -6,9 +6,10 @@ const native=()=>Boolean((window as Window & {__TAURI_INTERNALS__?:unknown}).__T
 let queue=Promise.resolve();
 export async function listPersonalExtensions():Promise<PersonalExtension[]> {
   await queue;
-  if(native()){const store=await(await import("@tauri-apps/plugin-store")).load(scopedKey("solar.personal")+".json",{defaults:{},autoSave:false});return await store.get<PersonalExtension[]>(key)??[];}
-  return JSON.parse(localStorage.getItem(key)??"[]");
+  if(native()){const store=await(await import("@tauri-apps/plugin-store")).load(scopedKey("solar.personal")+".json",{defaults:{},autoSave:false});return upgradeBuiltins(await store.get<PersonalExtension[]>(key)??[]);}
+  return upgradeBuiltins(JSON.parse(localStorage.getItem(key)??"[]"));
 }
+function upgradeBuiltins(items:PersonalExtension[]){return items.map(item=>{const builtin=builtinSkills.find(s=>s.id===item.id);return builtin&&item.kind==="skills"?{...item,name:builtin.name,content:builtin.content}:item;});}
 export function savePersonalExtensions(items:PersonalExtension[]) {
   const task=queue.then(async()=>{if(native()){const store=await(await import("@tauri-apps/plugin-store")).load(scopedKey("solar.personal")+".json",{defaults:{},autoSave:false});await store.set(key,items);await store.save();}else localStorage.setItem(key,JSON.stringify(items));});queue=task.catch(()=>{});return task;
 }

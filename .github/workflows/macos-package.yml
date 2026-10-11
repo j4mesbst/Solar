@@ -1,0 +1,48 @@
+name: Solar macOS installer
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/macos-package.yml'
+      - 'scripts/package-macos.py'
+      - 'scripts/verify-macos-window.swift'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macos-arm64:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      CARGO_BUILD_JOBS: 2
+      APPLE_SIGNING_IDENTITY: '-'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate frontend and exports before release compilation
+        run: |
+          npm run test:providers
+          npm run test:chat
+          npm run test:features
+          npm run test:evolution
+          npm run test:skills
+          node --experimental-strip-types scripts/visual-slides.test.mjs
+          npm run build
+      - name: Validate native commands
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml
+      - name: Build and inspect genuine release DMG
+        run: python3 scripts/package-macos.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Solar-macOS-arm64
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30

@@ -1,4 +1,4 @@
-import { slideParagraphs } from "../../services/artifacts";
+import { SlidePreview } from "./slide-preview";
 import { useEffect, useRef, useState } from "react";
 import { X, Download, ChevronLeft, ChevronRight, Copy, Maximize2, Minimize2 } from "lucide-react";
 import type { Artifact } from "../../domain/extensions";
@@ -152,10 +152,7 @@ export function ArtifactPanel({
           <>
             {artifact.kind === "slides" && (
               <>
-                <div className={`artifact-slide ${index===0?"slide-cover":"slide-content"}`}>
-                  <h2>{artifact.slides![index].title}</h2>
-                  {index===0 ? <p>{slideParagraphs(artifact.slides![index].body).join("\n")}</p> : <ul>{slideParagraphs(artifact.slides![index].body).map((line,i)=><li key={i}>{line}</li>)}</ul>}<small className="slide-footer">{index+1} / {artifact.slides!.length}</small>
-                </div>
+                <SlidePreview slide={artifact.slides![index]} index={index} total={artifact.slides!.length}/>
                 <div className="slide-navigation">
                   <button
                     aria-label="Diapositive précédente"
