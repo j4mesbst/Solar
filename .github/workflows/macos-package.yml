@@ -6,7 +6,14 @@ on:
       - '.github/workflows/macos-package.yml'
       - 'scripts/package-macos.py'
       - 'scripts/verify-macos-window.swift'
+      - 'src/**'
+      - 'src-tauri/**'
+      - 'public/**'
+      - 'package*.json'
   workflow_dispatch:
+concurrency:
+  group: solar-macos-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
