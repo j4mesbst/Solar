@@ -365,3 +365,5 @@ Contract feature tests passed for memory-only temporary messages/drafts, no disk
 - Packaging : commande Tauri Release arm64, signature ad-hoc, vérification DMG/montage/icône/exécutable et tentative de lancement par LaunchServices. Pipeline macOS15 créé sans publication de release. Le résultat natif sera consigné après son exécution réelle ; aucun DMG n'est annoncé à ce stade.
 
 - Première tentative native : tests macOS réussis dans la validation générale ; packaging interrompu avant compilation car Cargo.lock n’était pas présent alors que --locked était demandé. Cargo.lock est maintenant généré par Cargo officiel et versionné. Détails des plugins personnels corrigés et vérifiés ; pipeline déclenché aussi par les changements de sources, avec concurrence contrôlée.
+
+- Diaporamas denses : géométrie des cartes adaptée à deux rangées, six indicateurs sans débordement dans les aperçus et les éléments PowerPoint. Contrôle des bornes XML du PPTX et rendu navigateur réussis.

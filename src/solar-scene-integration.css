@@ -175,3 +175,7 @@ html:has(.shell.dark),html:has(.shell.dark) body{background:#000}
 .solar-scene.sky-chatting .composer-wrap{position:absolute;left:0;right:0;bottom:0;margin-inline:auto;pointer-events:none}
 .solar-scene.sky-chatting .composer-wrap>*{pointer-events:auto}
 .solar-scene.sky-chatting .chat-scroll{padding-bottom:var(--composer-inset,180px)}
+
+.slide-visual-grid:has(>.slide-visual-card:nth-child(4)) .slide-visual-number{font-size:clamp(10px,2.6cqw,26px)}
+.slide-visual-grid:has(>.slide-visual-card:nth-child(4)) h3{font-size:clamp(9px,1.9cqw,18px)}
+.slide-visual-grid:has(>.slide-visual-card:nth-child(4)) p{font-size:clamp(8px,1.4cqw,14px)!important}

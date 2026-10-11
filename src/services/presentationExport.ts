@@ -26,10 +26,13 @@ export function buildPresentationSlides(pptx:PptxGenJS,a:Artifact){
   visual.items.forEach((item,i)=>{
    const x=.76+(i%cols)*(w+gap),y=2.9+Math.floor(i/cols)*(h+gap);
    slide.addShape(pptx.ShapeType.roundRect,{x,y,w,h,rectRadius:.18,line:{transparency:100},fill:{color:palette.card}});
-   const prominent=visual.type==="metrics"?(item.display??String(item.value??"")):String(i+1).padStart(2,"0");
-   text(prominent,x+.22,y+.22,w-.44,visual.type==="metrics"?.7:.45,visual.type==="metrics"?34:18,palette.accent,true);
-   text(item.label,x+.22,y+(visual.type==="metrics"?1:.84),w-.44,.58,cols>3?17:21,ink,true);
-   if(item.detail)text(item.detail,x+.22,y+(visual.type==="metrics"?1.64:1.5),w-.44,Math.max(.45,h-1.7),cols>3?12:15,muted);
+   const compact=rows>1,metric=visual.type==="metrics";
+   const prominent=metric?(item.display??String(item.value??"")):String(i+1).padStart(2,"0");
+   const headingY=compact?(metric?.72:.55):(metric?1:.84);
+   const detailY=compact?1.14:(metric?1.64:1.5);
+   text(prominent,x+.22,y+.18,w-.44,compact?.4:metric?.7:.45,metric?(compact?26:34):18,palette.accent,true);
+   text(item.label,x+.22,y+headingY,w-.44,compact?.4:.58,compact||cols>3?17:21,ink,true);
+   if(item.detail)text(item.detail,x+.22,y+detailY,w-.44,h-detailY-.16,compact||cols>3?12:15,muted);
    if(visual.type==="process"&&i<count-1)slide.addShape(pptx.ShapeType.chevron,{x:x+w+.025,y:y+h/2-.13,w:.17,h:.26,line:{transparency:100},fill:{color:palette.accent}});
   });
  });
