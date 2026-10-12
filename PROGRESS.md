@@ -391,3 +391,13 @@ Contract feature tests passed for memory-only temporary messages/drafts, no disk
 - Pas de signature Developer ID ni de notarisation : macOS peut demander une autorisation dans Confidentialité et sécurité. Pas de publication de Release GitHub.
 - Inscription publique non activée : projet Supabase absent, appel get_cost UNAVAILABLE ; paramètres publics requis. Les tests de fournisseurs/Gmail/GitHub/Auth utilisent des fixtures, sans validation des identifiants réels de l’utilisateur.
 - Le Bureau du Mac de l’utilisateur est inaccessible depuis cet environnement : l’installateur est livré en téléchargement, sans prétendre y avoir été copié.
+
+## Préparation de la présentation GitHub — 12 octobre 2026
+
+- Remplacement du README par une version anglaise relue face à l’implémentation et ajout du logo transparent et des cinq captures fournis dans `assets/readme/`.
+- Correction des mentions d’arrière-plans personnalisés et de performance garantie ; le niveau d’effort décrit désormais ses vrais effets (consignes et budget de sortie).
+- Clarification : l’API GitHub ne retourne aucune release publiée ; aucun DMG officiel n’est actuellement disponible et la signature/notarisation ne peut pas être attestée.
+- Ajout de la licence MIT demandée (2026, James (j4mesbst)) et maintien des avis tiers existants. Les ressources visuelles du README ont été fournies par le mainteneur ; aucune licence distincte n’était jointe à l’archive.
+- Limitation de publication : la branche distante `main` a avancé de cinq commits depuis la base locale et le répertoire contient des changements de travail préexistants. Publication isolée nécessaire pour préserver ces changements et l’historique distant.
+- Vérifications exécutées avec succès : contrats `features`, `chat`, `providers`, `evolution` et build TypeScript/Vite (`npm run build`). Les cinq captures et le logo sont des PNG valides et chacun des six chemins README existe.
+- Audit des déclarations npm/Cargo : les dépendances utilisent plusieurs licences (MIT, Apache-2.0, BSD, MPL-2.0, EPL-2.0, Unicode-3.0, etc.). Certaines expressions npm sont multiples (par exemple `jszip`, MIT ou GPL-3.0-or-later) ; les conditions distinctes des dépendances doivent rester applicables. L’avis CC0 des icônes plugin reste intact. Cet inventaire des métadonnées n’est pas un avis juridique complet.
