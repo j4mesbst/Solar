@@ -407,3 +407,5 @@ Contract feature tests passed for memory-only temporary messages/drafts, no disk
 - Le bouton télécharge via `nightly.link` le dernier artefact macOS réussi de `macos-package.yml` sur `main`, sans imposer de connexion GitHub.
 - Vérification de l’exécution 38132611132 : l’artefact `Solar-macOS-arm64` contient `Solar-macOS-arm64.dmg`, le checksum SHA-256 et `verification.json`; l’archive ZIP a été téléchargée et son contenu listé.
 - Limites explicites : ZIP à extraire, Apple Silicon arm64 uniquement, rétention GitHub Actions de 30 jours. Il s’agit d’une compilation de développement non signée Developer ID et non notarisée, pas d’une Release V1.
+
+- Correction du lien nightly.link : le slug du workflow est `macos-package` (sans extension `.yml`), conformément au format du service.

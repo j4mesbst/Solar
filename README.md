@@ -9,7 +9,7 @@
 Chat with your models. Work with your files. Create more, with less clutter.
 
 <p>
-  <a href="https://nightly.link/j4mesbst/Solar/workflows/macos-package.yml/main/Solar-macOS-arm64.zip"><img alt="Download the latest Apple Silicon build (ZIP containing the DMG)" src="https://img.shields.io/badge/Download_latest_macOS_build-Apple_Silicon-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
+  <a href="https://nightly.link/j4mesbst/Solar/workflows/macos-package/main/Solar-macOS-arm64.zip"><img alt="Download the latest Apple Silicon build (ZIP containing the DMG)" src="https://img.shields.io/badge/Download_latest_macOS_build-Apple_Silicon-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
   <a href="https://github.com/j4mesbst/Solar/stargazers"><img alt="Star on GitHub" src="https://img.shields.io/github/stars/j4mesbst/Solar?style=for-the-badge&label=Star&color=111111" /></a>
 </p>
 
