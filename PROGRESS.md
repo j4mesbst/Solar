@@ -401,3 +401,9 @@ Contract feature tests passed for memory-only temporary messages/drafts, no disk
 - Limitation de publication : la branche distante `main` a avancé de cinq commits depuis la base locale et le répertoire contient des changements de travail préexistants. Publication isolée nécessaire pour préserver ces changements et l’historique distant.
 - Vérifications exécutées avec succès : contrats `features`, `chat`, `providers`, `evolution` et build TypeScript/Vite (`npm run build`). Les cinq captures et le logo sont des PNG valides et chacun des six chemins README existe.
 - Audit des déclarations npm/Cargo : les dépendances utilisent plusieurs licences (MIT, Apache-2.0, BSD, MPL-2.0, EPL-2.0, Unicode-3.0, etc.). Certaines expressions npm sont multiples (par exemple `jszip`, MIT ou GPL-3.0-or-later) ; les conditions distinctes des dépendances doivent rester applicables. L’avis CC0 des icônes plugin reste intact. Cet inventaire des métadonnées n’est pas un avis juridique complet.
+
+## Bouton de téléchargement du DMG — 12 octobre 2026
+
+- Le bouton télécharge via `nightly.link` le dernier artefact macOS réussi de `macos-package.yml` sur `main`, sans imposer de connexion GitHub.
+- Vérification de l’exécution 38132611132 : l’artefact `Solar-macOS-arm64` contient `Solar-macOS-arm64.dmg`, le checksum SHA-256 et `verification.json`; l’archive ZIP a été téléchargée et son contenu listé.
+- Limites explicites : ZIP à extraire, Apple Silicon arm64 uniquement, rétention GitHub Actions de 30 jours. Il s’agit d’une compilation de développement non signée Developer ID et non notarisée, pas d’une Release V1.

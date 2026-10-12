@@ -9,7 +9,7 @@
 Chat with your models. Work with your files. Create more, with less clutter.
 
 <p>
-  <a href="https://github.com/j4mesbst/Solar/releases/latest"><img alt="Download Solar for macOS" src="https://img.shields.io/badge/Download_for_macOS-Releases-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
+  <a href="https://nightly.link/j4mesbst/Solar/workflows/macos-package.yml/main/Solar-macOS-arm64.zip"><img alt="Download the latest Apple Silicon build (ZIP containing the DMG)" src="https://img.shields.io/badge/Download_latest_macOS_build-Apple_Silicon-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
   <a href="https://github.com/j4mesbst/Solar/stargazers"><img alt="Star on GitHub" src="https://img.shields.io/github/stars/j4mesbst/Solar?style=for-the-badge&label=Star&color=111111" /></a>
 </p>
 
@@ -108,16 +108,11 @@ Some integrations in the directory are marked **Coming soon** and are not yet fu
 
 ## Installation
 
-> **No official release is published yet.** The [latest release page](https://github.com/j4mesbst/Solar/releases/latest) currently has no published Solar release, so there is no official DMG to download. The development version is `0.1.0`; this does not mean Solar V1 has shipped.
+> **Solar V1 has not been released.** The download button fetches the latest successful Apple Silicon build from the macOS packaging workflow. GitHub Actions provides it as a ZIP containing `Solar-macOS-arm64.dmg`, its SHA-256 checksum, and a verification report; extract the ZIP, then open the DMG. The current development version is `0.1.0`.
 
-When a release is published:
+The download uses [nightly.link](https://nightly.link/) so it can follow the latest successful build without requiring a GitHub login. GitHub Actions artifacts expire after 30 days; the link may be unavailable if no recent installer build exists. This build is for Apple Silicon (arm64), not Intel Macs.
 
-1. Visit **[GitHub Releases](https://github.com/j4mesbst/Solar/releases/latest)** and select the latest published macOS release.
-2. Download the `.dmg` appropriate for your Mac's processor architecture.
-3. Open the DMG and drag **Solar.app** into **Applications**.
-4. Launch Solar, then configure a local or remote model provider from the initial setup.
-
-**macOS security note:** No official DMG is currently published, and no release signing or notarization status can be verified. Locally built DMGs are not automatically signed or notarized and may trigger a Gatekeeper warning. Check the status of any future release before installing it.
+**macOS security note:** This is a development build, not an official release. The latest verified installer is not signed with an Apple Developer ID and is not notarized, so Gatekeeper may show a warning. Read the included verification report before installing it. [GitHub Releases](https://github.com/j4mesbst/Solar/releases) will list an official release when one is published.
 
 ### Ollama (optional)
 
