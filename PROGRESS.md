@@ -1,3 +1,37 @@
+# Correctif — 11 octobre 2026
+
+## Mise à jour — compte, onboarding et animations
+
+- Ajout de Supabase à la configuration locale ignorée par Git avec l’URL et la clé publique fournies par James. Aucune clé secrète/service-role n’est utilisée.
+- Ajout d’une vraie section Paramètres > Compte avec connexion, création de compte, récupération/mise à jour du mot de passe, état de session et explication claire : comptes et identité distants, conversations/fichiers/clefs locaux.
+- Les erreurs de formulaire du compte s’effacent automatiquement après trois secondes.
+- L’assistant de premier lancement propose le dossier de référence optionnel, avec sélection puis validation persistante, et explique qu’il sert au contexte de fichiers ; l’historique reste dans le stockage interne local Solar. Le choix existant reste modifiable dans Paramètres > Stockage.
+- Accélération de l’ouverture/fermeture du panneau : largeur 280ms, révélations décalées de 8ms par élément, fondu/flou conservés et préférence de mouvement réduit respectée. Le contenu visible apparaît avant 650ms ; la cascade de 50 lignes reste sous une seconde.
+- Bouton latéral et feux natifs macOS remontés ensemble de 2px. Alignement horizontal inchangé.
+- Build de production et contrats de fonctionnalités, chat et fournisseurs réussis. Le endpoint public Supabase répond 200, le fournisseur e-mail est activé et l’inscription n’est pas désactivée ; la confirmation e-mail est requise (`autoConfirm=false`). L’envoi effectif par SMTP, les URL de redirection/confirmation et leur retour vers l’application native restent à valider/configurer dans Supabase ; aucun compte de test n’a été créé.
+- Le DMG n’a pas pu être reconstruit sur cet environnement : la commande Tauri s’arrête avant le build natif, car `cargo` n’est pas installé. L’artefact DMG existant n’a pas été remplacé.
+
+- Refonte du panneau de navigation : à l’état fermé, le chrome ne conserve que le bouton de panneau à côté des contrôles macOS natifs. L’ancien rail, le compte, le nouveau chat et le titre du chat ont été retirés de la barre haute.
+- À l’ouverture, l’historique devient un panneau flottant bordé au-dessus du chat, avec New Chat, New Projects, Search, Hub, Settings et les conversations existantes. Les raccourcis et le clavier restent disponibles.
+- Icônes des actions reprises en SVG animés, à 18 px, avec repli sans animation lorsque « Réduire les animations » est actif. Le nouveau visuel fourni est devenu l’icône macOS ICNS/PNG de Solar.
+- Ajout de `public/skills/mode-presentation.txt` et du skill installable « Mode Présentation » : les demandes de diaporama guident désormais vers un artefact HTML autonome, navigable et imprimable ; PowerPoint reste réservé à une demande explicite.
+- Limitation : l’icône `.ico` Windows existante n’a pas été modifiée, car le visuel demandé concerne le paquet macOS arm64.
+- Suppression de la barre web superposée : les trois contrôles macOS reviennent à leur position native standard.
+- Chrome resserré : en-tête 52 px, rail 52 px et historique 210 px sur bureau.
+- État actif clair adouci et icônes ramenées à 16 px ; l’icône Réglages utilise à nouveau un tracé de réglage professionnel.
+- Correctif final du chrome : barre native macOS et en-tête Solar fusionnés dans une unique bande de 78 px, sans seconde barre.
+
+---
+
+# Rapport — 11 octobre 2026
+
+- Barre de titre macOS reconstruite en mode overlay : boutons système natifs conservés, titre Solar centré et zone de déplacement transparente.
+- Rail et historique rendus translucides avec flou de fond, tout en conservant les palettes clair, sombre et personnalisées.
+- Icônes du rail redessinées en vecteurs monochromes plus fins et réduites à 18 px ; animations finies et préférence de mouvement réduit préservées.
+- Limitation matérielle : la transparence/vibrancy dépend de l’API macOS privée activée dans la configuration Tauri ; elle ne vise pas une distribution Mac App Store sans adaptation native distincte.
+
+---
+
 # Compte rendu — ajustements du 10 octobre 2026
 
 ## Changements livrés
@@ -353,3 +387,137 @@ Contract feature tests passed for memory-only temporary messages/drafts, no disk
 - Six skills proposés et installables : Artefact Pro, Code Max, Recherche Pro, Clarté Plus, Document Expert et Data Analyst. Installation, activation, suppression et sauvegarde par compte ; injection dans la demande seulement pour les tâches pertinentes.
 - Réponses : consignes de résultat précis, respect du projet et revue interne ciblée ; rafraîchissement du texte en Solar Code à 32ms comme Solar. Aucun appel de revue supplémentaire ni réduction arbitraire de l’effort. La latence et la qualité finale dépendent aussi du modèle/fournisseur ; les skills sont des instructions, pas de nouveaux outils.
 - Vérifications réussies : build TypeScript/Vite, contrats skills/providers/chat/features/evolution, suites Playwright skills-polish, first-turns, connections, evolution et solar-scene. Contrôle visuel clair/sombre/mobile ; installation/rechargement/désactivation/suppression des skills et présence réelle de leurs instructions dans la requête ; rotation à 10 secondes avec horloge contrôlée ; artefacts exportables et propositions Work approuvées/annulées. Les comptes sont vérifiés avec des fixtures Supabase ; l’activation réelle requiert toujours la configuration Supabase de l’installation.
+
+## 11 octobre 2026 — chrome macOS, panneau et Hub
+
+- Suppression de la bande blanche du haut : l’animation du chat commence à l’extrémité supérieure de la fenêtre et le seul bandeau de contrôle est transparent.
+- Position des boutons macOS abaissée à y=28 ; le bouton 18 px d’ouverture/fermeture du panneau est aligné sur la même ligne.
+- Les cinq actions du panneau déclenchent désormais les animations SVG au survol de toute leur ligne ou au focus clavier ; mouvement réduit respecté.
+- Hub ouvre les Plugins et Settings ferme automatiquement le panneau ; Plugins propose maintenant le bouton Skills à côté de Personnel. Plugins et paramètres utilisent chacun une surface unique dérivée du thème.
+- Les retours d’erreur visuels se ferment après trois secondes, y compris ceux du chat, du répertoire et les alertes de formulaire restantes.
+- Vérification effectuée : compilation TypeScript/Vite et contrôle des espaces Git sans erreur. Limite : le contrôle visuel automatisé Playwright n’est pas disponible localement (navigateur/module absent) ; le bundle macOS reste à reconstruire et à ouvrir pour le contrôle natif final.
+
+## 11 octobre 2026 — correction finale de la barre native
+
+- Suppression à la source du matériau macOS `underWindowBackground`, ainsi que de tous les fonds CSS de la zone de titre : aucune bande blanche ne doit subsister au-dessus de la scène.
+- Boutons macOS déplacés à droite et abaissés (x=30, y=47) pour s’aligner avec l’ouverture du panneau.
+- New Projects devient Solar Code et ouvre le mode Code/Work existant, dédié aux demandes de développement.
+- Panneau latéral : fondu, léger déplacement et flou à l’ouverture comme à la fermeture ; mouvement réduit préservé.
+- Messages d’erreur du chat retirés de l’interface, tout en laissant les échecs techniques tracés dans les données ; recherche des paramètres retirée ; navigation affinée en pastilles arrondies.
+- Skills conserve les boutons Public, Personnel et Skills, avec retour direct au Hub depuis les deux premiers.
+- Contrôle natif reconstruit : la zone supérieure est désormais continue avec la page ; le bouton du panneau est remonté de 16 px pour coïncider visuellement avec les trois contrôles macOS.
+
+## 11 octobre 2026 — corrections du chat normal et du panneau
+
+- Bouton latéral unifié : suppression du bouton distinct placé dans le panneau; l’unique commande reste à la même coordonnée ouvert/fermé, par-dessus le panneau flottant. Aucun changement aux coordonnées des contrôles natifs macOS. Les titres Plugins, Skills et Paramètres commencent au même endroit sous la bande transparente.
+- New Chat force l’espace normal, même si l’utilisateur se trouvait dans Solar Code. Les contrôles de projet restent propres à Solar Code. Les raccourcis visibles sont retirés des libellés du panneau.
+- Ajout dans Paramètres > Stockage d’un choix de dossier par défaut avec sélection distincte puis bouton Valider; le dossier peut être remplacé ou retiré. Le chemin est conservé dans le répertoire de configuration macOS. En chat normal, le dossier n’est consulté que pour les demandes relatives au code/projet, seuls des fichiers sûrs et pertinents sont lus, et la réponse est explicitement en lecture seule. La validation informe et autorise la transmission des extraits pertinents au modèle.
+- Hub/Skills : onglets ordonnés Public, Skills, Installés; depuis Skills, Public et Installés reviennent sur l’onglet correspondant du Hub. Fonds Hub/Paramètres restent unis selon le thème.
+- Chargement du chat normal remplacé par un point discret animé; « Réponse en cours » reste réservé à Solar Code. Le texte Markdown assistant en flux rend chaque mot dans un span stable par index, 4 px de flou vers net / fondu en 450 ms; le bloc monte en 700 ms. Les réponses déjà terminées ne rejouent pas l’effet. Mouvement réduit respecté.
+- Contrôles visuels dans l’aperçu local : panneau ouvert puis fermé, bouton unique, New Chat sans outils Solar Code, Hub/Skills et Paramètres; en petite fenêtre, les titres Plugins/Paramètres commencent tous deux à x=18/y=84.
+- Vérifications : `npm run build` réussi; contrats features et chat réussis; `git diff --check` propre. Le contrat skills échoue sur l’incohérence de la branche (`builtinSkills.length === 7`, test attendant 6; fichier déjà modifié dans le dépôt avant la dernière passe, et laissé intact). Playwright CLI n’a pas pu démarrer car Chrome manque, remplacé pour l’inspection par l’aperçu navigateur intégré.
+
+## Vérification finale — DMG arm64 (11 octobre 2026)
+- Reconstruction complète de l’application macOS arm64 réussie avec Tauri, y compris compilation de production du frontend et Rust.
+- DMG Tauri généré et vérifié par `hdiutil`: somme de contrôle valide. Copie livrable sous `Solar-macOS-arm64.dmg` à la racine du dépôt (12 Mio).
+- La vérification confirme l’intégrité de l’image disque; pas de notarisation/signature de distribution revendiquée.
+
+## Animation de sidebar, flux IA et ordre des paramètres — 11 octobre 2026
+- Sidebar existante animée de 272px à zéro puis inversement : fermeture avec décalage, fondu et flou; ouverture de la largeur avant la cascade de contenu. Les actions, le titre Conversations, les groupes et chaque conversation ont un index stable pour leur délai. ⌘B / Ctrl+B commute le panneau; son bouton reste disponible lorsqu’il est fermé. Mouvement réduit : transitions et animations coupées.
+- Réponses IA : composant mémoïsé par mot, clé d’index au sein du texte et mise à jour de texte regroupée par `requestAnimationFrame`. Le dernier token peut s’allonger sans remplacer les mots précédents. Le rendu Markdown reste en mode streaming après la complétion; aucune animation de conteneur ni flou parent n’est appliqué. Réduction de mouvement respectée.
+- Contrôles macOS et bouton latéral remontés de 2px sans déplacement horizontal. Dans Paramètres, Apparence est la première entrée et s’ouvre par défaut; Fournisseurs est la deuxième.
+- Vérifications : build TS/Vite et Rust/Tauri, contrats chat et fonctionnalités, diff sans espaces fautifs, ouverture/fermeture et raccourci testés dans le navigateur intégré, Apparence/Fournisseurs vérifiés visuellement. DMG arm64 reconstruit et checksum vérifié. Playwright CLI indisponible car Google Chrome n’est pas installé; le contrôle visuel a utilisé l’aperçu intégré. Le détecteur Impeccable ne signale plus de problème après une exception ciblée : la transition width/padding de la sidebar est volontaire, car explicitement demandée.
+
+## Préparation de la présentation GitHub — 12 octobre 2026
+
+- Remplacement du README par une version anglaise relue face à l’implémentation et ajout du logo transparent et des cinq captures fournis dans `assets/readme/`.
+- Correction des mentions d’arrière-plans personnalisés et de performance garantie ; le niveau d’effort décrit désormais ses vrais effets (consignes et budget de sortie).
+- Clarification : l’API GitHub ne retourne aucune release publiée ; aucun DMG officiel n’est actuellement disponible et la signature/notarisation ne peut pas être attestée.
+- Ajout de la licence MIT demandée (2026, James (j4mesbst)) et maintien des avis tiers existants. Les ressources visuelles du README ont été fournies par le mainteneur ; aucune licence distincte n’était jointe à l’archive.
+- Limitation de publication : la branche distante `main` a avancé de cinq commits depuis la base locale et le répertoire contient des changements de travail préexistants. Publication isolée nécessaire pour préserver ces changements et l’historique distant.
+- Vérifications exécutées avec succès : contrats `features`, `chat`, `providers`, `evolution` et build TypeScript/Vite (`npm run build`). Les cinq captures et le logo sont des PNG valides et chacun des six chemins README existe.
+- Audit des déclarations npm/Cargo : les dépendances utilisent plusieurs licences (MIT, Apache-2.0, BSD, MPL-2.0, EPL-2.0, Unicode-3.0, etc.). Certaines expressions npm sont multiples (par exemple `jszip`, MIT ou GPL-3.0-or-later) ; les conditions distinctes des dépendances doivent rester applicables. L’avis CC0 des icônes plugin reste intact. Cet inventaire des métadonnées n’est pas un avis juridique complet.
+
+
+## Bouton de téléchargement du DMG — 12 octobre 2026
+
+- Remplacement du lien Releases vide par un lien `nightly.link` qui suit le dernier artefact macOS réussi de `macos-package.yml` sur `main`.
+- Contrôle de l’exécution 38132611132 : l’artefact `Solar-macOS-arm64` contient `Solar-macOS-arm64.dmg`, son checksum SHA-256 et `verification.json`; téléchargement vérifié (ZIP).
+- Limites affichées dans le README : le téléchargement est un ZIP à extraire, ne nécessite pas de connexion GitHub via nightly.link, vise Apple Silicon arm64, et expire après les 30 jours de rétention des artefacts. Ce n’est pas une Release V1; l’installateur de développement n’est ni signé Developer ID ni notarisé.
+- Correction du lien nightly.link : le slug du workflow est `macos-package` (sans extension `.yml`), conformément au format du service.
+
+## Ollama, pipeline de réponse et rendu des artefacts — 12 octobre 2026
+
+- Détection Ollama native macOS ajoutée côté Rust avec Reqwest (tags, version et modèles chargés, délai de 1,5 s), recherche des emplacements d’installation courants, lecture des manifestes locaux et commande de démarrage. L’URL Ollama est normalisée vers `127.0.0.1`; le client Tauri HTTP sert les appels de chat et de téléchargement. L’écran fournisseur présente les états, modèles hors ligne, actualisation et détails d’erreur.
+- Le tiroir latéral utilise les durées/délais validés, l’indexation `.fx` et le respect du mouvement réduit. Les réponses utilisent le rendu Markdown existant, regroupé par animation frame, avec des blocs mémoïsés identifiés par l’id de message.
+- Ajout du module testable `src/lib/pipeline/` : réponse directe, plan, étapes et relecture, puis trois brouillons comparés et critique finale au niveau Ultra. Les quatre niveaux actuels et leurs noms restent inchangés; le pipeline ne s’applique aux fournisseurs en ligne qu’après activation dans Préférences. Les étapes restent hors du texte de réponse, et le signal d’annulation est partagé avec les requêtes.
+- Remplacement de la jauge d’effort existante par un curseur à ressort, texte morphé lettre par lettre, couleurs unies aux premiers niveaux et flux dégradé au dernier, sans changer les niveaux ni l’état. Le curseur est utilisable à la souris et au clavier; réduction de mouvement désactive flux, flou et transitions.
+- Cartes d’artefact plus compactes et cliquables avec pictogrammes animés, état de création, sous-titres typés et variantes de mise en page pour les diapositives. Le prompt de génération précise la concision, la variété et la fiabilité des données. La fonctionnalité/panneau d’artefact existants sont conservés.
+- Vérifications réussies : build TypeScript/Vite, contrats `pipeline`, `chat`, `providers`, `features`, `evolution`, et `cargo test` (un test Rust). Limites : Playwright visuel n’a pas démarré, car Chrome et la dépendance Playwright du dossier de vérification ne sont pas installés; pas de test réel Ollama, de présentation générée par modèle, ni d’ouverture de l’application macOS dans cette session. Le build signale aussi les gros bundles déjà présents.
+- Le filtre Impeccable conserve une exception ciblée pour le shimmer de réponse en cours, explicitement prévu par `DESIGN.md` (`gradient-text` dans `src/solar-composer-reference.css`).
+
+## Ajustement final de la jauge et DMG mis à jour — 12 octobre 2026
+- La jauge suit le texte joint : le flux coloré et le halo s’activent uniquement pour Ultra. Le mode de réduction des animations coupe les transitions, le flou et le dégradé animé et ramène le curseur immédiatement à sa valeur.
+- Vérifications réussies : build TypeScript/Vite, contrats `pipeline`, `chat`, `providers`, `features`, `evolution`, `cargo test`, `git diff --check` et détection Impeccable (aucun problème non traité). L’unique exception enregistrée est la transition de largeur du nom, explicitement demandée, limitée à `effort-slider.css`.
+- DMG Apple Silicon régénéré avec Tauri sous `Solar-macOS-arm64-updated.dmg`; checksum de l’image valide via `hdiutil verify`, binaire compilé en arm64. L’interface n’a pas pu être lancée/testée visuellement dans cette passe. Les avertissements de taille de bundle Vite persistent.
+
+## Détection Ollama et sidebar fermée — 13 octobre 2026
+- Dans Paramètres > Fournisseurs, le formulaire Ollama ne demande plus d’URL : l’adresse locale `127.0.0.1:11434` est utilisée en interne. La fiche n’affiche plus l’adresse non pertinente et propose un bouton contrasté « Lancer la détection » avec état, modèles et détails techniques.
+- Le bouton de détection appelle le statut natif Tauri; lorsqu’Ollama répond, les modèles détectés sont synchronisés dans Solar. L’onboarding utilise le même appel natif. L’aperçu navigateur indique clairement que la détection est réservée à l’application macOS.
+- La sidebar fermée passe à largeur et padding nuls, sans bordure, fond, ombre ni interception des clics.
+- À vérifier : build et contrats disponibles. Ollama local répondait sur `127.0.0.1:11434` et annonçait un modèle; la détection système/native et l’aspect final n’ont pas pu être validés dans une fenêtre macOS réelle durant cette passe. Playwright CLI est indisponible car Google Chrome n’est pas installé.
+
+## Rebuild de l’application macOS — 13 octobre 2026
+- Reconstruction de Solar en arm64 avec les changements présents dans le dépôt. Les paquets `.app` et `.dmg` Tauri ont été générés; DMG livrable `Solar-macOS-arm64-2026-10-13.dmg`, checksum vérifiée.
+- L’installation directe dans `/Applications/Solar.app` n’a pas été faite : Solar était ouvert et l’interface a signalé une reprise de contrôle par l’utilisateur pendant la tentative de fermeture. Pour éviter de remplacer une application active, installation laissée à l’utilisateur; quitter Solar puis ouvrir le DMG permet l’actualisation.
+
+## Correction connexion Ollama — 13 octobre 2026
+- Solar fixe désormais l’URL Ollama à `http://127.0.0.1:11434` lors de l’enregistrement et au démarrage : une ancienne URL sauvegardée ne peut plus détourner le chat vers le mauvais hôte/port.
+- Le test fournisseur et la découverte/synchronisation des modèles utilisent la détection native Rust/Reqwest, comme la carte d’état, au lieu de l’ancien appel modèle générique. Les erreurs de transport fournisseurs/chat incluent maintenant le détail renvoyé par le système pour identifier les échecs réels.
+- Vérifications : `npm run build`, contrats `providers`, `chat`, `features`, `cargo test` et `git diff --check` réussis. Test local réel : `/api/version`, `/api/tags` et `/api/chat` répondent sur 127.0.0.1; le modèle `batiai/qwen3.5-9b:q4` a renvoyé `OK`. Détecteur Impeccable : aucun problème.
+- DMG arm64 régénéré et vérifié : `Solar-macOS-arm64-Ollama-fix-2026-10-13.dmg`. L’installation directe n’a pas été faite, car l’utilisateur a repris la main sur l’application ouverte; le DMG est prêt à installer.
+
+## Réponse Ollama interrompue — 13 octobre 2026
+- Cause reproduite avec `batiai/qwen3.5-9b:q4` : Ollama envoyait d’abord du contenu dans `message.thinking`, sans contenu visible, et pouvait atteindre le budget de génération avant d’émettre la réponse. Le pipeline local de Solar gère déjà les étapes de raisonnement séparément.
+- Les requêtes Ollama de chat demandent maintenant `think: false`, pour réserver le flux aux tokens de réponse visibles et laisser le pipeline d’effort de Solar faire son travail. Les erreurs Ollama et de lecture du flux conservent désormais leur détail utile.
+- Vérification locale : même modèle, requête `/api/chat` en streaming avec `think: false`, réponse `OK` et fin normale; contrat `npm run test:chat`, `npm run build` et `git diff --check` réussis. Documentation officielle Ollama confirme que `think: false` renvoie directement le contenu visible pour les modèles compatibles.
+- Nouveau DMG arm64 construit et son checksum vérifiée : `Solar-macOS-arm64-Ollama-stream-fix-2026-10-13.dmg`. Non installé dans `/Applications`, car Solar est actuellement ouvert.
+
+## Actualisation et état Ollama dans le chat — 13 octobre 2026
+- La détection depuis la carte de configuration mettait à jour les modèles mais ne sauvegardait pas l’état du fournisseur; l’actualisation en chat ne montrait aucune erreur si son appel échouait. La détection enregistre désormais l’état connecté/erreur et l’URL locale, puis recharge la liste; le bouton indique l’actualisation et expose les erreurs.
+- Le point d’état du modèle dans le chat se base maintenant sur la disponibilité réelle du fournisseur et du modèle, pas sur la réussite de la précharge. Une précharge impossible ne marque donc plus comme déconnecté un modèle que l’API Ollama vient de détecter.
+- Vérifications : contrats `providers` et `chat`, build de production, `git diff --check` et détecteur Impeccable sur `src/ui/App.tsx` réussis. Nouveau DMG arm64 construit et checksum vérifiée : `Solar-macOS-arm64-Ollama-refresh-fix-2026-10-13.dmg`. Le rendu natif final reste à valider après installation de cette version.
+
+## Arrêt rapide de la génération Ollama — 13 octobre 2026
+- Le parcours de génération réel `streamChat` + pipeline Moyen a été exécuté en local contre `batiai/qwen3.5-9b:q4` : l’étape de planification et la réponse finale se terminent correctement.
+- La planification structurée de niveau Moyen retombe maintenant automatiquement sur une réponse directe si le modèle échoue à produire un plan exploitable. Les erreurs de transport/pipeline sont conservées au lieu d’être remplacées par un message générique, et s’affichent sous le message concerné dans le chat.
+- Contrats pipeline/chat/providers, build, détection UI et vérification du diff réussis. Nouveau DMG arm64 vérifié : `Solar-macOS-arm64-Ollama-stable-generation-2026-10-13.dmg`. La validation dans la webview native n’a pas pu être exécutée ici; la génération a été validée via la même couche réseau/service et le même pipeline que l’application.
+
+## Modèles Solar, moteur de Skills et clarification d’intention — 13 octobre 2026
+- Ajout du catalogue local Solar 4B (Qwen3-4B), Solar 9B (Ornith-1.0-9B) et Solar 12B (Gemma 3 12B IT). Les deux derniers portent la recommandation Solar Code; le consentement aux conditions Gemma précède son téléchargement. Le catalogue gère la détection/démarrage du runtime local et les progrès/erreurs de téléchargement. Les trois modèles n’ont pas été téléchargés dans cette session (plusieurs Go chacun).
+- Intégration des sept fichiers Markdown fournis comme Skills Solar versionnés. Routage automatique ou manuel, activations persistées, déclencheurs/compatibilités et budget de consignes qui varie selon le modèle; les six packs optionnels existants restent distincts. Un correctif garde les imports de service compatibles avec Vite et les tests Node, et le budget des Skills personnels n’est plus retranché deux fois.
+- Solar Code choisit une stratégie interne Fast/Balanced/Deep en fonction de la complexité, du modèle, du profil et de la mémoire détectée. Il borne le contexte historique tout en gardant la demande courante; le sélecteur d’effort et le pipeline déjà existants restent en place.
+- Ajout d’une clarification d’intention locale, découplée des fournisseurs : jusqu’à quatre questions seulement pour les demandes ambiguës, options cliquables, texte libre « Autre », passage facultatif, résumé concis et injection des choix à la requête.
+- Vérifications réussies : `npm run build`, contrats `providers`, `chat`, `evolution`, `skills`, `solar-ai`, `features`, `pipeline` et `git diff --check`. Le nouveau contrat `solar-ai` couvre les sept packs, métadonnées, routage, budgets, modèles, stratégie, contexte et clarification.
+- DMG Apple Silicon reconstruit : [`Solar-macOS-arm64-Skills-2026-10-13.dmg`](Solar-macOS-arm64-Skills-2026-10-13.dmg), image vérifiée (`hdiutil verify`), binaire `arm64`, SHA-256 `dd44ecab4a047bff075d3d1fa02bad3f90d227d00721d0dc38a68e3700952db6`. Signature et notarisation ignorées pour ce build local; il peut nécessiter l’autorisation macOS à l’ouverture.
+- Limites : aucun téléchargement/essai de génération des trois poids locaux, ni test natif macOS d’Ollama, n’a été réalisé. Playwright n’a pas pu ouvrir l’app de développement, car Google Chrome est absent (`/Applications/Google Chrome.app`); le rendu visuel macOS reste à valider. Le build Vite conserve ses avertissements existants de chunks volumineux.
+
+## Diagnostic erreur de téléchargement des modèles — 13 octobre 2026
+- L’interface perdait parfois l’erreur utile quand le client HTTP rejetait une chaîne ou un objet non-`Error`; elle affichait alors seulement « Téléchargement de … impossible ». Les réponses HTTP d’échec jetaient aussi leur corps JSON, qui contient le motif Ollama.
+- Le téléchargement conserve désormais le détail de transport, le statut/texte HTTP et le message JSON Ollama; les erreurs de flux sont aussi distinguées. Un test avec serveur HTTP local simulé confirme que l’erreur de manifeste remonte et qu’un flux de progression se termine correctement, sans récupérer de poids.
+- Vérifié sur le service local : `/api/version` répond `0.40.1`, `/api/tags` répond et expose le modèle existant. Cela confirme que le moteur répond, mais sans le corps exact du refus antérieur il n’est pas possible d’affirmer pourquoi Ollama a rejeté le modèle voulu.
+- Build et contrat `solar-ai` réussis. DMG arm64 de diagnostic créé et vérifié : `Solar-macOS-arm64-download-diagnostics-2026-10-13.dmg`, SHA-256 `691097478d0172b884abff357a34e3b331455e3babac1ca4c9de7a25c34a5b32`. Non signé/notarié; aucun téléchargement réel n’a été relancé.
+
+## Skills intégrés et génération native Ollama — 13 octobre 2026
+- Cause de la page « Skills Solar » vide : Vite laisse dans l’application compilée le garde `typeof import.meta.glob`, qui vaut faux à l’exécution, bien que les sept fichiers soient inclus dans le bundle. Le chargeur appelle maintenant directement `import.meta.glob` (dans un `try/catch` pour que le contrat Node continue de fonctionner). Vérification de l’artefact compilé et de l’interface : les sept skills fournis sont affichés.
+- Génération locale : le chemin de chat natif Rust/Reqwest est livré dans le build macOS, avec transport streaming et annulation. Essai réel dans l’application mise à jour avec `hf.co/ornith-ai/Ornith-1.0-9B-GGUF:Q4_K_M`, effort Faible : « Réponds uniquement par OK. » a produit « OK ». À effort Ultra, cet essai court n’a pas terminé dans le délai de contrôle; il a été arrêté et n’est pas présenté comme validé.
+- Vérifications : `npm run build`, tests `skills`, `chat`, `pipeline`, `solar-ai`, `cargo check`, `git diff --check` et bundle `.app` réussis. Le bundle de développement reconstruit a été lancé et l’interface Skills vérifiée.
+- Limites : build local non signé/notarié; avertissement Vite existant sur les gros chunks. Aucun DMG n’a été créé dans cette passe.
+
+## Solar Agent Runtime local — 13 octobre 2026
+
+- Ajout d’un runtime Solar Code local séparé en services : analyse de la demande, complexité, index de chemins en cache, sélection de contexte bornée, profils 4B/9B/12B, plan court, sorties JSON structurées, validation des actions, préparation de patchs, vérification et boucle de réparation. Les modes Fast/Balanced/Deep réutilisent l’effort existant; le chat normal, les fournisseurs cloud et les artefacts gardent leur moteur actuel.
+- Les actions shell proposées par le modèle sont refusées. Aucun fichier n’est écrit pendant la génération : les changements vérifiés deviennent des propositions dans le panneau Projet, puis suivent l’approbation/annulation existante. La création de fichier a été ajoutée au parcours natif et navigateur avec vérification du chemin et rollback. Les détails de génération consignés en mémoire n’incluent ni prompts, ni chemins, ni secrets.
+- Le contexte de l’agent local ne reçoit plus la copie complète des fichiers cochés ni l’historique du pipeline classique. Le nombre de fichiers et le budget correspondent à la fenêtre effective envoyée à Ollama. L’interface Projet précise que la sélection de fichiers est automatique et que les coches ne servent qu’à prioriser.
+- Tests passés : contrats agent (Fast/Balanced/Deep, JSON invalide, commande interdite, sélection, création, réparation après erreur de build simulée, annulation), chat, pipeline, skills, solar-ai, build TypeScript/Vite et tests Rust de chemins/écriture/annulation. Le contrat solar-ai a nécessité l’accès loopback autorisé par le bac à sable.
+- Limites matérielles et fonctionnelles : la vérification embarquée analyse la syntaxe JS/TS/JSON et les imports relatifs, mais n’exécute pas encore un build/test réel d’un projet choisi avant approbation. Le test JSON réel du Solar 9B installé a expiré à 90 s sans réponse; les modèles Solar 4B et 12B ne sont pas installés localement et n’ont pas été testés en inférence. Aucun gain chiffré de vitesse ou de qualité face à d’autres petits modèles n’est donc revendiqué. Le contrôle visuel Playwright CLI est limité par l’absence du paquet dans le cache et l’accès réseau bloqué; l’aperçu Vite a néanmoins été ouvert dans le navigateur de l’application et les modes Solar Code, sombre et clair ont été inspectés. La fenêtre native macOS et les petites tailles restent à valider. Aucun DMG créé ni installé pour ce chantier.

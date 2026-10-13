@@ -2,6 +2,7 @@ import type { Metrics,PerformanceProfile } from "../domain/extensions";
 import { runtimeProfile } from "./performance.ts";
 import { messagePayload } from "./messagePayload.ts";
 import { providerFetch, ollamaUrl } from "./transport.ts";
+import { isNativeSolar, streamNativeOllamaChat } from "./ollamaNative.ts";
 import type { Effort, Message, Provider } from "../domain/types";
 import type { SecretVault } from "./contracts";
 
@@ -50,7 +51,7 @@ const completionUrl = (provider: Provider) => {
   try { if (dev && typeof window !== "undefined" && !(window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ && new URL(base).hostname === "api.gonkarouter.io") return `/solar-router${new URL(base).pathname}/chat/completions`; } catch { /* Validation is handled by settings. */ }
   return `${base}/chat/completions`;
 };
-export async function streamChat(input: { provider: Provider; model: string; messages: Message[]; effort: Effort; vault: SecretVault; signal: AbortSignal; onDelta: (text: string) => void; performanceProfile?:PerformanceProfile; onMetrics?:(metrics:Metrics)=>void; systemInstruction?: string; maxOutputTokens?: number; onActivity?: (stage: Message["activity"]) => void }) {
+export async function streamChat(input: { provider: Provider; model: string; messages: Message[]; effort: Effort; vault: SecretVault; signal: AbortSignal; onDelta: (text: string) => void; performanceProfile?:PerformanceProfile; onMetrics?:(metrics:Metrics)=>void; systemInstruction?: string; maxOutputTokens?: number; format?: unknown; localOptions?: { temperature?: number; numCtx?: number }; onActivity?: (stage: Message["activity"]) => void }) {
   let stage: Message["activity"]; const activity = (value: Message["activity"]) => { if (stage !== value) { stage = value; input.onActivity?.(value); } }; activity("connecting");
   const local = input.provider.protocol === "ollama";
   const key = local ? null : await input.vault.get(input.provider.secretRef);
@@ -61,17 +62,26 @@ export async function streamChat(input: { provider: Provider; model: string; mes
   const profile=runtimeProfile(input.performanceProfile);
   const anthropic=input.provider.protocol==="anthropic";
   const anthropicMessages=messages.slice(1).map(m=>({role:m.role,content:typeof m.content==="string"?m.content:m.content.map((part:any)=>{if(part.type==="image_url"){const match=String(part.image_url.url).match(/^data:([^;]+);base64,(.+)$/);if(!match)throw new ChatError("Image invalide", "model");return {type:"image",source:{type:"base64",media_type:match[1],data:match[2]}};}return part;})}));
-  const body = { model: input.model, stream: true, messages:anthropic?anthropicMessages:messages, ...(anthropic?{system:messages[0].content}:{}),...(local ? {keep_alive:profile.keep_alive, options: { ...profile.options,num_predict: budget } } : { max_tokens: budget }) };
+  // Ollama thinking models can spend the entire output budget in the separate
+  // `thinking` field, leaving Solar with an apparently empty answer. Solar's
+  // local effort pipeline already handles staged reasoning, so ask Ollama for
+  // the user-facing answer directly on each stage.
+  const body = { model: input.model, stream: true, messages:anthropic?anthropicMessages:messages, ...(anthropic?{system:messages[0].content}:{}),...(local ? {think:false,keep_alive:profile.keep_alive, options: { ...profile.options,num_predict: budget, ...(input.localOptions?.temperature !== undefined ? { temperature: input.localOptions.temperature } : {}), ...(input.localOptions?.numCtx !== undefined ? { num_ctx: input.localOptions.numCtx } : {}) }, ...(input.format?{format:input.format}:{}) } : { max_tokens: budget }) };
   const headers: Record<string, string> = { "Content-Type": "application/json", Accept: local ? "application/x-ndjson" : "text/event-stream" };
   if(anthropic)headers["anthropic-version"]="2023-06-01";
   if (key) { headers.Authorization = `Bearer ${key.trim()}`; headers["x-api-key"] = key.trim(); }
   let response: Response;
-  try { response = await providerFetch(completionUrl(input.provider), { method: "POST", signal: input.signal, headers, body: JSON.stringify(body) }); }
-  catch { if (input.signal.aborted) throw new ChatError("La génération a été interrompue.", "interrupted"); throw new ChatError(`Impossible de joindre ${input.provider.name}. Vérifie ta connexion et l’URL du fournisseur.`, "network"); }
+  try { response = local && isNativeSolar()
+    ? await streamNativeOllamaChat(input.provider.baseUrl, body, input.signal)
+    : await providerFetch(completionUrl(input.provider), { method: "POST", signal: input.signal, headers, body: JSON.stringify(body) }); }
+  catch (error) { if (input.signal.aborted) throw new ChatError("La génération a été interrompue.", "interrupted"); const detail = error instanceof Error && error.message ? ` Détail : ${error.message}` : ""; throw new ChatError(`Impossible de joindre ${input.provider.name}. Vérifie que le service répond à ${input.provider.baseUrl}.${detail}`, "network"); }
   if (response.status === 401 || response.status === 403) throw new ChatError("La clé API a été refusée par le fournisseur.", "unauthorized");
   if (response.status === 404) throw new ChatError("Le modèle ou l’URL de l’API est introuvable.", "model");
   if ([400, 415, 422].includes(response.status) && input.messages.some(message => message.attachments?.some(item => item.kind === "image"))) throw new ChatError("Le fournisseur n’a pas accepté cette demande avec image. Choisis un modèle compatible vision ou vérifie son format d’API.", "model");
-  if (!response.ok || !response.body) throw new ChatError(`Le fournisseur a répondu ${response.status}.`, "provider");
+  if (!response.ok || !response.body) {
+    const detail = local ? response.headers.get("x-ollama-error") : null;
+    throw new ChatError(detail ? `Ollama : ${detail}` : `Le fournisseur a répondu ${response.status}.`, local ? "model" : "provider");
+  }
   activity("waiting");
   const reader = response.body.getReader(); const decoder = new TextDecoder(); const filter = new VisibleTextFilter(() => activity("thinking"));
   let buffer = ""; let dataLines: string[] = []; let completed = false; let visibleLength = 0; let snapshot = "";
@@ -80,7 +90,10 @@ export async function streamChat(input: { provider: Provider; model: string; mes
     if (data === "[DONE]") { completed = true; return; }
     let payload: { type?:string; delta?:{type?:string;text?:string;thinking?:string}; total_duration?:number;load_duration?:number;eval_count?:number;eval_duration?:number; error?: unknown; done?: boolean; message?: { content?: string; thinking?: string }; choices?: Array<{ delta?: { content?: string; reasoning_content?: string; reasoning?: string }; message?: { content?: string } }> };
     try { payload = JSON.parse(data); } catch { throw new ChatError("Le flux de réponse du fournisseur est invalide.", "invalid-response"); }
-    if (payload.error) throw new ChatError("Le fournisseur a signalé une erreur pendant la génération. Vérifie le modèle sélectionné puis réessaie.", "provider");
+    if (payload.error) {
+      const detail = typeof payload.error === "string" ? payload.error : "";
+      throw new ChatError(detail ? `Ollama : ${detail}` : "Le fournisseur a signalé une erreur pendant la génération. Vérifie le modèle sélectionné puis réessaie.", "provider");
+    }
     if(anthropic){if(payload.type==="message_stop"){completed=true;return;}if(payload.delta?.type==="thinking_delta")activity("thinking");if(payload.delta?.type==="text_delta"&&typeof payload.delta.text==="string")emit(payload.delta.text);return;}
     if (local) { if(payload.done && payload.total_duration)input.onMetrics?.({totalMs:payload.total_duration/1e6,loadMs:(payload.load_duration??0)/1e6,tokens:payload.eval_count,tokensPerSecond:payload.eval_duration? (payload.eval_count??0)/(payload.eval_duration/1e9):undefined}); if (payload.message?.thinking) activity("thinking"); if (typeof payload.message?.content === "string") emit(payload.message.content); if (payload.done) completed = true; }
     else {
@@ -115,6 +128,7 @@ export async function streamChat(input: { provider: Provider; model: string; mes
   } catch (error) {
     if (input.signal.aborted) throw new ChatError("La génération a été interrompue.", "interrupted");
     if (error instanceof ChatError) throw error;
-    throw new ChatError("Le flux de réponse a été interrompu.", "network");
+    const detail = error instanceof Error && error.message ? ` Détail : ${error.message}` : "";
+    throw new ChatError(`Le flux de réponse a été interrompu.${detail}`, "network");
   } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
 }

@@ -95,7 +95,7 @@ export function artifactInstruction(kind: ArtifactKind, existing?: Artifact) {
                 content: "Code complet",
               }),
     }) +
-    ". Respecte le nombre de diapositives demandé. Ne donne pas seulement un plan. Pour les diapositives : une couverture avec un sous-titre bref, puis des titres courts et 3 à 6 points concrets par diapositive séparés par des sauts de ligne. Rédige le contenu final, pas des instructions de création. La mise en page 16:9 et le fichier PowerPoint sont générés par Solar. " +
+    ". Respecte exactement le nombre de diapositives demandé. Ne donne pas seulement un plan. Pour une présentation : couverture avec sous-titre bref, puis titres courts et contenu concret ; vise environ 35 mots maximum par diapositive, avec des points concis séparés par des sauts de ligne. Varie les angles (repère chronologique, comparaison, étapes, chiffre clé, synthèse) et ne répète pas deux structures identiques de suite. Utilise uniquement des données de la conversation ou marque explicitement les exemples. Évite les placeholders et les consignes de création visibles. Le rendu Solar ajoute une mise en page 16:9 cohérente et exportable. Pour un design, décris les choix visuels par des valeurs, composants et proportions concrets. Pour du code, fournis un fichier complet et exécutable quand le contexte le permet. " +
     (existing
       ? "Modifie cet artefact existant en conservant son type et son contenu non concerné : " +
         JSON.stringify(existing)

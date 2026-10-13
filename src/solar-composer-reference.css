@@ -167,9 +167,9 @@ svg.i.sm { width: 15px; height: 15px; }
   align-self: flex-end; max-width: 82%; padding: 10px 16px; border-radius: 20px; background: var(--chip-bg);
   font-size: 16px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; animation: rise 0.7s var(--spring) backwards;
 }
-.msg-ai { align-self: flex-start; max-width: 100%; font-size: 16px; line-height: 1.7; color: var(--ink); animation: rise 0.7s var(--spring) backwards; }
-.msg-ai .w { display: inline; animation: wordIn 0.45s ease backwards; }
-@keyframes wordIn { from { opacity: 0; filter: blur(4px); } }
+.msg-ai { align-self: flex-start; max-width: 100%; font-size: 16px; line-height: 1.7; color: var(--ink); }
+.msg-ai .blk { animation: blkIn 0.3s ease-out backwards; }
+@keyframes blkIn { from { opacity: 0; } }
 
 /* Le conteneur garde une hauteur fixe : la barre est ancrée en bas et grandit vers le haut, rien ne saute. */
 .slot { position: relative; width: min(640px, 100%); height: 114px; flex: none; }

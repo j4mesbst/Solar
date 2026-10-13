@@ -40,6 +40,10 @@ export interface Metrics {
   tokens?: number;
   tokensPerSecond?: number;
   loadMs?: number;
+  contextTokens?: number;
+  contextFiles?: number;
+  repairIterations?: number;
+  agentMode?: "fast" | "balanced" | "deep";
 }
 export type ArtifactKind = "code" | "slides" | "document" | "table" | "diagram";
 export interface Artifact {
@@ -60,6 +64,7 @@ export interface WorkChange {
   path: string;
   before: string;
   after: string;
+  created?: boolean;
 }
 export interface WorkOperation {
   projectToken?: string;

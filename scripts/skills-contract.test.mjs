@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
+import { readdir, readFile } from 'node:fs/promises';
 import { builtinSkills, skillApplies, responseGuidance } from '../src/services/builtinSkills.ts';
-assert.equal(builtinSkills.length,6);assert.equal(new Set(builtinSkills.map(s=>s.id)).size,6);
-for(const skill of builtinSkills){assert(skill.content.length>200&&skill.content.length<1600);assert(skill.description.length>20)}
+import { loadBundledSkills } from '../src/services/skillEngine.ts';
+assert(builtinSkills.length>=6);assert.equal(new Set(builtinSkills.map(s=>s.id)).size,builtinSkills.length);
+const skillDirectory = new URL('../src/skills/', import.meta.url);
+const markdownFiles = await readdir(skillDirectory);
+const bundled = loadBundledSkills(Object.fromEntries(await Promise.all(markdownFiles.filter(file=>file.endsWith('.md')).map(async file=>[file,await readFile(new URL(file,skillDirectory),'utf8')]))));
+assert.equal(bundled.skills.length,7,'the seven bundled Solar skill packs should parse from the repository');
+assert.deepEqual(bundled.errors,[],'bundled skill metadata should remain valid');
+for(const skill of builtinSkills){assert(skill.content.length>200);assert(skill.description.length>20);if(!skill.bundled)assert(skill.content.length<1600)}
 assert(skillApplies('solar:artifact-pro',{text:'Un diaporama',artifact:true}));assert(!skillApplies('solar:artifact-pro',{text:'Bonjour'}));
 assert(skillApplies('solar:code-max',{text:'Bonjour',workMode:true}));assert(skillApplies('solar:code-max',{text:'Corrige ce bug React'}));assert(!skillApplies('solar:code-max',{text:'Bonjour'}));
 assert(skillApplies('solar:data-analyst',{text:'Calcule ce pourcentage'}));assert(skillApplies('custom',{text:'Bonjour'}));
@@ -12,4 +19,4 @@ stored=builtinSkills.map(s=>({...s,kind:'skills',enabled:true}));
 assert.equal(await personalSkillInstruction({text:'Bonjour'}),'');
 let instruction=await personalSkillInstruction({text:'Corrige un bug React'});assert(instruction.includes('Code Max'));assert(!instruction.includes('Artefact Pro'));
 await savePersonalExtensions(stored.map(s=>({...s,enabled:false})));assert.equal(await personalSkillInstruction({text:'Corrige ce code',workMode:true}),'');
-console.log('skills-contracts: ok (six scoped instructions, custom compatibility, enabled/disabled persistence, no irrelevant prompts)');
+console.log('skills-contracts: ok (optional pack compatibility, enabled/disabled persistence, no irrelevant prompts)');

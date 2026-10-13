@@ -33,6 +33,10 @@ const snapshot = text => `data: ${JSON.stringify({ choices: [{ message: { conten
 assert(await runChunks([snapshot("Salut"), snapshot("Salut !"), snapshot("Salut !"), "data: [DONE]\n\n"]) === "Salut !", "explicit snapshots must not replay content");
 const local = { ...provider, protocol: "ollama", baseUrl: "http://localhost:11434" };
 assert(await runChunks(['{"message":{"content":"Bon"},"done":false}\n', '{"message":{"content":"jour"},"done":true}'], { provider: local, vault: { get: async () => { throw new Error("local inference must not require a key"); } } }) === "Bonjour", "Ollama NDJSON must stream without a key");
+let ollamaRequest;
+globalThis.fetch=async(_url,init)=>{ollamaRequest=JSON.parse(init.body);return new Response('{"message":{"content":"OK"},"done":true}\n');};
+await streamChat({provider:local,model:"model-a",messages,effort:"medium",vault:{get:async()=>{throw new Error("local inference must not require a key");}},signal:new AbortController().signal,onDelta:()=>{}});
+assert(ollamaRequest.think===false,"Ollama requests must disable internal thinking so the local pipeline receives visible answer tokens");
 try { await runChunks([delta("partial")]); throw new Error("truncated stream must fail"); } catch (error) { assert(error instanceof ChatError && error.code === "network", "truncated stream must retain partial response with a meaningful error"); }
 try { await runChunks(['data: {broken}\n\n']); throw new Error("bad JSON must fail"); } catch (error) { assert(error instanceof ChatError && error.code === "invalid-response", "malformed chunks must fail clearly"); }
 const cancelled = new AbortController(); cancelled.abort();

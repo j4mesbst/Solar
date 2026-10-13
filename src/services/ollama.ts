@@ -4,16 +4,44 @@ import type { Model, Provider } from "../domain/types";
 import { solarStore } from "./store";
 import { providerApi } from "./providerApi";
 import { secretVault } from "./nativeVault";
-import { ollamaUrl, providerFetch } from "./transport";
+import { normalizeOllamaBaseUrl, ollamaUrl, providerFetch } from "./transport";
+import { inspectOllama, isNativeSolar } from "./ollamaNative";
 let discovery: Promise<void> | null = null;
 export async function refreshOllama(): Promise<void> {
   if (discovery) return discovery;
   discovery = (async () => {
     const configured = (await solarStore.listProviders()).filter(p => p.protocol === "ollama");
-    const candidates = configured.length ? configured.filter(p => p.enabled) : [{ id: "ollama:local", name: "Ollama", baseUrl: "http://127.0.0.1:11434", protocol: "ollama" as const, secretRef: "provider:ollama:local", enabled: true, connectionState: "unknown" as const }];
+    for (const provider of configured) {
+      // Ollama is local-only in Solar; stale custom hosts/ports make every later
+      // chat request fail even when the native detector can reach Ollama.
+      const baseUrl = isNativeSolar() ? "http://127.0.0.1:11434" : normalizeOllamaBaseUrl(provider.baseUrl);
+      if (baseUrl !== provider.baseUrl) {
+        const normalized = { ...provider, baseUrl };
+        configured[configured.indexOf(provider)] = normalized;
+        await solarStore.saveProvider(normalized);
+      }
+    }
+    const candidates = configured.length ? configured.filter(p => p.enabled) : [{ id: "solar:local-runtime", name: "Modèles Solar", baseUrl: "http://127.0.0.1:11434", protocol: "ollama" as const, secretRef: "provider:solar:local-runtime", enabled: true, connectionState: "unknown" as const }];
+    if (isNativeSolar()) {
+      const status = await inspectOllama("http://127.0.0.1:11434");
+      if (status.supported) {
+        if (status.running) {
+          for (const provider of candidates) {
+            const localProvider = { ...provider, baseUrl: "http://127.0.0.1:11434", connectionState: "connected" as const, lastError: undefined };
+            await solarStore.saveProvider(localProvider);
+            await reconcileModels(localProvider, status.models.map(name => ({ id: `${provider.id}:${name}`, providerId: provider.id, providerModelId: name, name, capabilities: [], source: "remote" as const, enabled: true })));
+          }
+        } else {
+          for (const provider of configured.filter(item => item.enabled)) {
+            await solarStore.saveProvider({ ...provider, connectionState: "error", lastError: status.error ?? "Ollama ne répond pas sur 127.0.0.1:11434." });
+          }
+        }
+        return;
+      }
+    }
     await Promise.all(candidates.map(async provider => {
       try {
-        const found = await providerApi.discoverModels(provider, secretVault, AbortSignal.timeout(2500));
+        const found = await providerApi.discoverModels(provider, secretVault, AbortSignal.timeout(1500));
         await solarStore.saveProvider({ ...provider, connectionState: "connected", lastError: undefined });
         await reconcileModels(provider, found);
       } catch { if (configured.some(item => item.id === provider.id)) await solarStore.saveProvider({ ...provider, connectionState: "error", lastError: "Instance Ollama non joignable." }).catch(() => {}); /* Discovery remains optional and cloud providers remain untouched. */ }

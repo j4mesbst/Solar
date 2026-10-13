@@ -7,6 +7,8 @@ import type { Hardware } from "../../domain/extensions";
 import { detectHardware, recommendModels } from "../../services/performance";
 import { pullModel, type PullProgress } from "../../services/modelInstall";
 import { refreshOllama } from "../../services/ollama";
+import { inspectOllama, type OllamaStatus } from "../../services/ollamaNative";
+import type { WorkBridge } from "./work-surface";
 const presets = [
   {
     name: "Ollama",
@@ -42,6 +44,7 @@ export function Onboarding({
   reload,
   renderForm,
   renderProviders,
+  workBridge,
 }: {
   settings: AppSettings;
   providers: Provider[];
@@ -53,6 +56,7 @@ export function Onboarding({
     onDone: () => void,
   ) => ReactNode;
   renderProviders: (onEdit:(preset:{id?:string;name:string;protocol:Provider["protocol"];baseUrl:string})=>void) => ReactNode;
+  workBridge: React.MutableRefObject<WorkBridge | null>;
 }) {
   const [step, setStep] = useState(0);
   const [chosen, setChosen] = useState<string[]>([]);
@@ -63,6 +67,10 @@ export function Onboarding({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [download, setDownload] = useState("");
+  const [ollamaStatus, setOllamaStatus] = useState<OllamaStatus | null>(null);
+  const native = Boolean((window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__);
+  const [pendingFolder, setPendingFolder] = useState<NonNullable<Awaited<ReturnType<WorkBridge["chooseDefaultProject"]>>> | null>(null);
+  const [folderBusy, setFolderBusy] = useState(false);
   const controller = useRef<AbortController>();
   useEffect(() => {
     void detectHardware()
@@ -79,10 +87,12 @@ export function Onboarding({
   };
   const detect = async () => {
     setBusy(true);
+    setError("");
     try {
-      await refreshOllama();
+      const status = await inspectOllama("http://127.0.0.1:11434");
+      setOllamaStatus(status);
+      if (status.running) await refreshOllama();
       await reload();
-      setError("");
     } catch (e) {
       setError(String(e));
     } finally {
@@ -220,12 +230,16 @@ export function Onboarding({
                   démarré pour que Solar puisse les détecter.
                 </p>
                 <Button
-                  className="small-button"
+                  variant="outline"
+                  className="small-button ollama-detect-button"
                   disabled={busy}
                   onClick={() => void detect()}
                 >
-                  Oui · détecter Ollama
+                  {busy ? "Détection en cours…" : "Lancer la détection"}
                 </Button>
+                {ollamaStatus && <p className="ollama-onboarding-status" role="status">{!ollamaStatus.supported ? "La détection est disponible dans l’application macOS." : ollamaStatus.running ? ollamaStatus.models.length ? `Ollama actif · ${ollamaStatus.models.length} modèle(s) détecté(s).` : "Ollama actif · aucun modèle téléchargé." : ollamaStatus.installed ? "Ollama est installé mais arrêté. Démarre-le puis relance la détection." : "Ollama n’est pas installé sur ce Mac."}</p>}
+                {ollamaStatus?.downloaded_models.length ? <p className="ollama-onboarding-status">Modèles téléchargés : {ollamaStatus.downloaded_models.join(", ")}</p> : null}
+                {ollamaStatus?.error && <details className="ollama-technical"><summary>Détail technique</summary><code>{ollamaStatus.error}</code></details>}
                 <a
                   className="small-button"
                   href="https://ollama.com/download/mac"
@@ -320,6 +334,20 @@ export function Onboarding({
               Continuer
             </Button>
           </>
+        ) : step === 4 ? (
+          <>
+            <h1>Ton dossier de référence</h1>
+            <p>Choisis un dossier si tu veux que le chat normal puisse retrouver des fichiers pertinents quand tu en parles. L’historique des conversations, lui, reste enregistré localement par Solar.</p>
+            {!native && <p className="settings-note">Le dossier de référence persistant se configure dans l’application Solar installée.</p>}
+            {workBridge.current?.defaultProject() && <p className="settings-note">Dossier déjà validé : {workBridge.current.defaultProject()!.name}</p>}
+            {pendingFolder && <p className="settings-note">Sélection : {pendingFolder.name}</p>}
+            <div className="onboarding-folder-actions">
+              <Button className="small-button" disabled={folderBusy || !native || !workBridge.current} onClick={() => void (async () => { setFolderBusy(true); setError(""); try { setPendingFolder(await workBridge.current?.chooseDefaultProject() ?? null); } catch (e) { setError(e instanceof Error ? e.message : "Impossible d’ouvrir le sélecteur de dossier."); } finally { setFolderBusy(false); } })()}>{folderBusy ? "Ouverture…" : "Choisir un dossier"}</Button>
+              {pendingFolder && <Button className="small-button" disabled={folderBusy} onClick={() => void (async () => { setFolderBusy(true); setError(""); try { if (!workBridge.current) throw new Error("Le service de dossiers n’est pas prêt."); await workBridge.current.confirmDefaultProject(pendingFolder); setPendingFolder(null); } catch (e) { setError(e instanceof Error ? e.message : "Impossible d’enregistrer ce dossier."); } finally { setFolderBusy(false); } })()}>Valider</Button>}
+              {workBridge.current?.defaultProject() && <Button variant="ghost" className="small-button" disabled={folderBusy} onClick={() => void workBridge.current?.clearDefaultProject().then(() => setPendingFolder(null)).catch(e => setError(e instanceof Error ? e.message : "Impossible de retirer ce dossier."))}>Retirer</Button>}
+              <Button className="primary-button" onClick={() => setStep(5)}>Continuer</Button>
+            </div>
+          </>
         ) : (
           <>
             <h1>
@@ -337,7 +365,7 @@ export function Onboarding({
             </Button>
           </>
         )}
-        {step > 0 && step < 4 && (
+        {step > 0 && step < 5 && (
           <button className="text-button" onClick={() => setStep((s) => s - 1)}>
             Retour
           </button>

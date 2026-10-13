@@ -1,5 +1,11 @@
 import type { Hardware, PerformanceProfile } from "../domain/extensions";
+let hardwarePromise: Promise<Hardware> | null = null;
 export async function detectHardware(): Promise<Hardware> {
+  if (hardwarePromise) return hardwarePromise;
+  hardwarePromise = detectHardwareOnce().catch(error => { hardwarePromise = null; throw error; });
+  return hardwarePromise;
+}
+async function detectHardwareOnce(): Promise<Hardware> {
   if (
     (window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__
   ) {
@@ -23,18 +29,25 @@ export function recommendModels(memory?: number) {
   const gb = memory ? memory / 2 ** 30 : undefined;
   return [
     {
-      name: "qwen3:4b",
+      name: "Solar 4B",
       downloadGB: 2.6,
-      memoryGB: 6,
-      use: "Chat et code léger",
+      memoryGB: 5,
+      use: "Chat rapide et code léger",
       speed: "Rapide",
     },
     {
-      name: "qwen3:8b",
-      downloadGB: 5.2,
-      memoryGB: 10,
-      use: "Analyse et code",
-      speed: "Équilibré",
+      name: "Solar 9B",
+      downloadGB: 5.6,
+      memoryGB: 8,
+      use: "Code agentique",
+      speed: "Recommandé pour Solar Code",
+    },
+    {
+      name: "Solar 12B",
+      downloadGB: 8.1,
+      memoryGB: 12,
+      use: "Chat multimodal et code",
+      speed: "Recommandé pour Solar Code",
     },
   ].filter((m) => !gb || m.memoryGB <= gb * 0.8);
 }

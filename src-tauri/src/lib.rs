@@ -1,5 +1,6 @@
 mod work;
 mod hardware;
+mod ollama;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -7,7 +8,8 @@ pub fn run() {
     .plugin(tauri_plugin_http::init())
     .plugin(tauri_plugin_dialog::init())
     .manage(work::WorkState::default())
-    .invoke_handler(tauri::generate_handler![secret_get, secret_set, secret_delete, export_save, artifact_save, work::work_open, work::work_read, work::work_apply, work::work_undo, hardware::hardware_info])
+    .manage(ollama::OllamaRequestState::default())
+    .invoke_handler(tauri::generate_handler![secret_get, secret_set, secret_delete, export_save, artifact_save, work::work_open, work::work_default, work::work_set_default, work::work_clear_default, work::work_read, work::work_apply, work::work_undo, hardware::hardware_info, ollama::ollama_status, ollama::ollama_start, ollama::ollama_chat_stream, ollama::ollama_cancel])
     .run(tauri::generate_context!())
     .expect("error while running Solar");
 }

@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "test:providers": "node --experimental-strip-types scripts/provider-contract.test.mjs",
     "test:chat": "node --experimental-strip-types scripts/chat-contract.test.mjs",
+    "test:pipeline": "node --experimental-strip-types scripts/pipeline-contract.test.mjs",
     "preview": "vite preview",
     "tauri": "tauri",
     "test:features": "node --experimental-strip-types scripts/features-contract.test.mjs",
@@ -25,9 +26,12 @@
     "test:ui:scene": "node scripts/ui-solar-scene.cjs",
     "test:ui:first-turns": "node scripts/ui-first-turns.cjs",
     "test:skills": "node --experimental-strip-types scripts/skills-contract.test.mjs",
+    "test:solar-ai": "node --experimental-strip-types scripts/solar-ai-contract.test.mjs",
+    "test:agent": "node --experimental-strip-types scripts/agent-contract.test.mjs",
     "test:ui:skills": "node scripts/ui-skills-polish.cjs"
   },
   "dependencies": {
+    "@babel/parser": "7.29.9",
     "@supabase/supabase-js": "2.117.3",
     "@tauri-apps/api": "^2.8.0",
     "@tauri-apps/plugin-http": "^2.8.1",

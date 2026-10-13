@@ -11,7 +11,8 @@ type DirectoryHandle = {
   name: string;
   values: () => AsyncIterable<DirectoryHandle | FileHandle>;
   getDirectoryHandle: (name: string) => Promise<DirectoryHandle>;
-  getFileHandle: (name: string) => Promise<FileHandle>;
+  getFileHandle: (name: string, options?: { create?: boolean }) => Promise<FileHandle>;
+  removeEntry: (name: string) => Promise<void>;
 };
 type FileHandle = {
   kind: "file";
@@ -74,15 +75,31 @@ export async function openProject(): Promise<WorkProject | null> {
   handles.set(token, root);
   return { token, name: root.name, files: files.sort() };
 }
-async function fileHandle(project: WorkProject, path: string) {
-  if (!allowedPath(path) || !project.files.includes(path))
+async function fileHandle(project: WorkProject, path: string, create = false) {
+  if (!allowedPath(path) || (!create && !project.files.includes(path)))
     throw new Error("Fichier non autorisé");
   let dir = handles.get(project.token);
   if (!dir) throw new Error("Ouvre le dossier à nouveau.");
   const parts = path.split("/");
   for (const part of parts.slice(0, -1))
     dir = await dir.getDirectoryHandle(part);
-  return dir.getFileHandle(parts.at(-1)!);
+  return dir.getFileHandle(parts.at(-1)!, { create });
+}
+async function parentHandle(project: WorkProject, path: string) {
+  if (!allowedPath(path)) throw new Error("Fichier non autorisé");
+  let dir = handles.get(project.token);
+  if (!dir) throw new Error("Ouvre le dossier à nouveau.");
+  for (const part of path.split("/").slice(0, -1)) dir = await dir.getDirectoryHandle(part);
+  return dir;
+}
+async function readBrowserOperationFile(project: WorkProject, path: string) {
+  const dir = await parentHandle(project, path);
+  return (await (await dir.getFileHandle(path.split("/").at(-1)!)).getFile()).text();
+}
+async function browserOperationFileExists(project: WorkProject, path: string) {
+  const dir = await parentHandle(project, path);
+  try { await dir.getFileHandle(path.split("/").at(-1)!); return true; }
+  catch (error) { if (error instanceof DOMException && error.name === "NotFoundError") return false; throw error; }
 }
 export async function readProjectFile(project: WorkProject, path: string) {
   if (!allowedPath(path) || !project.files.includes(path))
@@ -137,10 +154,11 @@ export async function applyOperation(
     });
   }
   const changes = operation.changes.map((c) =>
-    undo ? { path: c.path, before: c.after, after: c.before } : c,
+    undo ? { path: c.path, before: c.after, after: c.before, created: c.created } : c,
   );
   for (const c of changes) {
-    if ((await readProjectFile(project, c.path)) !== c.before)
+    if (!allowedPath(c.path)) throw new Error("Chemin de projet interdit.");
+    if (c.created && !undo ? await browserOperationFileExists(project, c.path) : (await readBrowserOperationFile(project, c.path)) !== c.before)
       throw new Error(c.path + " a changé depuis l’aperçu.");
   }
   if (
@@ -152,27 +170,25 @@ export async function applyOperation(
   const written: WorkChange[] = [];
   try {
     for (const c of changes) {
-      if ((await readProjectFile(project, c.path)) !== c.before)
+      if (c.created && !undo ? await browserOperationFileExists(project, c.path) : (await readBrowserOperationFile(project, c.path)) !== c.before)
         throw new Error(c.path + " a changé pendant la confirmation.");
-      const writer = await (await fileHandle(project, c.path)).createWritable();
-      try {
-        await writer.write(c.after);
-        await writer.close();
+      if (c.created && undo) {
+        await (await parentHandle(project, c.path)).removeEntry(c.path.split("/").at(-1)!);
         written.push(c);
-      } catch (error) {
-        await writer.abort();
-        throw error;
+      } else {
+        const writer = await (await fileHandle(project, c.path, Boolean(c.created))).createWritable();
+        try { await writer.write(c.after); await writer.close(); written.push(c); }
+        catch (error) { await writer.abort(); throw error; }
       }
     }
   } catch (error) {
     for (const c of written) {
-      if ((await readProjectFile(project, c.path)) !== c.after)
+      if (!c.created || !undo ? (await readBrowserOperationFile(project, c.path)) !== c.after : await browserOperationFileExists(project, c.path))
         throw new Error(
           "Restauration incomplète : un fichier a changé pendant l’opération.",
         );
-      const writer = await (await fileHandle(project, c.path)).createWritable();
-      await writer.write(c.before);
-      await writer.close();
+      if (c.created && !undo) await (await parentHandle(project, c.path)).removeEntry(c.path.split("/").at(-1)!);
+      else { const writer = await (await fileHandle(project, c.path, Boolean(c.created))).createWritable(); await writer.write(c.before); await writer.close(); }
     }
     throw error;
   }

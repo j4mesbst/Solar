@@ -29,7 +29,7 @@ async function requestModels(provider: Provider, secret: string, signal?: AbortS
   let response: Response;
   const apiKey = secret.trim();
   try { response = await providerFetch(endpoint(provider), { headers: { ...(apiKey ? { Authorization: `Bearer ${apiKey}`, "x-api-key": apiKey } : {}), Accept: "application/json",...(provider.protocol==="anthropic"?{"anthropic-version":"2023-06-01"}:{}) }, signal: signal ?? AbortSignal.timeout(15000) }); }
-  catch { throw new ProviderError("Connexion au fournisseur impossible. Vérifie l’URL, ta connexion, puis redémarre Solar après une mise à jour.", "unavailable"); }
+  catch (error) { const detail = error instanceof Error && error.message ? ` Détail : ${error.message}` : ""; throw new ProviderError(`Connexion au fournisseur impossible. Vérifie l’URL et l’état du service.${detail}`, "unavailable"); }
   if (response.status === 401 || response.status === 403) throw new ProviderError("La clé API a été refusée par le fournisseur.", "unauthorized");
   if (!response.ok) throw new ProviderError(`L’endpoint /models a répondu ${response.status}.`, "unavailable");
   let payload: unknown; try { payload = await response.json(); } catch { throw new ProviderError("La réponse /models n’est pas un JSON valide.", "invalid-response"); }
