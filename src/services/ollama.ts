@@ -6,6 +6,7 @@ import { providerApi } from "./providerApi";
 import { secretVault } from "./nativeVault";
 import { normalizeOllamaBaseUrl, ollamaUrl, providerFetch } from "./transport";
 import { inspectOllama, isNativeSolar } from "./ollamaNative";
+import { localModelIdentity } from "./localModelIdentity";
 let discovery: Promise<void> | null = null;
 export async function refreshOllama(): Promise<void> {
   if (discovery) return discovery;
@@ -51,7 +52,7 @@ export async function refreshOllama(): Promise<void> {
 }
 export async function reconcileModels(provider: Provider, found: Model[]) {
   const existing = (await solarStore.listModels()).filter(model => model.providerId === provider.id);
-  for (const model of found) { const old = existing.find(item => item.id === model.id); await solarStore.saveModel({ ...model, displayName: old?.displayName, displayNameSource: old?.displayNameSource, enabled: old?.enabled ?? true, source: old?.source === "manual" ? "manual" : model.source, available: true }); }
+  for (const model of found) { const old = existing.find(item => item.id === model.id); const merged={ ...model, displayName: old?.displayName, displayNameSource: old?.displayNameSource, enabled: old?.enabled ?? true, source: old?.source === "manual" ? "manual" as const : model.source, available: true }; await solarStore.saveModel(provider.protocol==="ollama"?localModelIdentity(merged):merged); }
   for (const model of existing) if (model.source === "remote" && !found.some(item => item.id === model.id)) await solarStore.saveModel({ ...model, available: false });
 }
 export async function prepareOllama(provider: Provider, model: Model, signal: AbortSignal,profile:PerformanceProfile="balanced"): Promise<"ready" | "skipped"> {

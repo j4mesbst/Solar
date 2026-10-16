@@ -40,10 +40,14 @@ export interface Metrics {
   tokens?: number;
   tokensPerSecond?: number;
   loadMs?: number;
+  promptMs?: number;
+  decodeMs?: number;
+  promptTokens?: number;
+  promptCachedTokens?: number;
   contextTokens?: number;
   contextFiles?: number;
   repairIterations?: number;
-  agentMode?: "fast" | "balanced" | "deep";
+  agentMode?: "fast" | "balanced" | "deep" | "ultra";
 }
 export type ArtifactKind = "code" | "slides" | "document" | "table" | "diagram";
 export interface Artifact {

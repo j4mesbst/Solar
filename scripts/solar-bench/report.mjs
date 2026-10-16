@@ -1,0 +1,23 @@
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { domains } from './registry.mjs';
+
+export async function writeJson(path, value) { await mkdir(dirname(path), { recursive: true }); await writeFile(path, `${JSON.stringify(value, null, 2)}\n`); }
+const avg = values => values.length ? Math.round(values.reduce((a,b)=>a+b,0) / values.length) : undefined;
+const status = result => result.status === 'CACHED' ? `CACHED (${result.cachedFrom})` : result.status === 'passed' ? 'Réussi' : result.status === 'timeout' ? 'Timeout' : result.status === 'stagnation' ? 'Stagnation' : result.status === 'cancelled' ? 'Interrompu' : result.status === 'infrastructure-error' ? 'Infrastructure' : 'Échoué';
+const metric = value => value === undefined || value === null ? 'non mesuré' : String(value);
+
+export function makeReport(run, previous) {
+  const rows = domains.map(domain => {
+    const entries = run.results.filter(result => result.domain === domain);
+    const passed = entries.filter(result => ['passed','CACHED'].includes(result.status)).length;
+    const quality = entries.filter(result => result.quality !== undefined).map(result => result.quality);
+    return `| ${domain} | ${passed}/${entries.length} | ${quality.length ? `${avg(quality)}/100` : 'qualité non mesurée'} | ${metric(avg(entries.map(result => result.durationMs)))} ms | ${entries.length ? (passed === entries.length ? 'ok' : 'à examiner') : 'non testé'} |`;
+  }).join('\n');
+  const fixtures = run.results.map(result => `| ${result.fixtureId} | ${result.variant} | ${status(result)} | ${result.durationMs} ms | ${metric(result.tokens)} | ${result.repairs ?? 0} | ${result.checks?.length ?? 0} | ${(result.reason ?? '').replaceAll('|','/') || '—'} |`).join('\n');
+  const old = previous ? `Campagne comparable précédente : \`${previous.id}\` — ${previous.summary?.passed ?? 0}/${previous.summary?.total ?? 0} réussites.` : 'Aucune campagne compatible antérieure trouvée.';
+  const snapshot = run.snapshot ?? run.cortex?.snapshot;
+  const snapshotLines = snapshot ? `- Snapshot SHA-256 : \`${snapshot.sha256}\`\n- Snapshot : ${snapshot.files} fichiers isolés\n- Branche : \`${snapshot.branch}\`\n- Commit : \`${snapshot.commit}\`\n- Working tree dirty au démarrage : ${snapshot.dirty ? 'oui' : 'non'}\n- Paramètres modèle/context : \`${JSON.stringify(run.ollama?.details?.parameters ?? run.configuration?.inference ?? run.options?.inference ?? {}).replaceAll('|','/') }\`` : '- Snapshot : non disponible (ancien format de rapport).';
+  return `# Solar Bench — ${run.id}\n\n## Informations générales\n\n- Cortex : ${run.cortex.version} (${run.cortex.commit})\n- Date : ${run.startedAt}\n${snapshotLines}\n- Modèle Ollama : ${run.model} (${run.ollama?.identity ?? 'identité non mesurée'})\n- Machine : ${run.machine}\n- Configuration : mode=${run.options.selectionMode??run.options.preset??'—'}, variante=${run.options.variant}, délai par fixture=${run.options.timeoutMs} ms\n- Sélection : ${run.options.selectionReason??'explicite'}\n- Fixtures : ${run.results.length}; ${run.summary.executed??run.results.length} exécutées, ${run.summary.cached??0} CACHED; durée totale : ${run.summary.durationMs} ms\n${run.options.preset==='full'&&!run.options.smart?'\nValidation officielle des 25 fixtures du registre.\n':'\n**Résultat partiel : ce rapport ne représente pas le score global des 25 exercices.**\n'}\n## Par domaine\n\n| Domaine | Réussite | Qualité /100 | Durée moyenne | Statut |\n|---|---:|---:|---:|---|\n${rows}\n\n## Par exercice\n\n| Fixture | Variante | Résultat | Durée de cette campagne | Tokens | Réparations | Vérifications | Diagnostic |\n|---|---|---|---:|---:|---:|---:|---|\n${fixtures}\n\n## Comparaison historique\n\n${old}\n\n## Diagnostic\n\n${run.diagnostics.length ? run.diagnostics.map(value => `- ${value}`).join('\n') : '- Aucun diagnostic bloquant.'}\n\n## Recommandations\n\n${run.recommendations.length ? run.recommendations.map(value => `- ${value}`).join('\n') : '- Aucun conseil déterministe à produire.'}\n\n## Limites\n\n- Les résultats CACHED proviennent uniquement d'une réussite antérieure avec empreinte identique ; leur durée initiale figure dans le JSON et n'entre pas dans le temps de cette campagne.\n- Les métriques absentes sont indiquées comme « non mesuré » et jamais remplacées par zéro.\n- La qualité visuelle n’est notée que lorsqu’un validateur déterministe a produit une mesure utilisable.\n`;
+}
+export async function latestRun(root) { try { return JSON.parse(await readFile(join(root, 'latest.json'), 'utf8')); } catch { return undefined; } }

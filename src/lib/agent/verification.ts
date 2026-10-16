@@ -1,17 +1,30 @@
 import type { AgentErrorSummary, AgentFileChange, SelectedProjectContext, VerificationResult } from "./types.ts";
+import { importMode,resolveLocalImport } from './module-resolution.ts';
 
 const sourcePattern = /\.(?:[cm]?[jt]sx?)$/i;
 const localImport = /(?:\bfrom\s*|\bimport\s*\(|\brequire\s*\()\s*["'](\.{1,2}\/[^"']+)["']/g;
-const candidates = ["", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json", ".css", "/index.ts", "/index.tsx", "/index.js", "/index.jsx"];
 
-function resolveRelative(from: string, specifier: string) {
-  const stack = from.split("/").slice(0, -1);
-  for (const part of specifier.split("/")) {
-    if (part === "." || !part) continue;
-    if (part === "..") { if (!stack.length) return null; stack.pop(); }
-    else stack.push(part);
+/** Catch a common small-model failure before a full project test: exporting a
+ * name that has never been declared in the proposed module. This is purposely
+ * conservative; only simple local identifiers are checked. */
+export function verifyModuleExports(path: string, source: string): VerificationResult[] {
+  if (!/\.(?:[cm]?[jt]sx?)$/i.test(path)) return [];
+  const declared = new Set([...source.matchAll(/(?:^|[;\n])\s*(?:export\s+)?(?:default\s+)?(?:async\s+)?(?:function|class|const|let|var)\s+([A-Za-z_$][\w$]*)\b/g)].map(match => match[1]));
+  for(const match of source.matchAll(/\b(?:const|let|var)\s*\{([^}]+)\}\s*=/g))for(const part of match[1].split(",")){
+    const local=part.trim().split(/\s*:\s*/).at(-1)?.trim();if(local&&/^[A-Za-z_$][\w$]*$/.test(local))declared.add(local);
   }
-  return stack.join("/");
+  const exported = new Set<string>();
+  const topLevel = (value: string) => { const parts: string[] = []; let start = 0, depth = 0, quote = "", escaped = false; for (let index = 0; index < value.length; index++) { const char = value[index]; if (quote) { if (escaped) escaped = false; else if (char === "\\") escaped = true; else if (char === quote) quote = ""; continue; } if (char === "'" || char === '"' || char === "`") { quote = char; continue; } if ("([{<".includes(char)) depth++; else if (")]}>".includes(char)) depth--; else if (char === "," && depth === 0) { parts.push(value.slice(start, index)); start = index + 1; } } parts.push(value.slice(start)); return parts; };
+  const simpleReference = (value: string) => /^[A-Za-z_$][\w$]*$/.test(value.trim()) ? value.trim() : undefined;
+  for (const match of source.matchAll(/(?:module\.exports\s*=\s*\{([^}]*)\}|exports\.([A-Za-z_$][\w$]*)\s*=\s*([A-Za-z_$][\w$]*)(?=\s*(?:;|$))|export\s*\{([^}]*)\}|export\s+default\s+([A-Za-z_$][\w$]*))/g)) {
+    if (match[1]) for (const part of topLevel(match[1])) { const segments = part.split(/\s*:\s*/, 2); const value = simpleReference(segments.length === 2 ? segments[1] : segments[0]); if (value) exported.add(value); }
+    if (match[3]) exported.add(match[3]);
+    if (match[4]) for (const part of topLevel(match[4])) { const value = simpleReference(part.split(/\s+as\s+/i)[0] ?? ""); if (value) exported.add(value); }
+    if (match[5]) exported.add(match[5]);
+  }
+  const missing = [...exported].filter(name => !declared.has(name));
+  if (!missing.length) return [{ type: "structure", success: true, file: path, output: "Exports CommonJS/ES associés à des déclarations locales." }];
+  return missing.map(name => ({ type: "structure", success: false, file: path, output: `Export invalide : ${name} est exporté mais aucune déclaration locale correspondante n’existe. Définis ${name} puis conserve l’export compatible.` }));
 }
 
 export async function verifyStagedChanges(changes: AgentFileChange[], context: SelectedProjectContext, projectFiles: string[], signal: AbortSignal): Promise<VerificationResult[]> {
@@ -32,15 +45,23 @@ export async function verifyStagedChanges(changes: AgentFileChange[], context: S
         parser.parse(change.after, { sourceType: "unambiguous", plugins: ["typescript", "jsx", "decorators-legacy"], errorRecovery: false });
         results.push({ type: "syntax", success: true, file: change.path, output: "Syntaxe JavaScript/TypeScript analysée." });
       } catch (error) {
-        const issue = error as Error & { loc?: { line: number } };
-        results.push({ type: "syntax", success: false, file: change.path, line: issue.loc?.line, output: issue.message });
+        const issue = error as Error & { loc?: { line: number; column:number } };
+        const line=issue.loc?.line,column=issue.loc?.column===undefined?undefined:issue.loc.column+1;
+        const excerpt=line?change.after.split("\n").slice(Math.max(0,line-2),line+1).map((text,i)=>`${Math.max(1,line-1)+i}: ${text.slice(0,220)}`).join("\n"):"";
+        results.push({ type: "syntax", success: false, file: change.path, line, column, output: `${change.path}${line?`:${line}:${column??1}`:""} ${issue.message}\n${excerpt}`.trim() });
       }
       for (const match of change.after.matchAll(localImport)) {
-        const resolved = resolveRelative(change.path, match[1]);
-        if (resolved && candidates.some(ext => files.has(`${resolved}${ext}`))) continue;
-        results.push({ type: "imports", success: false, file: change.path, output: `Import local introuvable : ${match[1]}` });
+        let packageType:string|undefined;try{packageType=JSON.parse(context.files.find(file=>file.path==='package.json')?.content??'{}').type;}catch{/* An excerpt is not a manifest. */}
+        const mode=importMode(change.path,match[0],packageType),resolution=resolveLocalImport(change.path,match[1],files,mode);
+        if (resolution.target) continue;
+        results.push({ type: "imports", success: false, file: change.path, output: `Import local introuvable : ${match[1]}. Importeur : ${change.path}; mode ${mode}; résolutions tentées : ${resolution.attempted.join(', ')}.` });
       }
       if (!results.some(result => result.file === change.path && result.type === "imports" && !result.success)) results.push({ type: "imports", success: true, file: change.path, output: "Imports relatifs présents dans l’index." });
+      results.push(...verifyModuleExports(change.path, change.after));
+    } else if (/\.html?$/i.test(change.path)) {
+      const scripts=[...change.after.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)].filter(match=>!/(?:\bsrc\s*=|\btype\s*=\s*["']?(?:application\/(?:json|ld\+json)|importmap))/i.test(match[1]));
+      if(scripts.length){const parser=await import("@babel/parser");for(const script of scripts){try{parser.parse(script[2],{sourceType:"unambiguous",plugins:["jsx","typescript"],errorRecovery:false});results.push({type:"syntax",success:true,file:change.path,output:"Script HTML analysé."});}catch(error){const issue=error as Error&{loc?:{line:number;column:number}};const offset=change.after.slice(0,(script.index??0)+script[0].indexOf(script[2])).split("\n").length-1;const line=offset+(issue.loc?.line??1),column=(issue.loc?.column??0)+1;const lines=change.after.split("\n");results.push({type:"syntax",success:false,file:change.path,line,column,output:`${change.path}:${line}:${column} ${issue.message}\n${lines.slice(Math.max(0,line-2),line+1).map((part,i)=>`${Math.max(1,line-1)+i}: ${part.slice(0,220)}`).join("\n")}`});}}}
+      results.push({ type: "structure", success: true, file: change.path, output: "Fichier proposé dans les limites du projet." });
     } else results.push({ type: "structure", success: true, file: change.path, output: "Fichier proposé dans les limites du projet." });
   }
   if (!changes.length) results.push({ type: "structure", success: true, output: "Aucun changement de fichier proposé." });

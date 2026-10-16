@@ -4,6 +4,7 @@ export interface WorkProject {
   token: string;
   name: string;
   files: string[];
+  workspaceId?: string;
   readOnly?: boolean;
 }
 type DirectoryHandle = {

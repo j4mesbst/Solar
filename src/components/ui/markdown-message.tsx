@@ -38,6 +38,7 @@ export const AiMessage = memo(function AiMessage({ text }: { text: string }) {
   }, [text]);
   useEffect(() => () => {
     if (raf.current) cancelAnimationFrame(raf.current);
+    raf.current = 0;
   }, []);
   const blocks = shown.split(/\n{2,}/);
   return <div className="msg-ai">{blocks.map((md, index) => <Block key={index} md={md}/>)}</div>;

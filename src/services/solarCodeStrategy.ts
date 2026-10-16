@@ -14,7 +14,7 @@ export function chooseSolarCodeStrategy(input: CodeStrategyInput): { strategy: I
   complexity += Math.min(2, input.attachments ?? 0);
   const lowMemory = input.availableMemory !== undefined && input.availableMemory < 6 * 2 ** 30;
   const eco = input.performanceProfile === "eco";
-  const strategy: InternalCodeStrategy = !lowMemory && !eco && complexity >= 4 && (modelClass === "solar-9b" || modelClass === "solar-12b" || modelClass === "cloud") ? "deep" : complexity <= 1 || eco ? "fast" : "balanced";
+  const strategy: InternalCodeStrategy = !lowMemory && !eco && complexity >= 4 ? "deep" : complexity <= 1 || eco ? "fast" : "balanced";
   const instruction = strategy === "fast"
     ? "Stratégie Solar Code rapide : limite l’inspection aux fichiers concernés, effectue le changement direct et une vérification courte."
     : strategy === "deep"

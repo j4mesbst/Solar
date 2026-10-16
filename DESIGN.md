@@ -129,7 +129,7 @@ Dans le chat normal, l’animation concerne uniquement les mots qui arrivent : c
 
 ### Modèles Solar, Solar Code et Skills — 13 octobre 2026
 
-Paramètres > Modèles propose Solar 4B (Qwen3-4B), Solar 9B (Ornith-1.0-9B) et Solar 12B (Gemma 3 12B IT). Les deux derniers sont identifiés comme recommandés pour Solar Code; l’acceptation des conditions Gemma est explicitement demandée avant le téléchargement. L’exécution locale reste interne au catalogue Solar; Ollama n’est pas proposé comme fournisseur ajoutable.
+Paramètres > Modèles propose Solar 4B (Qwen3-4B), Solar 9B (Ornith-1.5-9B) et Solar 12B (Gemma 3 12B IT). Les deux derniers sont identifiés comme recommandés pour Solar Code; l’acceptation des conditions Gemma est explicitement demandée avant le téléchargement. L’exécution locale reste interne au catalogue Solar; Ollama n’est pas proposé comme fournisseur ajoutable.
 
 Skills expose les sept packs Markdown versionnés fournis pour cette livraison, avec déclencheurs, compatibilités, catégories, activation et modes Auto/Manuel. Le routeur les sélectionne selon la demande, le contexte de conversation, les pièces jointes, Solar Code et la classe du modèle; il réduit le contenu injecté selon le budget local/cloud. Ces packs sont des consignes, pas des outils ou intégrations exécutables.
 
@@ -142,3 +142,21 @@ Pour les modèles locaux dans Solar Code, le projet sélectionné est indexé pa
 Paramètres > Compte est une page intégrée, pas une boîte de dialogue : elle réutilise le parcours Supabase e-mail/mot de passe, création, réinitialisation, confirmation et déconnexion. Le statut de configuration est visible, les sessions sont natives au stockage sécurisé macOS ou au stockage web. Les conversations et clés demeurent locales ; le compte ne promet aucune synchronisation. Le premier lancement propose facultativement le dossier de référence, qui sert au contexte de fichiers et reste modifiable dans Paramètres > Stockage ; l’historique Solar continue à être stocké dans sa base locale.
 
 L’ouverture/fermeture du panneau conserve flou, fondu et cascade, mais la carte et ses actions usuelles apparaissent en moins de 650 ms; les longues listes restent sous une seconde pour une cinquantaine d’éléments. Les trois contrôles natifs macOS et le bouton de panneau remontent ensemble de 2px sans changer leur alignement. Le mouvement réduit reste immédiat.
+
+### Solar Cortex — 13 octobre 2026
+
+Le catalogue conserve sa liste minimaliste et les tokens d’apparence. Télécharger dévoile une commande Terminal sélectionnable/copirable, plus le téléchargement intégré facultatif. Ornith 1.0 reste conservé et identifié comme ancien. Actualiser recharge réellement les modèles.
+
+Solar Code utilise Cortex pour Ornith 1.5 9B, avec les quatre niveaux d’effort existants, un historique d’opérations réel, un rapport de vérification repliable et un bouton Reprendre pour les tâches incomplètes. Une tâche suspendue n’est pas présentée comme réussie. Les modifications restent des propositions à approuver. Performance offre l’activation et la suppression de la mémoire technique locale. Aucun tableau de bord supplémentaire ni changement de chrome/typographie.
+
+Le chat normal répond directement aux échanges sociaux sans activer les Skills d’anciens sujets ni lancer un plan; les références conversationnelles utiles restent disponibles pour les autres demandes. Le correctif de rendu des frames React préserve le Markdown et l’animation existants.
+
+### Projet Solar Code persistant et validation Cortex — 14 octobre 2026
+
+Dans Paramètres > Stockage, le dossier validé est le projet par défaut de Solar Code : il est restauré comme espace de travail au prochain lancement, sans demander une nouvelle sélection. Les conversations, brouillons et checkpoints Cortex restent dans le stockage local de Solar et ne sont jamais écrits dans ce dossier. Le chat normal ne peut y lire que des extraits pertinents lorsqu’il est explicitement question du projet.
+
+Pour Ornith 1.5, Cortex utilise des actions JSON où chaque action exige ses champs nécessaires. Si un modèle local relit un fichier puis tente de terminer sans mutation, Cortex demande une proposition de patch exacte au tour suivant. Une proposition est terminée après un patch et les vérifications réellement réussies, sans attendre un marqueur décoratif du modèle. Les captures WebKit temporelles se règlent sur la durée demandée et l’examen vision fournit des écarts observables et une correction courte à la boucle de réparation. Le contexte local reste à 4K en mémoire basse et 8K par défaut ; 12K n’est pas activé automatiquement sans validation matérielle explicite.
+
+### Solar Cortex V3.1 — statut discret et continuité — 14 octobre 2026
+
+Le rapport Cortex reste un élément repliable de Solar Code, jamais un tableau de bord. Il expose uniquement des faits issus de l’exécution : étape, dernière opération, nombre de générations et durée finale. Une exécution longue conserve son checkpoint et peut être reprise, mais l’interface ne prétend ni garantir un traitement pendant la veille macOS, ni mesurer en continu le swap ou la pression système. Les propositions continuent à nécessiter l’approbation utilisateur avant toute écriture.

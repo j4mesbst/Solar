@@ -51,21 +51,22 @@ function excerpt(content: string, words: string[], charLimit: number) {
 }
 
 export async function selectProjectContext(intent: SolarIntent, project: AgentProject, index: RepositoryIndex, budget: ContextBudget, signal: AbortSignal, maxFiles: number): Promise<SelectedProjectContext> {
+  const charactersPerToken=budget.charactersPerToken??3.5;
   const words = [...new Set(normalized(intent.objective).split(/[^a-z0-9_.-]+/).filter(word => word.length > 2))].slice(0, 80);
   const preferred = new Set(project.preferredFiles ?? []);
   const ranking = index.files.map(file => ({ path: file.path, score: scorePath(file.path, words, preferred) })).sort((a, b) => b.score - a.score || a.path.length - b.path.length);
   const direct = ranking.filter(item => item.score > 2);
   const selected = (direct.length ? direct : ranking.filter(item => manifest.test(item.path))).slice(0, Math.min(maxFiles, 10));
-  const fileBudget = Math.max(2000, Math.floor((budget.maximumTokens - budget.reservedForGeneration - budget.reservedForSystem) * 3.5) - intent.objective.length - intent.constraints.join(" ").length);
+  const fileBudget = budget.fileCharacters??Math.max(2000, Math.floor((budget.maximumTokens - budget.reservedForGeneration - budget.reservedForSystem) * charactersPerToken) - intent.objective.length - intent.constraints.join(" ").length);
   let remaining = fileBudget;
   const files: SelectedFile[] = [];
   for (const item of selected) {
     signal.throwIfAborted();
     if (remaining < 800) break;
     const content = await project.readFile(item.path, signal);
-    const allowance = Math.min(remaining, Math.max(2000, Math.floor(fileBudget / Math.max(1, selected.length))));
+    const allowance = Math.min(remaining, Math.max(800, Math.floor(fileBudget / Math.max(1, selected.length))));
     files.push({ path: item.path, content: excerpt(content, words, allowance), score: item.score });
     remaining -= files.at(-1)!.content.length;
   }
-  return { files, architectureSummary: index.architectureSummary, relatedPaths: ranking.slice(0, 30).map(item => item.path), estimatedTokens: Math.ceil((fileBudget - remaining + intent.objective.length) / 3.5), budget: budget.maximumTokens };
+  return { files, architectureSummary: index.architectureSummary, relatedPaths: ranking.slice(0, 30).map(item => item.path), estimatedTokens: Math.ceil((fileBudget - remaining + intent.objective.length) / charactersPerToken), budget: budget.maximumTokens };
 }

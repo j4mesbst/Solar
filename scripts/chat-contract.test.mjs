@@ -43,4 +43,11 @@ const cancelled = new AbortController(); cancelled.abort();
 try { await runChunks([delta("hello"), "data: [DONE]\n\n"], { signal: cancelled.signal }); throw new Error("cancel must fail"); } catch (error) { assert(error instanceof ChatError && error.code === "interrupted", "cancellation should normalize"); }
 console.log("stream-regression-tests: ok");
 
+globalThis.fetch=async()=>new Response(JSON.stringify({message:{content:"",tool_calls:[{function:{name:"propose_actions",arguments:{actions:[{type:"finish",message:"Ready"}]}}}]},done:true,done_reason:"stop",eval_count:12})+'\n');
+const toolCompletion=await streamChat({provider:local,model:"fixture",messages,effort:"low",vault:{get:async()=>null},signal:new AbortController().signal,onDelta:()=>{throw Error('Tool-only output must not become visible text');}});
+assert(toolCompletion.stopReason==="tool_calls"&&toolCompletion.toolCalls.length===1,"tool-only completion must be returned to Cortex");
+globalThis.fetch=async()=>new Response(JSON.stringify({message:{content:'{"actions":['},done:true,done_reason:"length"})+'\n');
+const limited=await streamChat({provider:local,model:"fixture",messages,effort:"low",vault:{get:async()=>null},signal:new AbortController().signal,onDelta:()=>{}});
+assert(limited.stopReason==="length","a token limit must be distinguishable from task success");
+
 const activityStages=[];const hidden=await runChunks([`data: ${JSON.stringify({choices:[{delta:{reasoning_content:"hidden private content"}}]})}\n\n`,delta("<think>private</think>"),delta("Visible"),"data: [DONE]\n\n"],{onActivity:s=>activityStages.push(s)});assert(hidden==="Visible","activity events never reveal reasoning");assert(activityStages.join(",")==="connecting,waiting,thinking,writing","stages reflect received stream events");console.log("activity-contracts: ok (real connection/reasoning/writing events without reasoning exposure)");

@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import { fixtures, planned, selectFixtures, domains } from './solar-bench/registry.mjs';
+import { makeReport } from './solar-bench/report.mjs';
+import { createTerminalProgress } from './solar-bench/progress.mjs';
+assert.equal(selectFixtures({preset:'smoke'}).length,5);
+assert.equal(selectFixtures({preset:'medium'}).length,10);
+assert.equal(selectFixtures({domain:'animations'}).length,5);
+assert.equal(selectFixtures({preset:'full'}).length,25);
+assert.equal(new Set(fixtures.map(fixture=>fixture.id)).size,fixtures.length);
+assert.equal(planned.length,0);
+for(const domain of domains)assert.equal(fixtures.filter(f=>f.domain===domain).length,5);
+for(const item of fixtures){assert(item.validate.kind);assert(item.prompt.length>30);if(item.validate.kind==='node')assert.doesNotThrow(()=>new Function(item.validate.test));}
+const report=makeReport({id:'test',startedAt:'2026-01-01T00:00:00.000Z',finishedAt:'2026-01-01T00:00:01.000Z',model:'test',machine:'test',cortex:{version:1,commit:'abc'},options:{variant:'cortex',timeoutMs:1000},results:[],summary:{total:0,passed:0,durationMs:1000},diagnostics:[],recommendations:[]});
+assert.match(report,/Solar Bench/);
+const terminal=[]; const progress=createTerminalProgress({write:value=>terminal.push(value),isTTY:false,color:false});
+progress({type:'init',model:'ornith-1.5:9b',fixtureCount:2,total:3});
+progress({type:'start',index:1,total:3,fixtureId:'swift-debug',variant:'native'});
+progress({type:'complete',result:{variant:'native',status:'passed',durationMs:14200},total:3,completed:1,passed:1,failed:0});
+progress({type:'summary',total:3,passed:1,durationMs:22000,reportPath:'/tmp/report.md'});
+assert.match(terminal.join(''),/\[1\/3\] Swift Debug/);
+assert.match(terminal.join(''),/PASS/);
+assert.match(terminal.join(''),/\/tmp\/report.md/);
+console.log('solar-bench contract: ok');

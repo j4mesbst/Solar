@@ -114,7 +114,11 @@ function priorityValue(priority: SolarSkill["priority"]) { return ({ critical: 4
 
 function routeIds(input: SkillRouteInput, modelClass: ModelClass) {
   const current = input.prompt.trim();
-  const context = input.conversationContext?.trim() ?? "";
+  // Older assistant output is not a new user request. Resolve explicit short
+  // follow-ups only; otherwise old presentation/design instructions leak into chat.
+  const followUp = /\b(?:continue|poursuis|reprends|modifie|corrige|améliore|refais|ajoute|raccourcis|développe)\b/i.test(current) && current.split(/\s+/).length < 25;
+  const explicitDomain=[patterns.coding,patterns.uiDesign,patterns.presentation].some(pattern=>pattern.test(current));
+  const context = followUp&&!explicitDomain ? input.conversationContext?.trim() ?? "" : "";
   const text = `${current}\n${context}`;
   const present = (key: keyof typeof patterns) => patterns[key].test(current) || (context.length > 0 && patterns[key].test(context));
   const ids = new Set<string>();

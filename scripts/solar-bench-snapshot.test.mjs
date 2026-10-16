@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import { cp, mkdtemp, readFile, writeFile, symlink } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createCortexSnapshot, loadSnapshotModules } from './solar-bench/runner.mjs';
+
+const root = await mkdtemp(join(tmpdir(), 'solar-bench-snapshot-test-'));
+await cp(new URL('../src', import.meta.url), join(root, 'src'), { recursive: true });
+await symlink(join(process.cwd(), 'node_modules'), join(root, 'node_modules'), 'dir');
+const snapshot = await createCortexSnapshot(root);
+const before = snapshot.sha256;
+const source = join(root, 'src/lib/cortex/context-engine.ts');
+await writeFile(source, `${await readFile(source, 'utf8')}\n// modified after snapshot\n`);
+const modules = await loadSnapshotModules(snapshot);
+assert.equal(snapshot.sha256, before);
+assert.equal(typeof modules.CortexRuntime, 'function');
+assert.equal(typeof modules.createCortexBackend, 'function');
+assert.equal(typeof modules.cortexActionSchema, 'object');
+const snapshotSource = await readFile(join(snapshot.sourceRoot, 'lib/cortex/context-engine.ts'), 'utf8');
+assert.doesNotMatch(snapshotSource, /modified after snapshot/);
+console.log('solar-bench snapshot isolation: ok');

@@ -6,6 +6,7 @@ import { detectHardware } from "../../services/performance";
 import { secretVault } from "../../services/nativeVault";
 import { effectiveWebSettings } from "../../services/solarWeb";
 import { solarStore } from "../../services/store";
+import { cortexStore } from "../../services/cortexStore";
 export function WebSettingsPanel({
   settings,
   onSave,
@@ -210,6 +211,8 @@ export function PerformancePanel({
           <p>Réglages locaux explicites et mesures réelles des réponses.</p>
         </div>
       </div>
+      <div className="preference-row"><div><h3>Mémoire technique Cortex</h3><p>Sur cet appareil et pour ce compte seulement. Conserve les résumés et preuves des tâches vérifiées pour les retrouver dans le même projet. Aucun entraînement ni envoi externe. Les points de reprise restent enregistrés indépendamment.</p></div><input type="checkbox" aria-label="Activer la mémoire technique Cortex" checked={settings.cortexMemory===true} onChange={event=>void onSave({...settings,cortexMemory:event.target.checked})}/></div>
+      <div className="preference-row"><div><h3>Effacer la mémoire Cortex</h3><p>Supprime les expériences techniques conservées. Les conversations et les propositions de fichiers restent disponibles.</p></div><Button variant="outline" className="small-button" onClick={()=>void cortexStore.clearMemory().catch(e=>setError(String(e)))}>Effacer</Button></div>
       <div className="preference-row">
         <div>
           <h3>Profil Ollama</h3>

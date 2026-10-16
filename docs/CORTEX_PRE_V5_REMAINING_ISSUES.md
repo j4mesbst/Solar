@@ -1,0 +1,23 @@
+# Stabilisation avant V5 — problèmes encore ouverts
+
+16 octobre 2026. Le registre détaillé des 26 points reste dans [CORTEX_V4_1_AUDIT_COVERAGE.md](CORTEX_V4_1_AUDIT_COVERAGE.md), avec les améliorations de ce lot explicitement indiquées. Aucun constat déclaré corrigé sur la seule base d’un changement d’architecture.
+
+| Gravité | Limite réelle | Pourquoi elle subsiste / frontière actuelle |
+| --- | --- | --- |
+| Bloquant pour code non fiable | Pas de sandbox OS macOS | Une copie ne protège pas le système contre un script. Le consentement natif explicite est maintenu, de même que les scripts protégés et l’approbation des écritures. Une isolation OS/VM exige une conception et une validation dédiées ; aucune permission nouvelle. |
+| Haute | Atomicité disque durable multi-fichier et undo après crash | Propositions atomiques et gardes par fichier conservées, mais pas de journal disque transactionnel global ni de backup durable d’undo. |
+| Haute | Budget de tokens estimé | Texte sérialisé mesuré, mais pas de tokenizer exact du modèle ni de coût multimodal réel. Instructions/histoire obligatoire trop grandes : pause explicite. |
+| Haute | Contraintes naturelles toutes distinctes sur une très longue conversation | Déduplication exacte et priorité de la demande courante. Aucun résumé sémantique certifié ni suppression implicite d’une ancienne obligation ; le champ explicite `supersedes` n’a pas de contrôle UI dédié. |
+| Haute | Informations hors de l’index / environnement non exposé | Revalidation avant/après sur sources indexées et identité observable ; nouveaux fichiers concurrents et outils/dépendances externes ne sont pas exhaustivement attestés. |
+| Moyenne | Politiques de chemins hétérogènes et gestion des fichiers limitée | Pas d’outils génériques de mkdir/renommage/suppression ; compte et permissions natives ne constituent pas une frontière OS multi-compte. |
+| Moyenne | Récupération des anciennes observations évincées | Archive bornée et références en cours conservées. Un original disparu provoque une pause ; pas de magasin externe infini. Le dernier gros original peut seul dépasser la cible de 200 000 caractères. |
+| Moyenne | DOM instrumenté dans la page, readiness locale | Attentes conditionnelles de 1,2 s réellement testées, mais pas de readiness universelle, clavier/hover/scroll/navigation générale ou horloge JS virtuelle. Un état plus lent reste un diagnostic observé, pas une preuve de défaut esthétique. |
+| Moyenne | Captures temporelles de projets React multiples | Les origines séparées HTML fonctionnent ; un adaptateur général de capture par transition d’un projet compilé reste incomplet. Le résultat peut rester non vérifié. |
+| Moyenne | Résolution et AST | CJS/ESM/bundler conservateurs ; pas de résolution exhaustive `package exports`, aliases/tsconfig et tous langages. Repli gardé disponible, ambiguïté refusée. |
+| Moyenne | DAG, mémoire et meilleures candidates | Invalidation renforcée et expérience historique distincte ; la pertinence métier du plan, le bénéfice du DAG et la diversité des stratégies n’ont pas été démontrés par une génération réelle. Une présence de fichier ne suffit toujours pas à prouver le résultat métier. |
+| Moyenne | Observation des ressources | Durées/load/prompt/decode et cache seulement reçus, appels et vérifications suivis. Pas de monitoring continu RAM/swap/CPU/GPU ni d’adaptation mesurée en temps réel. |
+| Moyenne | Confidentialité complète des checkpoints | Traces d’appels sans contenu brut ; sources/demandes/originaux restent dans le checkpoint privé nécessaire à la reprise. Redaction exhaustive, chiffrement et politique de rétention des données sensibles non refondus. |
+| Faible | Helpers narratifs legacy | `cortexTurnPrompt`, `repairMemoryContext` et le wrapper `fitCortexPrompt` ne sont plus utilisés dans le chemin runtime ; des tests les importent encore. Leur retrait complet et la migration de ces tests peuvent être traités séparément. Ils ne préparent pas un second contexte de production. |
+| Non vérifiée | Performance avec Ornith ou plusieurs modèles | Aucun appel réel. Une réussite déterministe certifie le mécanisme testé, pas la compréhension, l’esthétique ou la vitesse d’un LLM. |
+
+Les six fondations V4 sont conservées. Pour V5 : envisager d’abord une isolation d’exécution adaptée, des checkpoints/transactions durables, un contrat d’environnement vérifiable, puis des évaluations ciblées de sélection de contexte, critères métier du graphe et stratégies de recherche. Ne pas ajouter des agents ou du raisonnement supplémentaire avant d’avoir mesuré les mécanismes actuels.

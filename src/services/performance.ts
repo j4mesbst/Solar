@@ -1,6 +1,7 @@
 import type { Hardware, PerformanceProfile } from "../domain/extensions";
 let hardwarePromise: Promise<Hardware> | null = null;
-export async function detectHardware(): Promise<Hardware> {
+export async function detectHardware(refresh=false): Promise<Hardware> {
+  if(refresh)hardwarePromise=null;
   if (hardwarePromise) return hardwarePromise;
   hardwarePromise = detectHardwareOnce().catch(error => { hardwarePromise = null; throw error; });
   return hardwarePromise;
@@ -37,7 +38,7 @@ export function recommendModels(memory?: number) {
     },
     {
       name: "Solar 9B",
-      downloadGB: 5.6,
+      downloadGB: 6.6,
       memoryGB: 8,
       use: "Code agentique",
       speed: "Recommandé pour Solar Code",
