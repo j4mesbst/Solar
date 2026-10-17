@@ -41,6 +41,7 @@ export interface CortexRepairRecord { step:number; hypothesis:string; actions:st
 export interface CortexRepairMemory {
   objective:string; latestError:string; focusFiles:string[]; lastFailedIds:string[]; lastPassedIds:string[];
   lastMeasurements:Record<string,number>; noProgress:number; strategy:"targeted"|"reassess";
+  lastDomDefects?:string[];
   nextAction:string; attempts:CortexRepairRecord[];
 }
 export interface CortexEvent { phase: CortexPhase; detail: string; at: string }
@@ -103,7 +104,7 @@ export interface CortexTask {
   mode: CortexMode; phase: CortexPhase; plan: string[]; criteria: CortexCriterion[];
   candidates: CortexCandidate[]; branch: number; steps: number; generations: number; repairs: number;
   tokens: number; elapsedMs: number; events: CortexEvent[]; context?: SelectedProjectContext;
-  issues: string[]; failures: Record<string, number>; pendingOutput?: string; pendingContinuations?: number; updatedAt: string;
+  issues: string[]; failures: Record<string, number>; pendingOutput?: string; pendingContinuations?: number; pendingStandaloneHtml?: string; pendingStandaloneContinuations?: number; standaloneRestartCount?: number; updatedAt: string;
   referenceImage?: string;
   verificationStatus?: "verified" | "completed_unverified";
   telemetry?: CortexTelemetry;

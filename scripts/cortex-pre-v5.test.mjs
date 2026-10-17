@@ -26,6 +26,19 @@ const sameFiles=fitContextPacket({...packet,items:[{id:'a',reference:'a.ts',cate
 assert.equal(sameFiles.selection.deduplicated,1);assert.deepEqual(sameFiles.selection.selected,['a','b']);assert.match(sameFiles.prompt,/a.ts/);assert.match(sameFiles.prompt,/b.ts/);
 const fitted=fitModelPayload({prompt:'',context:packet,system:'Règles stables.',schema:{type:'object'},images:2,contextWindow:4096,outputTokens:900});
 assert(fitted.serializedCharacters<=Math.floor((4096-fitted.reserveTokens)*2.3));assert(fitted.utf8Bytes>=fitted.serializedCharacters);assert.match(fitted.prompt,/Ne contacte aucun service externe/);
+// A visual repair can accumulate many successful checks. Their verbose
+// metadata is archival, not mandatory prompt text: the fitter must keep the
+// user obligations while compacting state and optional sources first.
+const visualPacket={...packet,state:{
+  phase:'repairing',step:4,
+  checks:Array.from({length:24},(_,i)=>({id:`check-${i}`,type:'visual',status:'passed',origin:'independent',output:'verbose measured evidence '.repeat(120)})),
+  checkCounts:{passed:24,failed:0,unavailable:0},changes:[{path:'index.html',hash:'live'}],
+  recoverableContext:Array.from({length:12},(_,i)=>({id:`ctx-${i}`,start:0,end:6000,hash:'hash',status:'observed'})),
+  unresolved:Array.from({length:12},(_,i)=>({id:`ctx-${i}`,hash:'hash',characters:8000})),
+},items:[...packet.items,{id:'must-keep',category:'observation',content:'Visual correction required.',priority:100,required:true,reference:'current-operation'}]};
+const visualFit=fitModelPayload({prompt:'',context:visualPacket,system:'Règles stables.',schema:{type:'object',properties:{actions:{type:'array',items:{type:'object'}}}},images:1,contextWindow:4096,outputTokens:900});
+assert.match(visualFit.prompt,/Ne contacte aucun service externe/);assert.match(visualFit.prompt,/Visual correction required/);assert(!visualFit.prompt.includes('verbose measured evidence'));assert(visualFit.selection?.compacted.some(id=>id.startsWith('state:')),'state must become a compact recoverable projection');
+assert.throws(()=>fitModelPayload({prompt:'',context:{...visualPacket,requirements:'Contraintes indispensables. '.repeat(1000)},system:'Règles',images:1,contextWindow:4096,outputTokens:900}),/CORTEX_CONTEXT/,'mandatory requirements must fail visibly rather than truncate');
 const history=conversationRequirements([{id:'u1',role:'user',content:'Pas de réseau.'},{id:'a1',role:'assistant',content:'Tout est validé'},{id:'u2',role:'user',content:'La couleur devient bleue.'}]);
 assert.match(history,/Pas de réseau/);assert(!history.includes('Tout est validé'));
 const replaced=conversationRequirements([{id:'u1',role:'user',content:'Couleur rouge.'},{id:'a1',role:'assistant',content:'Couleur noire.',supersedes:['u1']},{id:'u2',role:'user',content:'Couleur bleue.',supersedes:['u1']}]);

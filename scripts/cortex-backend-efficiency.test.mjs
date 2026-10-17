@@ -21,5 +21,10 @@ try {
   assert(requests.every(request=>request.model==='any-user-selected-model:30b'));
   assert.equal(fitCortexPrompt('small prompt','system',8192,1000),'small prompt');
   assert.throws(()=>fitCortexPrompt('Critical objective '.repeat(1000),'system',4096,2200),/CORTEX_CONTEXT/);
+
+  // Runtime has already serialized its ContextPacket. The backend must keep
+  // that payload intact rather than serializing sources a second time.
+  const prepared=await backend({system:'Prepared context.',prompt:'OBJECTIF\nKeep privacy.\n\nSOURCE\nonly-once',context:{version:1,objective:'duplicate',requirements:'duplicate',state:{},items:[{id:'source',category:'project',content:'only-once',priority:1,reference:'a.ts'}],next:'duplicate'},contextPrepared:true,schema:cortexActionSchema,maxOutputTokens:500},new AbortController().signal);
+  assert(prepared.text.includes('actions'));const last=requests.at(-1);const rendered=last.messages.at(-1).content;assert.equal((rendered.match(/only-once/g)??[]).length,1,'prepared context must not be duplicated by the transport');
 } finally {globalThis.fetch=originalFetch;}
 console.log('cortex-backend-efficiency: model-neutral tool fallback retained across turns, safe context overflow — ok');

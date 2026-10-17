@@ -5,7 +5,7 @@ import { findSymbols, semanticSource, sourceHash } from "../cortex/semantic.ts";
 export const atomicMutationTypes = ["replaceRange", "patchStyle", "applyPatch"];
 export function validateAtomic(action:AgentAction):string|null|undefined {
   if(action.type==="searchSymbol")return action.query.length>=2&&action.query.length<=120?null:"Recherche de symbole hors limites.";
-  if(action.type==="readSymbol")return /^(.+):(\d+)-(\d+)#([a-f0-9]+)$/.test(action.symbolId)&&safeProjectPath(action.symbolId.split(":")[0])?null:"Identifiant de symbole invalide.";
+  if(action.type==="readSymbol")return /^(.+):(\d+)-(\d+)#([a-f0-9]+)$/.test(action.symbolId)&&safeProjectPath(action.symbolId.split(":")[0])?null:"Identifiant de symbole mal formé ou non issu de la découverte courante.";
   if(action.type==="readFileRange"||action.type==="replaceRange") {
     if(!Number.isInteger(action.start)||!Number.isInteger(action.end)||action.start<1||action.end<action.start||action.end-action.start>199)return "Plage de lignes invalide (200 lignes maximum).";
     if(action.type==="replaceRange"&&(!action.sourceHash||action.content.length>60_000))return "Remplacement sans empreinte ou trop volumineux.";

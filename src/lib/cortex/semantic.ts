@@ -7,6 +7,26 @@ export function sourceHash(text: string) { let hash=2166136261; for(let i=0;i<te
 const cache = new Map<string, SemanticSnapshot>();
 let parserModule:typeof import("@babel/parser")|undefined;
 export async function initializeSemantic(){parserModule??=await import("@babel/parser");}
+/** Ignore JSX presentation attributes using their real AST ranges. This is a
+ * repair guard only; it never supplies evidence that a node was rendered. */
+export function withoutJsxPresentation(source:string){
+  if(!parserModule)return source;
+  try{
+    const ast=parserModule.parse(source,{sourceType:'unambiguous',plugins:['typescript','jsx']});
+    const ranges:{start:number;end:number}[]=[];
+    const walk=(value:unknown):void=>{
+      if(!value||typeof value!=='object')return;
+      const node=value as Record<string,any>;
+      if(node.type==='JSXAttribute'&&['style','className','class'].includes(node.name?.name)){ranges.push({start:node.start,end:node.end});return;}
+      for(const [key,child] of Object.entries(node))if(!['loc','start','end','comments','tokens'].includes(key)){
+        if(Array.isArray(child))child.forEach(walk);else if(child&&typeof child==='object')walk(child);
+      }
+    };
+    walk(ast.program);
+    let result=source;for(const range of ranges.sort((a,b)=>b.start-a.start))result=result.slice(0,range.start)+result.slice(range.end);
+    return result;
+  }catch{return source;}
+}
 /** Real JS/TS/TSX AST; Swift/Rust keep a named conservative fallback. */
 export function semanticSource(path: string, text: string): SemanticSnapshot {
   const hash=sourceHash(text), cached=cache.get(path); if(cached?.hash===hash&&(!parserModule||cached.parser==="babel"||!/\.[cm]?[jt]sx?$/.test(path)))return cached;
@@ -52,4 +72,26 @@ export async function findSymbols(query:string,project:AgentProject,changes:Agen
     found.push(...semanticSource(path,source).symbols.filter(symbol=>symbol.name.toLowerCase().includes(query.toLowerCase())));
     if(found.length>=20)break;
   }return found.slice(0,20);
+}
+
+/**
+ * Return the exact symbol identifiers that are usable against the current
+ * staged sources.  Runtime schemas use this bounded inventory instead of
+ * inviting the model to invent an opaque id.
+ */
+export async function availableSymbols(project:AgentProject,changes:AgentFileChange[],paths:string[],signal:AbortSignal,limit=20){
+  await initializeSemantic();
+  const staged=new Map(changes.map(change=>[change.path,change.after]));
+  const available=new Set([...project.files,...staged.keys()]);
+  const selected=[...new Set(paths)].filter(path=>available.has(path)&&safeProjectPath(path)).slice(0,80);
+  const found:CodeSymbol[]=[];
+  for(const path of selected){
+    signal.throwIfAborted();
+    if(!/\.(?:[cm]?[jt]sx?|swift|rs)$/.test(path))continue;
+    const source=staged.get(path)??await project.readFile(path,signal);
+    if(source.length>300_000)continue;
+    found.push(...semanticSource(path,source).symbols);
+    if(found.length>=limit)break;
+  }
+  return found.slice(0,limit);
 }

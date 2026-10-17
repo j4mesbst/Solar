@@ -9,10 +9,10 @@ import { visualPlan } from "./visual-plan.ts";
 import { CORTEX_VERSION, defaultFeatures } from "./types.ts";
 import { evidenceFeedback, preserveEvidence } from "./evidence.ts";
 import { solveVisual, explicitConstraints, inspectInteractions } from "./visual-solver.ts";
-import { completedActionPrefix, recoverFileArtifact } from "./structured.ts";
+import { completedActionPrefix, recoverFileArtifact, recoverStandaloneHtml } from "./structured.ts";
 import { classifyRepair, isStyleOnlyChange, recordRepairVerification, generationDecision, verificationCategory } from "./repair.ts";
 import { atomicMutationTypes } from "../agent/atomic.ts";
-import { sourceHash } from "./semantic.ts";
+import { availableSymbols, sourceHash } from "./semantic.ts";
 import { assertCurrentSources, beginTransaction, completeTransaction } from "./transaction.ts";
 import { adaptivePolicy, modelExperienceKey, newModelExperience, observeResponse, recordModelError } from "./adaptive.ts";
 import { currentTaskNode, graphComplete, parseTaskGraph, taskGraphContext, taskGraphSchema, verifyTaskGraph } from "./task-graph.ts";
@@ -26,6 +26,7 @@ import { validateActionEnvelope,validateSchema } from '../agent/schema.ts';
 import { CHARACTERS_PER_TOKEN,fitModelPayload,outputAllowance } from './budget.ts';
 import { taskContextPacket,recoverContext,rememberContext,validateContextCheckpoint } from './context-engine.ts';
 import { compactRequirements } from './conversation.ts';
+import { domSourceExcerpt, missingDomTargets } from './dom-repair.ts';
 import type { CortexCandidate, CortexLimits, CortexModelResponse, CortexRequest, CortexResult, CortexServices, CortexTask, CortexVerification } from "./types.ts";
 
 const blankCandidate = (i: number): CortexCandidate => ({ id: `candidate-${i}`, changes: [], checks: [], issues: [], finished: false, attempts: 0 });
@@ -100,12 +101,15 @@ export class CortexRuntime {
         const upstreamDelta=call.onDelta;
         const generationWatchdog=setInterval(()=>{if(Date.now()-lastProgress>=idleTimeout)generationController.abort();},Math.min(1000,idleTimeout/4));
         try {
-          const onContext=(fitted:ReturnType<typeof fitModelPayload>)=>{journal.context=fitted.selection;journal.payloadCharacters=fitted.serializedCharacters;journal.payloadBytes=fitted.utf8Bytes;journal.estimatedInputTokens=fitted.estimatedInputTokens;call.onContext?.(fitted);};
+          const onContext=(fitted:ReturnType<typeof fitModelPayload>)=>{if(fitted.selection)journal.context=fitted.selection;journal.payloadCharacters=fitted.serializedCharacters;journal.payloadBytes=fitted.utf8Bytes;journal.estimatedInputTokens=fitted.estimatedInputTokens;call.onContext?.(fitted);};
           const fitted=fitModelPayload({prompt:call.prompt,context:call.context,system:call.system,schema:call.schema,images:call.images?.length,contextWindow:compute.contextWindow,outputTokens:outputAllowance(compute.contextWindow,call.maxOutputTokens,call.visual)});
           onContext(fitted);
           task!.generations++;
           journal.providerAttempted=true;
-          const result = await abortable(services.generate({...call,prompt:fitted.prompt,onContext,preferJson:call.preferJson??policy().preferJson,onProgress:()=>{lastProgress=Date.now();call.onProgress?.();},onDelta:part=>{lastProgress=Date.now();journal.receivedCharacters=(journal.receivedCharacters??0)+part.length;upstreamDelta?.(part);}}, generationController.signal), generationController.signal);
+          // A backend receives this already-fitted payload. Passing the packet
+          // again used to serialize every source, diagnostic and archive twice
+          // (runtime then transport), which is especially costly with vision.
+          const result = await abortable(services.generate({...call,prompt:fitted.prompt,contextPrepared:true,onContext,preferJson:call.preferJson??policy().preferJson,onProgress:()=>{lastProgress=Date.now();call.onProgress?.();},onDelta:part=>{lastProgress=Date.now();journal.receivedCharacters=(journal.receivedCharacters??0)+part.length;upstreamDelta?.(part);}}, generationController.signal), generationController.signal);
           if (generationController.signal.aborted) throw new Error("CORTEX_GENERATION_TIMEOUT: flux Ollama bloqué sans progression.");
           signal.throwIfAborted(); task!.tokens += result.tokens ?? 0;
           if(task!.modelExperience)observeResponse(task!.modelExperience,result);
@@ -127,7 +131,13 @@ export class CortexRuntime {
           const detail=error instanceof Error?error.message:String(error);
           if(/context.*(?:exceed|length|full|limit)|contexte.*(?:satur|limite)|too many tokens/i.test(detail)){
             if(attempt>=1)throw new Error("CORTEX_CONTEXT: Le contexte reste trop volumineux après compactage.");
-            const keep=Math.max(1000,Math.floor(call.prompt.length*.65));
+            // `maximumCharacters` constrains the serialized *context* portion,
+            // not merely the short user prompt. A hard 1k floor made a safe
+            // retry impossible whenever the mandatory objective/state itself
+            // needed more space. Refit against a smaller but viable target;
+            // fitContextPacket will evict optional sources and compact state,
+            // while failing visibly if the user obligations alone cannot fit.
+            const keep=Math.max(2_400,Math.floor((journal.payloadCharacters??call.prompt.length)*.7));
             if(call.context){const recovered=fitModelPayload({prompt:call.prompt,context:call.context,system:call.system,schema:call.schema,images:call.images?.length,contextWindow:compute.contextWindow,outputTokens:outputAllowance(compute.contextWindow,call.maxOutputTokens,call.visual),maximumCharacters:keep});call={...call,prompt:recovered.prompt,context:undefined};}
             else call={...call,prompt:compactPromptFiles(call.prompt,keep)};
             await report("analyzing","Contexte saturé : compactage ciblé");continue;
@@ -142,6 +152,9 @@ export class CortexRuntime {
     };
     const verificationCache=new VerificationCache<{checks:CortexVerification[];issues:string[];score?:number;repairBrief?:string}>();
     const verifyUnsafe = async (candidate: CortexCandidate, requireExecution: boolean) => {
+      const priorRepairMemory=task!.repairMemory?structuredClone(task!.repairMemory):undefined;
+      const priorRepairBrief=task!.repairBrief;
+      const attemptedEdit=task!.pendingRepairEdit;
       const sources=await verificationSources(request.project,candidate.changes,signal);
       const environment=typeof services.verificationEnvironment==='function'?await services.verificationEnvironment():services.verificationEnvironment??`task:${task!.id}`;
       task!.verificationSettings={...task!.verificationSettings,inspection:request.inspection,environment};
@@ -248,7 +261,7 @@ export class CortexRuntime {
           }catch(error){signal.throwIfAborted();checks.push({type:'tests',origin:'model-suggestion',hardConstraint:false,validatorId:'suggested-render',status:'unavailable',success:false,output:`Capture du scénario suggéré indisponible, contrôles indépendants inchangés : ${String(error)}`});}
         }else checks.push({type:'tests',origin:'model-suggestion',hardConstraint:false,validatorId:'behavior-capture',category:'functional',status:'unavailable',success:false,output:'Scénario suggéré non vérifié : aucun rendu complémentaire disponible. Les contrôles indépendants restent inchangés.'});
       }
-      const technicalFailure=checks.some(check=>check.status==='failed'&&check.hardConstraint!==false&&['syntax','imports','build'].includes(check.type));
+      const technicalFailure=checks.some(check=>check.status==='failed'&&check.hardConstraint!==false&&['syntax','imports','build'].includes(check.type))||missingDomTargets(checks).length>0;
       const reviewKey=contentHash(JSON.stringify([candidate.changes.map(change=>[change.path,sourceHash(change.after)]),inspection,request.referenceImage?sourceHash(request.referenceImage):null]));
       if(task!.visualReview?.key===reviewKey)task!.visualAdvice=task!.visualReview.advice;
       if(features.visualSolver&&services.supportsVision&&policy().useVision&&captured?.frames.length&&!technicalFailure&&!task!.pendingBehavior&&task!.visualReview?.key!==reviewKey){
@@ -285,8 +298,8 @@ export class CortexRuntime {
       const experience=verificationExperience(sources??Object.fromEntries(candidate.changes.map(change=>[change.path,sourceHash(change.after)])),{inspection,criteria:task!.criteria,visualConstraints:request.visualConstraints},environment);
       if(sources&&services.recordTrajectory){task!.memorySourceFingerprints=sources;task!.memoryFingerprintAlgorithm='sha256';}
       checks=identifyChecks(checks,experience);candidate.checks = checks;
-      const repairTarget=classifyRepair(checks,candidate.changes,captured);
-      task!.repairBrief=repairTarget?[repairTarget.brief,captured?visualObservations(captured):'',...(task!.visualAdvice??[]).slice(0,2).map(advice=>`Avis complémentaire (à confronter aux mesures) : ${advice}`)].filter(Boolean).join('\n'):undefined;
+      const repairTarget=classifyRepair(checks,candidate.changes,captured,request.project.files);
+      task!.repairBrief=repairTarget?repairTarget.missingDom?repairTarget.brief:[repairTarget.brief,captured?visualObservations(captured):'',...(task!.visualAdvice??[]).slice(0,2).map(advice=>`Avis complémentaire (à confronter aux mesures) : ${advice}`)].filter(Boolean).join('\n'):undefined;
       const repairProgress=recordRepairVerification(task!,candidate,repairTarget,request.evolution);
       if(repairProgress.strategy==="reassess")task!.strategy="recovery";
       candidate.issues = [
@@ -300,10 +313,16 @@ export class CortexRuntime {
       if(lost.length&&task!.bestCandidate){
         task!.taskGraph=graphBefore;
         const rejectedFeedback=evidenceFeedback(candidate.checks);
-        const rejectedBrief=task!.repairBrief;
         const best=structuredClone(task!.bestCandidate);candidate.changes=best.changes;candidate.checks=best.checks;candidate.score=best.score;
         candidate.issues=[`Régression rejetée (${lost.join(", ")}). La meilleure version est restaurée. Corrige la cause sans dégrader ces contraintes.`,rejectedFeedback];
-        task!.repairBrief=rejectedBrief;
+        // A rejected candidate's diagnostics describe code that is no longer
+        // staged. Keep that feedback in issues, but restore the repair memory
+        // and actionable diagnosis for the files actually returned to Cortex.
+        task!.repairMemory=priorRepairMemory;
+        const restoredTarget=classifyRepair(candidate.checks,candidate.changes,undefined,request.project.files);
+        task!.repairBrief=`DERNIER ESSAI REJETÉ, NON APPLIQUÉ : ${rejectedFeedback.slice(0,760)}\nSOURCE COURANTE RESTAURÉE : ${(restoredTarget?.brief??priorRepairBrief??'').slice(0,700)}`;
+        task!.pendingRepairEdit=attemptedEdit;
+        recordRepairVerification(task!,candidate,restoredTarget,request.evolution);
       }
       if(cacheKey&&!lost.length&&!checks.some(check=>check.status==='unavailable'&&check.hardConstraint!==false)){
         // Scenario may have been prepared inside verify; use its final identity.
@@ -457,15 +476,17 @@ export class CortexRuntime {
         if(task.telemetry)task.telemetry.contextTokensEstimate=task.context.estimatedTokens;
         const conflicted=task.patchConflict;
         const currentConflictSource=conflicted ? candidate.changes.find(change=>change.path===conflicted.path)?.after ?? await request.project.readFile(conflicted.path,signal) : undefined;
-        const conflictSnapshot=conflicted&&currentConflictSource!==undefined ? `\nSOURCE ACTUELLE CERTIFIÉE ${conflicted.path} #${sourceHash(currentConflictSource)}. La source numérotée apparaît une seule fois dans FICHIER; utilise une plage ou un symbole gardé. Ne remplace pas le fichier entier.` : '';
+        const conflictSnapshot=conflicted&&currentConflictSource!==undefined ? `\nSOURCE ACTUELLE CERTIFIÉE ${conflicted.path} #${sourceHash(currentConflictSource)}. La source numérotée apparaît une seule fois dans FICHIER. Fais exactement un replaceRange sur cette source avec cette empreinte; ne relis pas, ne fais pas de patchFile et ne remplace pas le fichier entier.` : '';
         if(conflicted&&currentConflictSource!==undefined){
           const numbered=currentConflictSource.split('\n').map((line,index)=>`${index+1}: ${line}`).join('\n');
           task.context.files=[{path:conflicted.path,sourceHash:sourceHash(currentConflictSource),score:200,content:`#${sourceHash(currentConflictSource)}\n${numbered.length>6000?numbered.slice(0,6000)+'\n[Extrait seulement : suite omise; lire la plage utile avant édition.]':numbered}`},...task.context.files.filter(file=>file.path!==conflicted.path)];
         }
         if(conflicted&&currentConflictSource!==undefined)conflicted.hash=sourceHash(currentConflictSource);
         await report(candidate.issues.length ? "repairing" : "generating", `Proposition ${task.branch + 1} · étape ${task.steps}`);
-        const repairKind=task.repairMemory?.attempts.at(-1)?.category==="functional"?"interaction":classifyRepair(candidate.checks,candidate.changes)?.kind;
-        const requiresSourceRepair=candidate.issues.length>0&&["syntax","structure","imports","interaction"].includes(repairKind??"");
+        const repairTarget=classifyRepair(candidate.checks,candidate.changes,undefined,request.project.files);
+        const domRepair=Boolean(repairTarget?.missingDom?.length);
+        const repairKind=domRepair?'structure':task.repairMemory?.attempts.at(-1)?.category==="functional"?"interaction":repairTarget?.kind;
+        const requiresSourceRepair=candidate.issues.length>0&&["syntax","structure","imports","contract","interaction"].includes(repairKind??"");
         const approach = task.branch === 0 ? "Modification minimale" : task.branch === 1 ? "Approche alternative, sans mélanger les autres candidats" : "Solution simple optimisée, indépendante";
         const isVisual = isVisualTask;
         const missingMotion = candidate.issues.some(issue => /aucun changement visuel|animation.*(?:instantan|invisible)|temporal/i.test(issue));
@@ -480,9 +501,16 @@ export class CortexRuntime {
         // change task must use that evidence to propose a file mutation instead
         // of repeatedly re-reading the same file.
         const recoveryInspection=task.solutionSearch?.active?.strategy==='inspect'&&!task.solutionSearch.active.inspectionUsed;
-        const firstArtifact=isVisual&&!candidate.changes.length&&!candidate.issues.length&&task.context.files.every(file=>file.content.length<1500);
-        const standalonePath=firstArtifact&&request.project.files.length===1&&/\.html?$/i.test(request.project.files[0])&&request.prompt.includes(request.project.files[0])?request.project.files[0]:undefined;
-        const standaloneSystem=`${system}\nPOUR CE TOUR UNIQUEMENT : produis un seul fichier HTML autonome complet. Aucun accès réseau, shell ni dépendance externe. Respecte les exigences et les styles existants. Le format JSON d’actions est remplacé pour ce tour uniquement par un bloc \`\`\`html ${standalonePath??''} contenant un document <html>…</html> complet et compact; aucun JSON ni explication. Le programme le convertira en proposition vérifiée avant approbation.`;
+        const continuingStandalone=Boolean(task.pendingStandaloneHtml);
+        const retryStandalone=isVisual&&!candidate.changes.length&&(task.standaloneRestartCount??0)<2&&candidate.issues.some(issue=>/Continuation HTML non alignée|Document HTML autonome encore tronqué/.test(issue));
+        const firstArtifact=isVisual&&!continuingStandalone&&!candidate.changes.length&&(!candidate.issues.length||retryStandalone)&&task.context.files.every(file=>file.content.length<1500);
+        const standalonePath=(firstArtifact||continuingStandalone)&&request.project.files.length===1&&/\.html?$/i.test(request.project.files[0])&&request.prompt.includes(request.project.files[0])?request.project.files[0]:undefined;
+        // Ornith 9B is much more reliable when the first visual document is a
+        // small, complete baseline rather than a full polished page squeezed
+        // into the output limit. The initial document still contains every
+        // explicit structural requirement; later, evidence-driven repairs can
+        // enrich it after independent verification.
+        const standaloneSystem=`${system}\nPOUR CE TOUR UNIQUEMENT : produis un seul fichier HTML autonome complet, court et fonctionnel (maximum ${retryStandalone?'1200':'2600'} caractères, styles inclus). Commence par la structure exigée, les contrôles demandés, une mise en page responsive simple et des styles locaux sobres. N’ajoute ni texte décoratif, ni animation, ni composants non explicitement demandés à ce premier artefact. Aucun accès réseau, shell ni dépendance externe. Respecte toutes les exigences structurelles utilisateur. Le format JSON d’actions est remplacé pour ce tour uniquement par un bloc \`\`\`html ${standalonePath??''} contenant un document <html>…</html> complet et compact; aucun JSON ni explication. Le programme le convertira en proposition vérifiée avant approbation.`;
         const outputBudget=isVisual&&!candidate.changes.length?3200:2200;
         const contextIncomplete=task.context.files.some(file=>/Extrait seulement|Source omise/.test(file.content))&&!task.sourceReads?.length;
         const explicitSourceReady=!candidate.changes.length&&task.context.files.some(file=>request.prompt.includes(file.path));
@@ -492,10 +520,89 @@ export class CortexRuntime {
         try {
           let schema=firstArtifact?cortexFirstArtifactSchema:mustMutate?cortexRepairSchema:cortexActionSchema;
           if(mustMutate&&!firstArtifact)schema={...schema,properties:{...schema.properties,actions:{...schema.properties.actions,items:{oneOf:[...schema.properties.actions.items.oneOf,...cortexActionSchema.properties.actions.items.oneOf.filter(item=>['readContext','readFile','readFileRange','readSymbol','searchCode','searchSymbol','runCheck','runBuild','runTests','inspectUI','inspectMotion','finish'].includes((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]))]}}}};
+          // Neither a missing import nor an explicit change task with no
+          // staged edits can improve by checking the same sources again.
+          // Reads and guarded mutations remain available in the same turn.
+          if((['imports','syntax','contract','structure','motion'].includes(repairKind??'')&&candidate.issues.length)||(mustMutate&&!candidate.changes.length))schema={...schema,properties:{...schema.properties,actions:{...schema.properties.actions,items:{oneOf:schema.properties.actions.items.oneOf.filter(item=>!['runCheck','runBuild','runTests','finish'].includes((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]))}}}};
+          // A measured missing node requires source evidence or an edit, not
+          // another unchanged capture, cosmetic tool, or declared completion.
+          if(domRepair){
+            const canCreate=repairTarget?.files.some(path=>!request.project.files.includes(path)&&!candidate.changes.some(change=>change.path===path));
+            const allowed=new Set(features.atomicActions?['replaceRange','readFileRange','readSymbol','searchSymbol','searchCode','readContext',...(canCreate?['createFile']:[])]:['patchFile','replaceFile','readFile','searchCode','readContext',...(canCreate?['createFile']:[])]);
+            schema={...schema,properties:{...schema.properties,actions:{...schema.properties.actions,items:{oneOf:schema.properties.actions.items.oneOf.filter(item=>allowed.has((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]))}}}};
+            if(features.atomicActions&&repairTarget?.files.length===1){
+              const path=repairTarget.files[0],source=candidate.changes.find(change=>change.path===path)?.after??await request.project.readFile(path,signal);
+              const lineCount=Math.max(1,source.split('\n').length),hash=sourceHash(source);
+              schema={...schema,properties:{...schema.properties,actions:{...schema.properties.actions,items:{oneOf:schema.properties.actions.items.oneOf.map(item=>{
+                if((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]!=='replaceRange')return item;
+                const guarded=structuredClone(item) as {properties:Record<string,Record<string,unknown>>};
+                guarded.properties.path={...guarded.properties.path,enum:[path]};
+                guarded.properties.start={...guarded.properties.start,maximum:lineCount};
+                guarded.properties.end={...guarded.properties.end,maximum:lineCount};
+                guarded.properties.sourceHash={...guarded.properties.sourceHash,enum:[hash]};
+                return guarded;
+              })}}}};
+            }
+            if(features.atomicActions)schema={...schema,properties:{...schema.properties,actions:{...schema.properties.actions,maxItems:1}}};
+          }
+          if(repairKind==='syntax'&&candidate.issues.length){
+            const allowed=new Set(['replaceRange','patchFile','applyPatch','replaceFile','readFileRange']);
+            schema={...schema,properties:{...schema.properties,actions:{...schema.properties.actions,items:{oneOf:schema.properties.actions.items.oneOf.filter(item=>allowed.has((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]))}}}};
+          }
+          if(repairKind==='motion'&&candidate.issues.length){
+            const allowed=new Set(['replaceRange','patchFile','applyPatch','replaceFile','readFileRange']);
+            schema={...schema,properties:{...schema.properties,actions:{...schema.properties.actions,items:{oneOf:schema.properties.actions.items.oneOf.filter(item=>allowed.has((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]))}}}};
+          }
+          // Before a visual task has a staged document, inspecting the unchanged
+          // source cannot establish progress. Keep mutations and new reads;
+          // offer render/inspection only after a real artifact exists.
+          if(isVisual&&mustMutate&&!candidate.changes.length&&!continuingStandalone)schema={...schema,properties:{...schema.properties,actions:{...schema.properties.actions,items:{oneOf:schema.properties.actions.items.oneOf.filter(item=>!['inspectUI','inspectMotion','renderPreview','inspectRender'].includes((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]))}}}};
+          if(!isVisual)schema={...schema,properties:{...schema.properties,actions:{...schema.properties.actions,items:{oneOf:schema.properties.actions.items.oneOf.filter(item=>!['inspectUI','inspectMotion','renderPreview','inspectRender','patchStyle'].includes((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]))}}}};
+          if(isVisual&&!candidate.changes.length&&!firstArtifact&&!continuingStandalone&&!task.pendingOutput&&!conflicted&&(task.standaloneRestartCount??0)>0){
+            const allowed=new Set(['createFile','replaceFile']);
+            schema={...schema,properties:{...schema.properties,actions:{...schema.properties.actions,items:{oneOf:schema.properties.actions.items.oneOf.filter(item=>allowed.has((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]))}}}};
+            if((task.standaloneRestartCount??0)>=2){
+              const compact=structuredClone(schema);
+              compact.properties.actions.maxItems=1;
+              for(const item of compact.properties.actions.items.oneOf as {properties:Record<string,Record<string,unknown>>}[])item.properties.content={...item.properties.content,minLength:80,maxLength:2500};
+              schema=compact;
+            }
+          }
+          // A textual patch conflict has one safe recovery route: a bounded
+          // replacement of the certified current source. Leaving patchFile or
+          // replaceFile in the schema makes small local models retry their
+          // stale proposal even though the runtime must reject it.
+          if(conflicted&&currentConflictSource!==undefined&&features.atomicActions){
+            const currentHash=sourceHash(currentConflictSource), lineCount=Math.max(1,currentConflictSource.split('\n').length);
+            const otherPaths=request.project.files.filter(path=>path!==conflicted.path);
+            const conflictItems=schema.properties.actions.items.oneOf
+              .filter(item=>otherPaths.length||['readFileRange','replaceRange'].includes((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]))
+              .map(item=>{
+                const name=(item as {properties:{type:{enum:string[]}}}).properties.type.enum[0];
+                if(!['readFileRange','replaceRange'].includes(name)&&'path' in (item as {properties:Record<string,unknown>}).properties){
+                  const constrained=structuredClone(item) as {properties:Record<string,Record<string,unknown>>};
+                  constrained.properties.path={...constrained.properties.path,enum:otherPaths};
+                  return constrained;
+                }
+                if(name!=='replaceRange')return item;
+                const constrained=structuredClone(item) as {properties:Record<string,Record<string,unknown>>};
+                constrained.properties.path={...constrained.properties.path,enum:[conflicted.path]};
+                constrained.properties.start={...constrained.properties.start,maximum:lineCount};
+                constrained.properties.end={...constrained.properties.end,maximum:lineCount};
+                constrained.properties.sourceHash={...constrained.properties.sourceHash,enum:[currentHash],description:`Empreinte obligatoire de ${conflicted.path} : ${currentHash}`};
+                return constrained;
+              });
+            schema={...schema,properties:{...schema.properties,actions:{...schema.properties.actions,items:{oneOf:conflictItems}}}};
+          }
+          // The exact current contents of both sides of an import have already
+          // been returned by readFile. A second identical read cannot add
+          // evidence; keep patch/replace and other targeted tools available.
+          const importSourcesRead=repairKind==='imports'&&Boolean(task!.repairMemory?.focusFiles.length)&&task!.repairMemory!.focusFiles.every(path=>task!.sourceReads?.some(read=>read.path===path&&!read.content.includes('[Suite omise')&&task!.context!.files.some(file=>file.path===path&&file.sourceHash===read.hash)));
+          if(importSourcesRead)schema={...schema,properties:{...schema.properties,actions:{...schema.properties.actions,items:{oneOf:schema.properties.actions.items.oneOf.filter(item=>(item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]!=='readFile')}}}};
           // Source-conflict restrictions are path-specific in validate/staging;
           // do not ban a safe patch on an unrelated file in the same lot.
           if((!features.atomicActions||!features.semantic)&&schema===cortexActionSchema)schema={...schema,properties:{...schema.properties,actions:{...schema.properties.actions,items:{oneOf:schema.properties.actions.items.oneOf.filter(item=>{const name=(item as {properties:{type:{enum:string[]}}}).properties.type.enum[0];return !(!features.atomicActions&&["searchSymbol","readSymbol","readFileRange","replaceRange","patchStyle","applyPatch","runBuild","runTests","inspectUI","inspectMotion"].includes(name))&&!(!features.semantic&&["searchSymbol","readSymbol"].includes(name));})}}}};
-          let outputSchema=task.pendingOutput?undefined:features.atomicActions?{...schema,properties:{...schema.properties,actions:{...schema.properties.actions,maxItems:policy().maxActions}}}:schema;
+          let outputSchema=task.pendingOutput?undefined:features.atomicActions?{...schema,properties:{...schema.properties,actions:{...schema.properties.actions,maxItems:Math.min(schema.properties.actions.maxItems,policy().maxActions)}}}:schema;
           // Suggestions have a separate, advisory parser. Do not pay for their
           // large DOM grammar in every editing turn; the small scenario call
           // is already separate for standalone documents.
@@ -504,31 +611,98 @@ export class CortexRuntime {
             const compactTools=new Set(['patchFile','createFile','replaceFile','replaceRange','readFileRange','readContext','runCheck','finish']);
             outputSchema.properties.actions.items.oneOf=outputSchema.properties.actions.items.oneOf.filter(item=>compactTools.has((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]));
           }
-          requestedSchema=standalonePath?cortexFirstArtifactSchema:outputSchema;
-          const actionPrompt=(task.pendingOutput
+          const actionPrompt=(continuingStandalone
+            ? `Continue uniquement le document HTML commencé, exactement après ce préfixe. Ne répète pas le début, n'ajoute aucune explication ni bloc JSON. Termine le document complet et ferme le bloc Markdown s'il était ouvert :\n${task.pendingStandaloneHtml!.slice(-2500)}`
+            : task.pendingOutput
             ? `${nextAction}\nLa réponse JSON a été tronquée. Termine uniquement le suffixe de l'action commencée, sans répéter le préfixe :\n${task.pendingOutput.slice(-2500)}`
             : firstArtifact
               ? `${nextAction}\nFIRST WORKING ARTIFACT : produis maintenant un seul createFile ou replaceFile pour le fichier principal. Document minimal fonctionnel, sans contenu décoratif superflu ; améliore après la première vérification. Utilise le chemin exact de l’index.`
               : mustMutate
-                ? `${nextAction}\nAction requise : corrige le diagnostic courant avec un patch ciblé. Lis une plage/source compacte manquante si nécessaire; ne répète pas une vérification inchangée.`
+                ? `${nextAction}\n${isVisual&&!candidate.changes.length&&(task.standaloneRestartCount??0)>=2?'PREMIER ARTEFACT APRÈS TRONQUAGES : une seule action replaceFile/createFile, document HTML complet de 80 à 2500 caractères avec les éléments explicitement demandés; pas de lecture ni seconde action. ':''}Action requise : corrige le diagnostic courant avec un patch ciblé. Lis une plage/source compacte manquante si nécessaire; ne répète pas une vérification inchangée.`
                 : nextAction)+conflictSnapshot;
-          const context=taskContextPacket(task,candidate,{requirements:task.userRequirements??'',guidance:request.guidance??'',memory,next:standalonePath?'Produis le fichier HTML autonome complet autorisé par le protocole de ce tour.':actionPrompt});
-          const method=()=>JSON.stringify({schema:requestedSchema?contentHash(JSON.stringify(requestedSchema)):'html',conflict:task!.patchConflict?.path,alternative:task!.solutionSearch?.active?.strategy});
+          const domSources:string[]=[];
+          if(domRepair)for(const path of repairTarget!.files.slice(0,2)){
+            const source=candidate.changes.find(change=>change.path===path)?.after??await request.project.readFile(path,signal);
+            domSources.push(domSourceExcerpt(path,source,repairTarget!.files.length>1?1000:2200));
+          }
+          if(repairKind==='syntax'||repairKind==='contract'||repairKind==='imports'||repairKind==='structure'&&!domRepair)for(const path of (repairTarget?.files??[]).slice(0,3)){
+            const source=candidate.changes.find(change=>change.path===path)?.after??await request.project.readFile(path,signal);
+            const numbered=source.split('\n');
+            const line=candidate.checks.find(check=>check.status==='failed'&&check.file===path&&check.line)?.line;
+            const start=line?Math.max(0,line-(repairKind==='syntax'?12:5)):0;
+            const excerpt=line?numbered.slice(start,line+(repairKind==='syntax'?12:3)).map((value,index)=>`${start+index+1}: ${value}`).join('\n'):numbered.slice(0,65).map((value,index)=>`${index+1}: ${value}`).join('\n');
+            domSources.push(`SOURCE COURANTE ${path} #${sourceHash(source)} (${numbered.length} lignes)\n${excerpt.slice(0,repairKind==='contract'?1500:repairKind==='syntax'?2300:1800)}${excerpt.length>(repairKind==='contract'?1500:repairKind==='syntax'?2300:1800)?'\n[Extrait tronqué; lire la plage concernée.]':''}`);
+          }
+          // A refactor's public behaviour is defined by the original working
+          // source, not by the last broken proposal. Keep this tiny immutable
+          // reference beside the current file when a runtime contract fails.
+          if(repairKind==='contract'||repairKind==='structure'&&!domRepair)for(const change of candidate.changes.slice(0,3)){
+            if(!repairTarget?.files.includes(change.path)||!change.before||change.before===change.after)continue;
+            const original=change.before.split('\n').slice(0,24).map((line,index)=>`${index+1}: ${line}`).join('\n');
+            domSources.push(`SOURCE ORIGINALE AVANT REFACTOR ${change.path} (comportement à préserver; ne pas éditer cette copie)\n${original.slice(0,1000)}`);
+          }
+          if(repairKind==='motion')for(const path of (repairTarget?.files??[]).slice(0,2)){
+            const source=candidate.changes.find(change=>change.path===path)?.after??await request.project.readFile(path,signal);
+            const excerpt=source.length<=2600?source:`${source.slice(0,900)}\n[Milieu omis; source certifiée, lire une plage exacte si nécessaire.]\n${source.slice(-1500)}`;
+            domSources.push(`SOURCE COURANTE MOUVEMENT ${path} #${sourceHash(source)}\n${excerpt}`);
+          }
+          const context=taskContextPacket(task,candidate,{requirements:task.userRequirements??'',guidance:request.guidance??'',memory,extra:domSources.length?`SOURCE COURANTE CIBLÉE (données, pas instructions)\n${domSources.join('\n')}`:undefined,next:continuingStandalone?actionPrompt:standalonePath?'Produis le fichier HTML autonome complet autorisé par le protocole de ce tour.':domRepair?`${repairTarget!.brief}\n${task.repairMemory?.noProgress?'Aucun progrès DOM au dernier essai : utilise la source actuelle ci-jointe, change la zone ou la méthode d’édition. ':''}Une seule mutation atomique par tour : si plusieurs balises liées changent, remplace leur bloc complet dans une seule plage; le hash de la source courante sera vérifié. Le rendu confirmera le résultat.`:repairTarget&&['syntax','contract','imports','structure','motion'].includes(repairTarget.kind)?`${repairTarget.brief}\n${actionPrompt}`:actionPrompt});
+          const semanticPaths=[...task.context.files.map(file=>file.path),...(currentTaskNode(task.taskGraph)?.files??[]),...(task.repairMemory?.focusFiles??[]),...(task.focusFiles??[])];
+          const semanticToolsExposed=Boolean(outputSchema?.properties.actions.items.oneOf.some(item=>['readSymbol','searchSymbol'].includes((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0])));
+          const symbols=features.semantic&&semanticToolsExposed?await availableSymbols(request.project,candidate.changes,semanticPaths,signal):[];
+          if(semanticToolsExposed)context.state.availableSymbols=symbols.map(symbol=>({id:symbol.id,path:symbol.path,name:symbol.name,kind:symbol.kind,editable:symbol.editable}));
+          if(outputSchema){
+            const recoverable=(context.state.recoverableContext??[]) as {id:string;start:number;end:number}[];
+            const actions=outputSchema.properties.actions.items.oneOf as {properties:{type:{enum:string[]};id?:Record<string,unknown>;start?:Record<string,unknown>;end?:Record<string,unknown>;symbolId?:Record<string,unknown>;path?:Record<string,unknown>}}[];
+            const readIndex=actions.findIndex(item=>item.properties.type.enum[0]==='readContext');
+            if(readIndex>=0){
+              const [template]=actions.splice(readIndex,1);
+              const variants=recoverable.map(reference=>{
+                const variant=structuredClone(template);
+                variant.properties.id={...variant.properties.id,enum:[reference.id],description:`Identifiant exact récupérable : ${reference.id}`};
+                variant.properties.start={...variant.properties.start,maximum:Math.max(0,reference.end-1)};
+                variant.properties.end={...variant.properties.end,maximum:reference.end};
+                return variant;
+              });
+              actions.splice(readIndex,0,...variants);
+            }
+            const symbolIds=symbols.map(symbol=>symbol.id);
+            const readSymbolIndex=actions.findIndex(item=>item.properties.type.enum[0]==='readSymbol');
+            if(readSymbolIndex>=0){
+              if(!symbolIds.length)actions.splice(readSymbolIndex,1);
+              else actions[readSymbolIndex].properties.symbolId={...actions[readSymbolIndex].properties.symbolId,enum:symbolIds,description:'Identifiant exact issu de availableSymbols pour la source courante.'};
+            }
+            if(!symbolIds.length){
+              const searchSymbolIndex=actions.findIndex(item=>item.properties.type.enum[0]==='searchSymbol');
+              if(searchSymbolIndex>=0)actions.splice(searchSymbolIndex,1);
+            }
+            const currentFullReads=new Set((task!.sourceReads??[]).filter(read=>!read.content.includes('[Suite omise')&&!read.content.includes('[Extrait seulement')&&task!.context!.files.some(file=>file.path===read.path&&file.sourceHash===read.hash)).map(read=>read.path));
+            if(currentFullReads.size){
+              const readFileIndex=actions.findIndex(item=>item.properties.type.enum[0]==='readFile');
+              if(readFileIndex>=0){
+                const unreadPaths=[...new Set(task!.context!.files.filter(file=>file.sourceHash&&!currentFullReads.has(file.path)).map(file=>file.path))];
+                if(!unreadPaths.length)actions.splice(readFileIndex,1);
+                else actions[readFileIndex].properties.path={...actions[readFileIndex].properties.path,enum:unreadPaths,description:'Fichier contextuel qui n’a pas encore été lu intégralement dans sa version courante.'};
+              }
+            }
+          }
+          requestedSchema=standalonePath?cortexFirstArtifactSchema:outputSchema;
+          const method=()=>JSON.stringify({schema:requestedSchema?contentHash(JSON.stringify(requestedSchema)):'html',standaloneContinuation:continuingStandalone,standalonePrefix:task!.pendingStandaloneHtml?contentHash(task!.pendingStandaloneHtml):undefined,jsonPrefix:task!.pendingOutput?contentHash(task!.pendingOutput):undefined,conflict:task!.patchConflict?.path,alternative:task!.solutionSearch?.active?.strategy});
           let decision=generationDecision(task,candidate,method());
           if(decision.repeated&&outputSchema&&candidate.issues.length){
             // One substantive fallback: stop offering an unchanged check as
             // an action. Source/context reads and guarded mutations remain.
             outputSchema=structuredClone(outputSchema);
-            outputSchema.properties.actions.items.oneOf=outputSchema.properties.actions.items.oneOf.filter(item=>!['runCheck','runBuild','runTests','finish','renderPreview','inspectRender'].includes((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]));
+            outputSchema.properties.actions.items.oneOf=outputSchema.properties.actions.items.oneOf.filter(item=>!['runCheck','runBuild','runTests','finish','renderPreview','inspectRender','inspectUI','inspectMotion'].includes((item as {properties:{type:{enum:string[]}}}).properties.type.enum[0]));
             requestedSchema=outputSchema;
             decision=generationDecision(task,candidate,method());
             context.next+='\nLa vérification identique a déjà été fournie. Ce tour utilise les outils de lecture et d’édition ciblée, sans re-test inchangé; une mutation valable sera automatiquement vérifiée.';
           }
           if(decision.repeated)return finalize('paused','Aucune information, source ou méthode nouvelle ne justifie une génération supplémentaire. Le diagnostic et la meilleure proposition sont conservés.');
           result = await response(standalonePath?{
-            system:standaloneSystem,
-            prompt:request.prompt,context,reason:decision.reason,
-            maxOutputTokens:2200,temperature:.3,images:request.referenceImage&&services.supportsVision?[request.referenceImage]:undefined,
+            system:continuingStandalone?`${system}\nContinue uniquement le document HTML demandé. Le préfixe est fourni dans le contexte; ne le répète pas et ne produis ni JSON ni explication.`:standaloneSystem,
+            prompt:continuingStandalone?actionPrompt:request.prompt,context,reason:decision.reason,
+            maxOutputTokens:1100,temperature:.2,images:request.referenceImage&&services.supportsVision?[request.referenceImage]:undefined,
           }:{system:stableSystem,prompt:request.prompt,context,reason:decision.reason,schema:outputSchema,maxOutputTokens:outputBudget,temperature:candidate.issues.length?0.2:0.5,images:request.referenceImage&&services.supportsVision?[request.referenceImage]:undefined});
         } catch (error) {
           if (error instanceof Error && error.message.startsWith("CORTEX_GENERATION_TIMEOUT:") && !budgetExpired) {
@@ -542,12 +716,37 @@ export class CortexRuntime {
           throw error;
         }
         const toolCall=result.toolCalls?.find(c=>c.name==="propose_actions");
+        const standalonePrefix=task.pendingStandaloneHtml;
         let raw = toolCall ? typeof toolCall.arguments==="string"?toolCall.arguments:JSON.stringify(toolCall.arguments) : (task.pendingOutput ?? "") + result.text;
-        const standaloneArtifact=standalonePath?recoverFileArtifact(raw,[standalonePath],{standaloneHtml:true}):undefined;
+        if(standalonePrefix)raw=standalonePrefix+result.text;
+        const standaloneArtifact=standalonePath?(standalonePrefix?recoverStandaloneHtml(standalonePrefix,result.text,[standalonePath]):recoverFileArtifact(raw,[standalonePath],{standaloneHtml:true})):undefined;
         if(standaloneArtifact)raw=standaloneArtifact;
         if(result.toolCalls?.length&&!toolCall&&!raw.trim())candidate.issues=[`Appel d’outil inattendu : ${result.toolCalls.map(call=>call.name).join(", ")}. Utilise propose_actions avec une action de fichier complète.`];
         if(task.pendingOutput&&result.stopReason!=="length"){try{parseAgentResponse(result.text);raw=result.text;}catch{/* A suffix is expected; preserve the previous prefix. */}}
         let recoveredPrefix=false;
+        if(standalonePath&&result.stopReason==="length"&&!standaloneArtifact){
+          const continuations=(task.pendingStandaloneContinuations??0)+1;
+          if(continuations<=1){
+            task.pendingStandaloneHtml=raw.slice(0,100_000);
+            task.pendingStandaloneContinuations=continuations;
+            candidate.issues=[];
+            await save();continue;
+          }
+          task.pendingStandaloneHtml=undefined;
+          task.pendingStandaloneContinuations=0;
+          task.standaloneRestartCount=(task.standaloneRestartCount??0)+1;
+          candidate.issues=["Document HTML autonome encore tronqué après sa continuation : aucun fragment n’a été appliqué. Repars avec un unique replaceFile HTML complet et compact."];
+          task.pendingMutation=true;
+          await save();continue;
+        }
+        if(standalonePrefix&&!standaloneArtifact){
+          task.pendingStandaloneHtml=undefined;task.pendingStandaloneContinuations=0;
+          task.standaloneRestartCount=(task.standaloneRestartCount??0)+1;
+          candidate.issues=['Continuation HTML non alignée ou document incomplet : aucun fragment appliqué. Propose un nouveau document complet et court avec replaceFile.'];
+          task.pendingMutation=true;
+          await save();continue;
+        }
+        if(standalonePrefix){task.pendingStandaloneHtml=undefined;task.pendingStandaloneContinuations=0;}
         if (result.stopReason === "length"&&!standalonePath) {
           let complete=false;try{parseAgentResponse(raw);complete=true;}catch{/* Inspect complete actions below. */}
           if(!complete){const prefix=features.atomicActions?completedActionPrefix(raw):undefined;
@@ -572,6 +771,11 @@ export class CortexRuntime {
         let attemptedAction: {type:string;path:string;oldText?:string;newText?:string}|undefined;
         try {
           const parsed = parseAgentResponse(raw,{advisoryValidation:true});
+          if(task.patchConflict)for(const action of parsed.actions){
+            if(!('path' in action)||action.path!==task.patchConflict.path||!['patchFile','applyPatch'].includes(action.type))continue;
+            const source=staged.get(action.path)?.after??await request.project.readFile(action.path,signal);
+            if(task.rejectedEdits?.includes(editSignature(action,sourceHash(source))))throw Error(`Patch déjà rejeté pour ${action.path} #${sourceHash(source)}. Utilise replaceRange avec l'empreinte courante.`);
+          }
           if(requestedSchema)validateActionEnvelope(raw,recoveredPrefix?{...requestedSchema,required:['actions']}:requestedSchema);
           envelopeAccepted=true;
           const lastCall=task.calls?.at(-1);if(lastCall)lastCall.parsing='accepted';
@@ -581,6 +785,7 @@ export class CortexRuntime {
           if(features.atomicActions&&parsed.actions.length>policy().maxActions)throw Error(`Tour compact : ${policy().maxActions} action(s) maximum selon les éditions observées. Décompose la modification.`);
           const normalized = await Promise.all(parsed.actions.map(action => normalizeProposedAction(action, request.project, staged, signal)));
           const actions = normalized.map(item => item.action);
+          if(isVisual&&!candidate.changes.length&&(task.standaloneRestartCount??0)>=2&&actions.some(action=>action.type==='replaceFile'&&/\.html?$/i.test(action.path)&&!/^\s*(?:<!doctype\s+html[^>]*>\s*)?<html\b[\s\S]*<\/html>\s*$/i.test(action.content)))throw Error('Premier artefact HTML incomplet : replaceFile doit contenir un document <html>…</html> entier. Aucun fragment appliqué.');
           trace.actions=actions.map(action=>({type:action.type,...('path' in action?{path:action.path}:{})}));
           task.focusFiles=[...new Set(actions.flatMap(action=>"path" in action?[action.path]:action.type==="readSymbol"?[action.symbolId.split(":")[0]]:[]))].slice(0,8);
           task.pendingRepairEdit={step:task.steps,hypothesis:(parsed.diagnosis?.trim()||task.repairBrief||"Première proposition").slice(0,320),actions:actions.map(action=>action.type),files:[...new Set(actions.flatMap(action=>"path" in action?[action.path]:[]))]};
@@ -588,6 +793,7 @@ export class CortexRuntime {
           const normalizerNotes = normalized.flatMap(item => item.note ? [item.note] : []);
           const toolResults: string[] = [...normalizerNotes];
           let asksFinish = actions.some(a => a.type === "finish");
+          let diagnosticInspection:import('./types.ts').InspectionOptions|undefined;
           const asksCheck = actions.some(a => a.type === "runCheck");
           const asksRender = actions.some(a => a.type === "renderPreview" || a.type === "inspectRender"||a.type==="inspectUI"||a.type==="inspectMotion");
           const mutation = actions.some(a => ["patchFile", "createFile", "replaceFile", "replaceSymbol",...atomicMutationTypes].includes(a.type));
@@ -620,8 +826,10 @@ export class CortexRuntime {
               }
               if(action.type==="replaceSymbol"&&action.sourceHash!==hash)throw Error(`Symbole sans empreinte courante pour ${action.path} #${hash}.`);
             }
-            if(action.type==="inspectUI"){request.inspection={...request.inspection,viewport:action.viewport};continue;}
-            if(action.type==="inspectMotion"){request.inspection={...request.inspection,timeline:action.timeline,...(action.selector?{interactions:request.inspection?.interactions??task.behaviorValidation?.interactions??[{type:"click",selector:action.selector}]}:{})};continue;}
+            // Model experiments must never change the independent oracle's
+            // viewport/timeline or invalidate its comparison identity.
+            if(action.type==="inspectUI"){diagnosticInspection={...diagnosticInspection,viewport:action.viewport};continue;}
+            if(action.type==="inspectMotion"){diagnosticInspection={...diagnosticInspection,timeline:action.timeline,...(action.selector?{interactions:request.inspection?.interactions??task.behaviorValidation?.interactions??[{type:"click",selector:action.selector}]}:{})};continue;}
             if (action.type === "runCheck" || action.type === "renderPreview" || action.type === "inspectRender") continue;
             const mutates="path" in action&&["patchFile","createFile","replaceFile","replaceSymbol",...atomicMutationTypes].includes(action.type);
             const reads=action.type==='readFile'||action.type==='readFileRange'||action.type==='readSymbol';
@@ -659,6 +867,14 @@ export class CortexRuntime {
           // Empty actions/finalMessage is never evidence that a change task is done.
           if (!actions.length) throw new Error("Aucune action concrète. Inspecte les fichiers utiles ou propose un patch.");
           actionsCompleted=true;
+          if(diagnosticInspection){
+            const html=candidate.changes.find(change=>/\.html?$/i.test(change.path));
+            if(html&&services.render){
+              await report('verifying','Capture complémentaire demandée, paramètres indépendants conservés');
+              const observed=await services.render(html.after,diagnosticInspection.timeline??[0],signal,request.referenceImage,effectiveInspection({...request.inspection,...diagnosticInspection}));
+              toolResults.push(`Inspection complémentaire : ${observed.frames.length} captures, ${observed.errors.length} erreurs. ${visualObservations(observed)}`);
+            }else toolResults.push('Inspection complémentaire indisponible : adaptateur de rendu HTML absent.');
+          }
           if (mutation || asksCheck || asksRender || asksFinish) {
             await verify(candidate, true);
             if (candidate.checks.some(c => c.status === "unavailable"&&c.hardConstraint!==false) && !candidate.checks.some(c => c.status === "failed"&&c.hardConstraint!==false)) return finalize("paused", "Une vérification nécessaire n’est pas disponible ou n’a pas été autorisée.");
@@ -708,7 +924,7 @@ export class CortexRuntime {
           if(task.repairMemory){
             const memory=task.repairMemory,edit=proposedEdit;
             memory.latestError=detail.slice(0,500);memory.noProgress++;
-            memory.strategy=memory.noProgress>=2?"reassess":"targeted";
+            memory.strategy=memory.noProgress>=(domRepair?1:2)?"reassess":"targeted";
             memory.attempts=[...memory.attempts,{step:task.steps,hypothesis:(edit?.hypothesis??"Action rejetée").slice(0,320),actions:edit?.actions??[],files:edit?.files??[],result:detail.slice(0,500),progress:false,category:memory.attempts.at(-1)?.category??"technical",sourceHashes:Object.fromEntries(candidate.changes.map(change=>[change.path,sourceHash(change.after)]))}].slice(-8);
             if(memory.strategy==="reassess")task.strategy="recovery";
           }

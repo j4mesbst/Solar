@@ -31,9 +31,17 @@ export function createCortexBackend(input: {provider:Provider;vault:SecretVault;
     if(call.images?.length&&!input.vision)throw new Error("La vision n’est pas disponible pour ce backend.");
     const request = (useTools: boolean) => {
       const system=call.system+(!useTools&&toolFallbacks?'\nTransport outils incompatible : objet JSON complet du schéma, sans Markdown.':'');
-      const fitted=fitModelPayload({prompt:call.prompt,context:call.context,system,schema:useTools?undefined:call.schema,tools:useTools?tools:undefined,images:call.images?.length,contextWindow:input.contextWindow,outputTokens:output});
-      call.onContext?.(fitted);
-      const message:Message={id:crypto.randomUUID(),conversationId:input.conversationId,role:'user',content:fitted.prompt,status:'completed',createdAt:new Date().toISOString(),order:0,attachments:call.images?.slice(0,4).map((image,i)=>({id:String(i),title:`Capture Cortex ${i+1}`,kind:'image',content:image}))};
+      // CortexRuntime has already performed the authoritative fit. Re-fitting
+      // its serialized packet together with call.context duplicates the whole
+      // context in a second user message projection.
+      let prompt:string;
+      if(call.contextPrepared){
+        prompt=call.prompt;
+      }else{
+        const fitted=fitModelPayload({prompt:call.prompt,context:call.context,system,schema:useTools?undefined:call.schema,tools:useTools?tools:undefined,images:call.images?.length,contextWindow:input.contextWindow,outputTokens:output});
+        call.onContext?.(fitted);prompt=fitted.prompt;
+      }
+      const message:Message={id:crypto.randomUUID(),conversationId:input.conversationId,role:'user',content:prompt,status:'completed',createdAt:new Date().toISOString(),order:0,attachments:call.images?.slice(0,4).map((image,i)=>({id:String(i),title:`Capture Cortex ${i+1}`,kind:'image',content:image}))};
       return streamChat({provider:input.provider,model:input.modelId,messages:[message],effort:'low',exactSystem:true,systemInstruction:system,localOptions:{temperature:call.temperature??.6,numCtx:input.contextWindow,keepAlive:'5m'},maxOutputTokens:output,format:useTools?undefined:call.schema,tools:useTools?tools:undefined,vault:input.vault,signal,onProgress:call.onProgress,onMetrics:value=>{metrics=value;},onDelta:delta=>{text+=delta;call.onDelta?.(delta);if(call.visible)input.onVisible(delta);}});
     };
     let completion;

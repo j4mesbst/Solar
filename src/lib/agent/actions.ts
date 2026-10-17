@@ -42,7 +42,7 @@ const standardActions = [
   action("finish", { message: { type: "string", minLength: 1, maxLength: 5000 } }, ["message"]),
 ] as const;
 const responseSchema = (actions: readonly unknown[], requireDiagnosis = false) => ({
-  type: "object", properties: { actions: { type: "array", maxItems: 8, items: { oneOf: actions } }, finalMessage: { type: "string" }, diagnosis:{type:"string",maxLength:320},validation:visualValidationSchema }, required: requireDiagnosis?["actions","diagnosis"]:["actions"], additionalProperties: false,
+  type: "object", properties: { actions: { type: "array", maxItems: 8, items: { oneOf: actions } }, finalMessage: { type: "string" }, diagnosis:{type:"string",maxLength:1200},validation:visualValidationSchema }, required: requireDiagnosis?["actions","diagnosis"]:["actions"], additionalProperties: false,
 });
 
 export const agentActionSchema = responseSchema(standardActions);
@@ -108,7 +108,8 @@ export function parseAgentResponse(raw: string, options: { advisoryValidation?:b
   catch { try { data = JSON.parse(stripTrailingCommas(source)); } catch { throw new Error("JSON d’actions invalide : régénération structurée nécessaire."); } }
   if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Réponse d’actions invalide.");
   const value = data as Record<string, unknown>;
-  if(Object.keys(value).some(key=>!["actions","finalMessage","diagnosis","validation"].includes(key)))throw Error("Champ inattendu dans la réponse d’actions.");
+  const unexpected=Object.keys(value).filter(key=>!["actions","finalMessage","diagnosis","validation"].includes(key));
+  if(unexpected.length)throw Error(`Champ inattendu dans la réponse d’actions : ${unexpected.slice(0,4).join(', ').slice(0,160)}. Champs autorisés : actions, finalMessage, diagnosis, validation. Renvoie uniquement le JSON du schéma sans ajouter d'explication.`);
   if (!Array.isArray(value.actions) || value.actions.length > 8 || (value.finalMessage !== undefined && typeof value.finalMessage !== "string") || (value.diagnosis!==undefined&&typeof value.diagnosis!=="string")) throw new Error("Schéma d’actions invalide.");
   const actions = value.actions.map((entry): AgentAction => {
     if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error("Action invalide.");
@@ -158,7 +159,11 @@ export function parseAgentResponse(raw: string, options: { advisoryValidation?:b
 }
 
 export function validateAction(action: AgentAction, project: AgentProject, staged: ReadonlyMap<string, AgentFileChange>, allowChanges: boolean): string | null {
-  if(action.type==='readContext')return /^ctx-\d+-[a-f0-9]+$/.test(action.id)&& (action.start===undefined||Number.isInteger(action.start)&&action.start>=0)&&(action.end===undefined||Number.isInteger(action.end)&&action.end>0)?null:'Référence de contexte invalide.';
+  if(action.type==='readContext'){
+    if(!/^ctx-\d+-[a-f0-9]+$/.test(action.id))return 'Référence de contexte mal formée : utilise exactement un identifiant ctx-… annoncé comme récupérable.';
+    if(action.start!==undefined&&(!Number.isInteger(action.start)||action.start<0)||action.end!==undefined&&(!Number.isInteger(action.end)||action.end<=0))return 'Plage de contexte mal formée : indices caractères entiers, start ≥ 0 et end > 0.';
+    return null;
+  }
   const atomicIssue=validateAtomic(action);if(atomicIssue)return atomicIssue;
   if(action.type==="searchSymbol"||action.type==="readSymbol")return atomicIssue??null;
   if (action.type === "runCommand" || action.type === "runTests") return "Les commandes proposées par le modèle ne sont jamais exécutées.";

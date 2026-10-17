@@ -84,7 +84,7 @@ export interface AgentRequest {
   signal: AbortSignal;
   additionalGuidance?: string;
 }
-export interface AgentModelCall { system: string; prompt: string; schema?: object; visible?: boolean; onDelta?: (part: string) => void; onProgress?: () => void; maxOutputTokens?: number; temperature?: number; images?: string[]; preferJson?:boolean; visual?:boolean; context?:import('../cortex/context-engine.ts').ContextPacket; onContext?:(value:ReturnType<typeof import('../cortex/budget.ts').fitModelPayload>)=>void; reason?:string }
+export interface AgentModelCall { system: string; prompt: string; schema?: object; visible?: boolean; onDelta?: (part: string) => void; onProgress?: () => void; maxOutputTokens?: number; temperature?: number; images?: string[]; preferJson?:boolean; visual?:boolean; context?:import('../cortex/context-engine.ts').ContextPacket; /** Runtime already serialized and budgeted context; transport must not inject it again. */ contextPrepared?:boolean; onContext?:(value:ReturnType<typeof import('../cortex/budget.ts').fitModelPayload>)=>void; reason?:string }
 export interface AgentDependencies {
   generate: (call: AgentModelCall, signal: AbortSignal) => Promise<string>;
   onState?: (state: AgentState, detail?: string) => void;

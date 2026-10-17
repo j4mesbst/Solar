@@ -1,5 +1,5 @@
 import type { AgentErrorSummary, AgentFileChange, SelectedProjectContext, VerificationResult } from "./types.ts";
-import { importMode,resolveLocalImport } from './module-resolution.ts';
+import { importMode,nearbyLocalImports,resolveLocalImport } from './module-resolution.ts';
 
 const sourcePattern = /\.(?:[cm]?[jt]sx?)$/i;
 const localImport = /(?:\bfrom\s*|\bimport\s*\(|\brequire\s*\()\s*["'](\.{1,2}\/[^"']+)["']/g;
@@ -54,7 +54,8 @@ export async function verifyStagedChanges(changes: AgentFileChange[], context: S
         let packageType:string|undefined;try{packageType=JSON.parse(context.files.find(file=>file.path==='package.json')?.content??'{}').type;}catch{/* An excerpt is not a manifest. */}
         const mode=importMode(change.path,match[0],packageType),resolution=resolveLocalImport(change.path,match[1],files,mode);
         if (resolution.target) continue;
-        results.push({ type: "imports", success: false, file: change.path, output: `Import local introuvable : ${match[1]}. Importeur : ${change.path}; mode ${mode}; résolutions tentées : ${resolution.attempted.join(', ')}.` });
+        const nearby=nearbyLocalImports(change.path,match[1],files,mode);
+        results.push({ type: "imports", success: false, file: change.path, output: `Import local introuvable : ${match[1]}. Importeur : ${change.path}; mode ${mode}; résolutions tentées : ${resolution.attempted.join(', ')}.${nearby.length?` Fichiers présents mais non résolus : ${nearby.map(item=>`${item.path} (import explicite ${item.specifier})`).join(', ')}. Vérifier également leurs exports.`:''}` });
       }
       if (!results.some(result => result.file === change.path && result.type === "imports" && !result.success)) results.push({ type: "imports", success: true, file: change.path, output: "Imports relatifs présents dans l’index." });
       results.push(...verifyModuleExports(change.path, change.after));
@@ -64,6 +65,46 @@ export async function verifyStagedChanges(changes: AgentFileChange[], context: S
       results.push({ type: "structure", success: true, file: change.path, output: "Fichier proposé dans les limites du projet." });
     } else results.push({ type: "structure", success: true, file: change.path, output: "Fichier proposé dans les limites du projet." });
   }
+  // Inspect only concrete named imports whose target is part of the staged
+  // transaction. A path that exists is not proof that its named export exists.
+  // Unknown/dynamic exports remain the runtime verifier's responsibility.
+  const stagedSources=new Map(changes.map(change=>[change.path,change.after]));
+  for(const change of changes.filter(change=>sourcePattern.test(change.path))){
+    for(const match of change.after.matchAll(/\bimport\s*\{([^}]+)\}\s*from\s*['"](\.{1,2}\/[^'"]+)['"]/g)){
+      const target=resolveLocalImport(change.path,match[2],files,importMode(change.path,match[0])).target;
+      const targetSource=target&&stagedSources.get(target);
+      if(!target||targetSource===undefined)continue;
+      const explicitExports=[...targetSource.matchAll(/\bexport\s+(?:(?:default|declare|async)\s+)*(?:function|class|const|let|var|type|interface|enum)\s+([A-Za-z_$][\w$]*)\b/g)].map(item=>item[1]);
+      for(const group of targetSource.matchAll(/\bexport\s*\{([^}]+)\}/g))for(const item of group[1].split(','))explicitExports.push(item.trim().split(/\s+as\s+/i).at(-1)??'');
+      // Re-exports and dynamic module shapes cannot be proven locally.
+      if(!explicitExports.length||/\bexport\s*\*/.test(targetSource))continue;
+      for(const part of match[1].split(',')){
+        const name=part.trim().split(/\s+as\s+/i)[0];
+        if(/^[A-Za-z_$][\w$]*$/.test(name)&&!explicitExports.includes(name))results.push({type:'imports',success:false,file:change.path,output:`Contrat de module : ${change.path} importe ${name} depuis ${target}, mais ce module n'exporte pas ce nom.`});
+      }
+    }
+    for(const match of change.after.matchAll(/\b(?:const|let|var)\s*\{([^}]+)\}\s*=\s*require\s*\(\s*['"](\.{1,2}\/[^'"]+)['"]\s*\)/g)){
+      const target=resolveLocalImport(change.path,match[2],files,importMode(change.path,match[0])).target;
+      const targetSource=target&&stagedSources.get(target);
+      if(!target||targetSource===undefined)continue;
+      for(const part of match[1].split(',')){
+        const name=part.trim().split(/\s*:\s*/)[0];
+        if(!/^[A-Za-z_$][\w$]*$/.test(name))continue;
+        const explicitObject=targetSource.match(/\bmodule\.exports\s*=\s*\{([^}]*)\}/);
+        const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        const hasExport=new RegExp(`\\bexports\\.${escaped}\\s*=|\\bexport\\s+(?:(?:async\\s+)?function|class|const|let|var)\\s+${escaped}\\b`).test(targetSource)||Boolean(explicitObject&&new RegExp(`(?:^|,)\\s*${escaped}\\s*(?:[:,]|$)`).test(explicitObject[1]));
+        if(explicitObject&&!hasExport)results.push({type:'imports',success:false,file:change.path,output:`Contrat de module : ${change.path} importe ${name} depuis ${target}, mais le module cible ne l'exporte pas dans son objet module.exports.`});
+        const reciprocal=new RegExp(`\\b(?:const|let|var)\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*=\\s*require\\s*\\(\\s*['"]([^'"]+)['"]\\s*\\)`);
+        const back=targetSource.match(reciprocal);
+        if(back&&resolveLocalImport(target,back[1],files,importMode(target,back[0])).target===change.path&&explicitObject?.[1].includes(name))results.push({type:'imports',success:false,file:change.path,output:`Import circulaire de ${name} entre ${change.path} et ${target} : les deux modules se réexportent mutuellement avant l'initialisation. Déplace la déclaration réelle dans un seul module et réexporte-la depuis l'autre.`});
+      }
+    }
+  }
+  // One verdict per import contract and file. A simultaneous optimistic PASS
+  // and concrete FAIL would make evidence identities ambiguous and can trigger
+  // an unrelated rollback of an otherwise useful multi-file repair.
+  const failedImportFiles=new Set(results.filter(result=>result.type==='imports'&&!result.success).map(result=>result.file));
+  for(let index=results.length-1;index>=0;index--)if(results[index].type==='imports'&&results[index].success&&failedImportFiles.has(results[index].file))results.splice(index,1);
   if (!changes.length) results.push({ type: "structure", success: true, output: "Aucun changement de fichier proposé." });
   if (context.estimatedTokens > context.budget) results.push({ type: "structure", success: false, output: "Budget de contexte dépassé." });
   return results;

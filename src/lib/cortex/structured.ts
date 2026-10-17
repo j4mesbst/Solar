@@ -41,3 +41,21 @@ export function recoverFileArtifact(raw:string, projectPaths:string[], options:{
   const response=JSON.stringify({actions:[{type:"replaceFile",path,content}]});
   try{parseAgentResponse(response);return response;}catch{return;}
 }
+
+/** A standalone document may arrive in two streamed pieces. Accept it only
+ * once the joined source is a complete, allowed HTML document. */
+export function recoverStandaloneHtml(prefix:string, continuation:string, projectPaths:string[]):string|undefined {
+  // A continuation is only trustworthy when it completes the exact prefix
+  // that Cortex retained. Accepting a newly restarted standalone document
+  // here would silently discard the first part and violate the continuation
+  // contract.
+  if(/<\s*(?:!doctype\s+html|html\b)/i.test(continuation))return;
+  if((/<\/head\s*>/i.test(prefix)&&/<\/head\s*>/i.test(continuation))||(/<body\b/i.test(prefix)&&/<body\b/i.test(continuation)))return;
+  // A local model can restart from an earlier CSS/JS fragment without
+  // repeating <html>. Joining that fragment in the middle of a token creates
+  // a superficially complete but corrupted document. Require novel suffix
+  // text, not merely a closing </html> tag.
+  const leading=continuation.trimStart().slice(0,64);
+  if(leading.length>=48&&prefix.includes(leading))return;
+  return recoverFileArtifact(prefix+continuation,projectPaths,{standaloneHtml:true});
+}

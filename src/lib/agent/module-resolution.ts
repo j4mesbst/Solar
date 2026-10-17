@@ -7,6 +7,16 @@ export function resolveLocalImport(importer:string,specifier:string,paths:Iterab
   const attempted=extensions.map(extension=>base+extension);
   return {target:attempted.find(file=>files.has(file)),attempted};
 }
+/** A nearby file is evidence for a repair, not proof that Node can resolve it.
+ * In particular, CommonJS does not append .cjs to extensionless requires. */
+export function nearbyLocalImports(importer:string,specifier:string,paths:Iterable<string>,mode:ModuleMode){
+  if(!specifier.startsWith('./')&&!specifier.startsWith('../'))return [];
+  const base=resolveLocalImport(importer,specifier,[],mode).attempted[0];
+  if(!base)return [];
+  const suffixes=mode==='cjs'?['.cjs','/index.cjs']:mode==='esm'?['.js','.mjs','.cjs']:['.cjs','.mjs','/index.cjs'];
+  return [...new Set(paths)].filter(path=>suffixes.some(suffix=>path===base+suffix))
+    .map(path=>({path,specifier:specifier+path.slice(base.length)}));
+}
 export function importMode(importer:string,expression:string,packageType?:string):ModuleMode {
   if(/\brequire\s*\(/.test(expression))return 'cjs';
   return /\.mjs$/.test(importer)||/\.js$/.test(importer)&&packageType==='module'?'esm':'bundler';
