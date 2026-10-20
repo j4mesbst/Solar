@@ -1,0 +1,38 @@
+.solar-agent-page { flex:1; min-height:0; overflow:auto; padding:32px 20px 60px; color:inherit; }
+.solar-agent-container { max-width:780px; margin:auto; display:flex; flex-direction:column; gap:23px; }
+.solar-agent-header { display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; padding:20px 0 8px; }
+.solar-agent-avatar { width:54px;height:54px;border-radius:18px;display:grid;place-items:center;background:color-mix(in srgb,currentColor 10%,transparent); }
+.solar-agent-header h1 { margin:0;font-size:27px;font-weight:650;letter-spacing:-.04em; }
+.solar-agent-header p { margin:0;opacity:.7;font-size:14px; }
+.solar-agent-safe { display:flex;align-items:center;gap:6px;font-size:11px;opacity:.7; }
+.solar-agent-connectors,.solar-agent-composer { border:1px solid color-mix(in srgb,currentColor 16%,transparent);border-radius:19px;padding:18px; }
+.solar-agent-section-title { display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;margin-bottom:12px; }
+.solar-agent-section-title button { background:none;border:0;color:inherit;opacity:.75;cursor:pointer;font-size:12px; }
+.solar-agent-tabs,.solar-agent-controls { display:flex;gap:9px;margin-bottom:12px; }
+.solar-agent-tabs button {display:flex;align-items:center;gap:7px;border:1px solid color-mix(in srgb,currentColor 18%,transparent);border-radius:12px;background:transparent;color:inherit;padding:9px 13px;cursor:pointer;}
+.solar-agent-tabs button[aria-pressed="true"] {background:color-mix(in srgb,currentColor 11%,transparent);}
+.solar-agent-controls input {flex:1;min-width:0;border:1px solid color-mix(in srgb,currentColor 18%,transparent);border-radius:11px;padding:10px 12px;background:transparent;color:inherit;}
+.solar-agent-controls button {display:flex;align-items:center;gap:7px;border:1px solid color-mix(in srgb,currentColor 20%,transparent);border-radius:11px;padding:9px 12px;background:transparent;color:inherit;cursor:pointer;}
+.solar-agent-controls button:disabled {opacity:.5;cursor:not-allowed;}
+.solar-agent-hint,.solar-agent-disclaimer {opacity:.65;font-size:12px;line-height:1.6;margin:3px 0;display:flex;gap:6px;align-items:center;}
+.solar-agent-results {max-height:255px;overflow:auto;border-top:1px solid color-mix(in srgb,currentColor 12%,transparent);margin-top:10px;}
+.solar-agent-results label {display:flex;align-items:flex-start;gap:10px;padding:12px 3px;border-bottom:1px solid color-mix(in srgb,currentColor 9%,transparent);cursor:pointer;}
+.solar-agent-results label span {display:grid;gap:4px;overflow-wrap:anywhere;font-size:13px;}
+.solar-agent-results label small {opacity:.65;}
+.solar-agent-results input {margin-top:2px;accent-color:currentColor;}
+.solar-agent-history {display:flex;flex-direction:column;gap:14px;}
+.solar-agent-history article {padding:15px 18px;border-radius:17px;line-height:1.55;overflow-wrap:anywhere;}
+.solar-agent-user {background:color-mix(in srgb,currentColor 8%,transparent);margin-left:10%;}
+.solar-agent-answer {border:1px solid color-mix(in srgb,currentColor 11%,transparent);margin-right:6%;}
+.solar-agent-history article p {margin:6px 0;}
+.solar-agent-message-label {font-size:12px;font-weight:650;opacity:.75;margin-bottom:7px;}
+.solar-agent-history article small {opacity:.6;}
+.solar-agent-composer textarea {width:100%;resize:vertical;min-height:64px;border:0;outline:0;background:transparent;color:inherit;font:inherit;}
+.solar-agent-composer-bottom {display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.solar-agent-composer select {max-width:78%;font:inherit;font-size:12px;color:inherit;background:transparent;border:0;padding:7px; }
+.solar-agent-composer option {background:#242424;color:#fff;}
+.solar-agent-send {display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:50%;background:currentColor;color:inherit;cursor:pointer;}
+.solar-agent-send svg {color:var(--solar-agent-arrow,#777);mix-blend-mode:difference;}
+.solar-agent-send:disabled {opacity:.3;cursor:default;}
+.solar-agent-error {color:#dc5858;font-size:13px;}
+@media(max-width:620px){.solar-agent-page{padding:14px 11px 40px;}.solar-agent-connectors,.solar-agent-composer{padding:12px;}.solar-agent-controls{flex-wrap:wrap;}.solar-agent-controls input{flex-basis:100%;}.solar-agent-header{padding-top:8px;}}
