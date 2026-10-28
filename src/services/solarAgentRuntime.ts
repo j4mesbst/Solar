@@ -1,4 +1,4 @@
-import {conversationQuestionInstructions,parseAgentQuestion} from './agentQuestions';
+import {conversationQuestionInstructions,parseAgentQuestion,requestedAgentQuestion,withoutWidgetMarkup,finalAgentPresentation} from './agentQuestions';
 import {isSolarCloudProvider} from './solarCloud.ts';
 import {readUsage} from './usage.ts';
 import {effectiveSolarLimits} from './solarPlans.ts';
@@ -158,7 +158,7 @@ export async function runAgentMissionCore(input: {
       if (!answer.trim()) throw new Error("Le modèle n’a produit aucune réponse.");
       mission.result = answer;
     }
-    if(agent.instructions.includes(conversationQuestionInstructions)&&mission.result){const parsed=parseAgentQuestion(mission.result);mission.result=parsed.text;mission.question=parsed.question;input.onReplace?.(parsed.text);}
+    if(agent.instructions.includes(conversationQuestionInstructions)&&mission.result){const parsed=finalAgentPresentation(mission.result,requestText,agent.description+' ' +agent.instructions.split(conversationQuestionInstructions)[0]);mission.result=parsed.text;mission.question=parsed.question;input.onReplace?.(parsed.text);}
     if(mission.result&&mission.sources?.length){const previous=mission.result;mission.result=ensureWebCitations(qualifyWebScope(requestText,previous,mission.sources),mission.sources);if(mission.result!==previous){if(mission.result.startsWith(previous))input.onDelta?.(mission.result.slice(previous.length));else if(input.onReplace)input.onReplace(mission.result);}}
     signal.throwIfAborted();
     if(unavailableSources.length){const note=`\n\nSources indisponibles : ${unavailableSources.join(', ')}. Le bilan reste partiel.`;mission.result=(mission.result??'')+note;input.onDelta?.(note);mission.verification??={checked:0,limitations:[]};mission.verification.limitations.push(note.trim());}

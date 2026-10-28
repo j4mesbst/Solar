@@ -1,7 +1,7 @@
 import type { AppSettings, Palette } from "../domain/types";
 export const palettes: Record<"light"|"dark",Palette> = {
-  light:{accent:"#18181b",background:"#ffffff",surface:"#ffffff",text:"#202024",sidebar:"#fdfdfd",userBubble:"#f2f2f4",border:"#e1e1e7",selection:"#3478f6"},
-  dark:{accent:"#eeeeef",background:"#000000",surface:"#101010",text:"#ececed",sidebar:"#000000",userBubble:"#242427",border:"#303033",selection:"#3478f6"}
+  light:{accent:"#18181b",background:"#fcfcfc",surface:"#ffffff",text:"#202024",sidebar:"#f5f5f5",userBubble:"#f2f2f4",border:"#e1e1e7",selection:"#3478f6"},
+  dark:{accent:"#eeeeef",background:"#121212",surface:"#202020",text:"#ececed",sidebar:"#0e0e0e",userBubble:"#242427",border:"#303033",selection:"#3478f6"}
 };
 export const validColor=(value:string)=>/^#[0-9a-f]{6}$/i.test(value);
 export function contrastText(hex:string): string { const rgb=hex.slice(1).match(/../g)!.map(c=>parseInt(c,16)/255).map(c=>c<=.04045?c/12.92:((c+.055)/1.055)**2.4);return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2]>.179?"#141416":"#ffffff"; }

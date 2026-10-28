@@ -58,6 +58,9 @@ export async function runTeamMission(input:Parameters<typeof runAgentMission>[0]
 }
 async function runTeamMissionCore(input:Parameters<typeof runAgentMission>[0]):Promise<AgentMission>{
  if(!input.agent.enabled)throw Error('Cet agent est désactivé.');
+ const request=input.mission.requestText??input.mission.goal;
+ // Help and choice requests are conversations, not delegation plans.
+ if(/\bqcm\b|choix multiple|(?:propose|suggère).{0,60}(?:actions?|t[âa]ches?)|(?:comment|en quoi).{0,25}(?:aider|aides)|^(?:salut|bonjour|bonsoir|hello|merci)[!.?\s]*$/iu.test(request))return (await import('./solarAgentRuntime')).runAgentMissionCore(input);
  const data=await solarAgentStore.snapshot();const designated=data.team?.profiles.find(p=>p.agentId===input.agent.id)?.manager;
  const manager=designated?{...(data.manager??{enabled:false,nextCheckAt:now(),tasks:[]}),agentId:input.agent.id,grants:data.agents.filter(a=>a.id!==input.agent.id&&a.enabled&&!data.team?.profiles.find(p=>p.agentId===a.id)?.manager).map(a=>({agentId:a.id,instruction:a.instructions,goal:a.description,providerId:a.providerId,modelId:a.modelId,cadence:"daily" as const,connections:{}}))}:designated===false?undefined:data.manager;
  if(!manager||manager.agentId!==input.agent.id||input.attachments?.length)return (await import('./solarAgentRuntime')).runAgentMissionCore(input);

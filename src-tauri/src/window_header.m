@@ -9,13 +9,13 @@ void solar_align_window_header(void *raw, double centerFromTop) {
   NSButton *close = [window standardWindowButton:NSWindowCloseButton];
   if (!close) return;
   NSRect closeRect = [close convertRect:close.bounds toView:content];
-  CGFloat horizontalShift = 42.0 - NSMinX(closeRect);
+  CGFloat horizontalShift = 10.0 - NSMinX(closeRect);
   for (NSNumber *kind in @[@(NSWindowCloseButton), @(NSWindowMiniaturizeButton), @(NSWindowZoomButton)]) {
     NSButton *button = [window standardWindowButton:kind.unsignedIntegerValue];
     NSView *parent = button.superview;
     if (!button || !parent) continue;
     NSRect current = [button convertRect:button.bounds toView:content];
-    NSPoint desired = NSMakePoint(NSMidX(current) + horizontalShift, content.isFlipped ? NSMinY(content.bounds) + centerFromTop : NSMaxY(content.bounds) - centerFromTop);
+    NSPoint desired = NSMakePoint(NSMidX(current) + horizontalShift, content.isFlipped ? NSMinY(content.bounds) + 10.0 + current.size.height/2 : NSMaxY(content.bounds) - 10.0 - current.size.height/2);
     NSPoint local = [parent convertPoint:desired fromView:content];
     NSRect frame = button.frame;
     frame.origin.x = local.x - frame.size.width / 2;

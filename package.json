@@ -1,7 +1,7 @@
 {
   "name": "solar",
   "private": true,
-  "version": "0.13.2",
+  "version": "0.13.4",
   "type": "module",
   "scripts": {
     "test:agent:durable": "node scripts/durable-jobs.test.mjs && node scripts/durable-file-integration.test.mjs",

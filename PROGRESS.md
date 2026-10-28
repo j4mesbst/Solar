@@ -1,12 +1,9 @@
-# Solar 0.13.2 — état public
+# Progression publique
 
-Publication du 28 octobre 2026.
+## 28 octobre 2026 — Solar 0.13.4
 
-- Messagerie d’équipe, mascottes personnalisables, cinq formes animées et couleurs de conversation.
-- Managers centrés, déplacement direct, suppression au clic droit et restauration sans réactivation des routines.
-- Panneau Détails réduit à trois autorisations ; Bibliothèque pour les dossiers ajoutés ; Ordinateur annoncé Bientôt.
-- Modèles simplifiés : détection Ollama, clé OpenAI personnelle, Solar Cloud selon configuration réelle.
-- Logo natif actualisé, apparences clair/sombre/personnalisée et mouvement réduit conservés.
-- Distribution macOS Apple Silicon, signature ad hoc, non notarisée. Aucune clé fournisseur privée dans le dépôt ou le téléchargement public.
+Fiabilisation des QCM, regroupement des réponses en trois bulles maximum, demandes d’aide au manager conservées dans le dialogue, nettoyage des commandes affichées et annulations. Fenêtre déplaçable depuis le haut ; thèmes clair/sombre et sélection grise des managers. Fournisseur, stockage, permissions et palettes personnalisées préservés.
 
-Les vérifications couvrent TypeScript/build, contrats de conversation et stockage, interaction Playwright sur données synthétiques et packaging natif. Elles ne démontrent pas une connexion à tous les services externes. Les limites et prérequis sont détaillés dans README.md.
+Tests TypeScript, contrats Messenger et chat, parcours Playwright avec thèmes, pièces jointes, petites fenêtres et mouvement réduit validés. Les réponses des modèles peuvent varier. La position des boutons natifs reste dépendante de macOS ; badge de partage d’écran présent pendant la vérification locale.
+
+Médias fournis et publication explicitement autorisée par James. Build public sans accès développeur personnel. Release macOS Apple Silicon signée ad hoc, sans notarisation. Aucun secret ou contenu de stockage local inclus dans le code publié.

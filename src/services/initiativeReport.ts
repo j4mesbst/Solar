@@ -15,5 +15,5 @@ export function initiativeReport(mission:AgentMission){
 }
 export function readableMissionText(text:string){
  // Old transcripts remain intact in storage; do not display the opaque internal diagnostic.
- return text.replace(/Budget de mission atteint ; résultats conservés pour une reprise ciblée\./g,'Vérification inachevée : la limite de traitement a été atteinte avant le compte rendu. Aucun résultat complet n’est confirmé.');
+ return text.replace(/(?:signal is aborted without reason|The (?:operation|user) aborted (?:a |the )?request\.?|AbortError(?::[^\n]*)?)/gi,'Demande interrompue.').replace(/Aucune preuve indépendante ne confirme encore cette tâche\./g,'Je n’ai pas pu confirmer le résultat. Tu peux réessayer.').replace(/Budget de mission atteint ; résultats conservés pour une reprise ciblée\./g,'Vérification inachevée : la limite de traitement a été atteinte avant le compte rendu. Aucun résultat complet n’est confirmé.');
 }

@@ -12,3 +12,8 @@ Solar est une messagerie d’agents macOS. Préserver le mot Solar, la typograph
 - Clés dans le Trousseau, cache de session dédupliqué sans désactiver la sécurité macOS. Les plugins non implémentés ne sont pas annoncés comme connectés.
 
 Avant une livraison, vérifier les états désactivés et erreur, clair/sombre/personnalisé, petite fenêtre, clavier/focus, mouvement réduit, pièces jointes et génération en cours. Mettre à jour PROGRESS.md avec les preuves et limites. Ne publier aucun secret, conversation privée ou artefact de test utilisateur.
+
+
+## Finition 0.13.4
+
+Chat clair #fcfcfc, sidebar #f5f5f5 ; sombre #121212 et #0e0e0e. Managers sélectionnés sur gris neutre ; palettes personnalisées prioritaires. Zone de déplacement supérieure, boutons natifs à 10 px des bords. QCM contextuels et réponses limitées à trois bulles, sans perte des livrables structurés.

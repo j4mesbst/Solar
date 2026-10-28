@@ -24,7 +24,7 @@ import{solarStore}from'../services/store';
 import{solarAgentStore,type AgentData,type MascotId}from'../services/solarAgentStore';
 import {developAgentRole} from '../services/developAgentRole';
 import{teamCloud}from'../services/teamCloud';
-import{appearanceStyle,contrastText}from'../services/appearance';
+import{appearanceStyle,contrastText,paletteFor}from'../services/appearance';
 import{resolveTheme,nextThemeBoundary}from'../services/theme';
 import{scopedKey}from'../services/accountScope';
 import{authClient}from'../services/auth';
@@ -57,7 +57,7 @@ export function AgentApp(){
   if(!(window as Window&{__TAURI_INTERNALS__?:unknown}).__TAURI_INTERNALS__)return;
   let frame=0,disposed=false;
   const align=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{frame=requestAnimationFrame(()=>{
-   const header=document.querySelector<HTMLElement>('.team-sidebar-top'),rect=header?.getBoundingClientRect(),center=rect?rect.y+rect.height/2:26;
+   const center=18;
    if(!disposed)void import('@tauri-apps/api/core').then(({invoke})=>!disposed&&invoke('window_align_header',{center})).catch(()=>{});
   });});};align();window.addEventListener('resize',align);window.addEventListener('focus',align);
   return()=>{disposed=true;cancelAnimationFrame(frame);window.removeEventListener('resize',align);window.removeEventListener('focus',align);};
@@ -93,10 +93,13 @@ export function AgentApp(){
  useEffect(()=>{void acknowledgeVisible().catch(()=>{});},[acknowledgeVisible,data,view,selected,busy[selected??''],create,editing,accountOpen,connecting]);
  useEffect(()=>{const read=()=>void acknowledgeVisible().catch(()=>{});window.addEventListener('focus',read);document.addEventListener('visibilitychange',read);return()=>{window.removeEventListener('focus',read);document.removeEventListener('visibilitychange',read);};},[acknowledgeVisible]);
  const editAgent=data?.agents.find(a=>a.id===editing),editProfile=data?.team?.profiles.find(p=>p.agentId===editing);
- const style={...appearanceStyle(settings,theme),'--team-bg':settings.appearance?.[theme]?.background??(theme==='dark'?'#000000':'#ffffff'),'--team-side':settings.appearance?.[theme]?.sidebar??(theme==='dark'?'#151515':'#f6f6f4')} as CSSProperties;
+ const palette=paletteFor(settings,theme);
+ const style={...appearanceStyle(settings,theme),'--team-bg':palette.background,'--team-side':palette.sidebar} as CSSProperties;
  const accountName=settings.profile?.name||email.split('@')[0]||'Mon compte';
  const rows=[...(data?.team?.profiles??[])].map(profile=>({profile,agent:data?.agents.find(a=>a.id===profile.agentId)!})).filter(row=>row.agent&&`${row.agent.name} ${row.profile.role??row.agent.description} ${roleSummary(row.profile.role??row.agent.description)}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
- return <div className={`shell team-app ${collapsed?'sidebar-collapsed':''} `} data-theme={theme} data-native={Boolean((window as Window & {__TAURI_INTERNALS__?:unknown}).__TAURI_INTERNALS__)} style={style}>
+ const dragWindow=(event:React.PointerEvent)=>{if(event.button!==0||!(window as Window&{__TAURI_INTERNALS__?:unknown}).__TAURI_INTERNALS__)return;const target=event.target as HTMLElement;if(!target.closest('[data-tauri-drag-region]')||target.closest('button,input,textarea,a,select,[role=tab]'))return;event.preventDefault();void import('@tauri-apps/api/window').then(({getCurrentWindow})=>getCurrentWindow().startDragging()).catch(()=>setError('Impossible de déplacer la fenêtre. Réessaie depuis le bord supérieur.'));};
+ return <div onPointerDownCapture={dragWindow} className={`shell team-app ${collapsed?'sidebar-collapsed':''} `} data-theme={theme} data-native={Boolean((window as Window & {__TAURI_INTERNALS__?:unknown}).__TAURI_INTERNALS__)} style={style}>
+  <div className="team-window-dragbar" data-tauri-drag-region aria-hidden="true"/>
   {!collapsed&&view==='agents'&&<button className="team-mobile-scrim" aria-label="Fermer la barre latérale" onClick={()=>setCollapsed(true)}/>}
   <aside ref={sidebarRef} style={{transform:collapsed?'translate3d(-100%,0,0)':'translate3d(0,0,0)'}} className="team-sidebar" aria-label="Tes agents" aria-hidden={collapsed||undefined}>
    <div className="team-sidebar-top" data-tauri-drag-region><button className="team-icon-button team-drawer-close" aria-label="Fermer les agents" onClick={()=>setCollapsed(true)}><PanelLeft size={17}/></button><button className="team-icon-button messenger-search-toggle" aria-label="Rechercher un agent" title="Rechercher · ⌘K" aria-expanded={searchOpen} onClick={()=>{setSearchOpen(v=>!v);setTimeout(()=>document.querySelector<HTMLInputElement>('.team-search input')?.focus(),0);}}><Search size={18}/></button><button className="team-icon-button" aria-label="Créer un agent" title="Créer un agent · ⌘N" onClick={()=>setCreate(true)}><Plus size={21}/></button></div>
