@@ -1,0 +1,28 @@
+.solar-agent-page{flex:1;min-height:0;overflow:auto;background:var(--bg);color:var(--text);padding:90px 32px 70px;scrollbar-gutter:stable}
+.solar-agent-inner{width:min(1100px,100%);margin:auto}
+.solar-agent-header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:38px}
+.solar-agent-eyebrow{font-size:10px!important;letter-spacing:.15em;font-weight:700!important;color:var(--muted);margin:0 0 13px!important}
+.solar-agent-header h1{font-size:clamp(30px,4vw,44px);line-height:1.08;letter-spacing:-.045em;font-weight:590;margin:0 0 12px}
+.solar-agent-header p{max-width:530px;font-size:14px;line-height:1.55;color:var(--muted);margin:0}
+.solar-agent-head-actions,.solar-agent-actions,.solar-agent-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.solar-agent-collection{min-height:400px;display:grid;align-items:start}
+.solar-agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.solar-agent-card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:23px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;min-height:205px;gap:10px;color:var(--text);transition:border-color .18s,transform .18s}
+.solar-agent-card:hover{border-color:var(--muted);transform:translateY(-2px)}
+.solar-agent-card-mark{height:38px;width:38px;border-radius:12px;display:grid;place-items:center;font-size:18px;font-weight:550;background:var(--hover)}
+.solar-agent-card strong{font-size:16px;font-weight:590;letter-spacing:-.02em;margin-top:6px}
+.solar-agent-card>span:not(.solar-agent-card-mark){font-size:12px;color:var(--muted);line-height:1.5}
+.solar-agent-card small{font-size:11px;color:var(--subtle);margin-top:auto}
+.solar-agent-empty{margin:28px auto 0;max-width:510px;min-height:370px;text-align:center;border:1px solid var(--line);border-radius:28px;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:40px;background:var(--surface)}
+.solar-agent-empty-mark{display:flex;gap:6px;margin-bottom:25px;align-items:end;height:38px}.solar-agent-empty-mark span{width:13px;background:var(--text);border-radius:5px}.solar-agent-empty-mark span:first-child{height:23px;opacity:.35}.solar-agent-empty-mark span:nth-child(2){height:37px;opacity:.7}.solar-agent-empty-mark span:last-child{height:29px}
+.solar-agent-empty h2{font-size:24px;letter-spacing:-.035em;font-weight:590;margin:0 0 10px}.solar-agent-empty p{font-size:13px;line-height:1.6;color:var(--muted);margin:0 0 23px}
+.solar-agent-panel{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:24px;margin-bottom:16px;min-width:0}.solar-agent-panel h2{font-size:17px;font-weight:590;letter-spacing:-.025em;margin:0 0 15px}.solar-agent-panel>p{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 15px}
+.solar-agent-form{display:grid;gap:17px;max-width:680px}.solar-agent-form>label{display:grid;gap:7px;font-size:12px;font-weight:550}.solar-agent-form input:not([type=checkbox]),.solar-agent-form textarea,.solar-agent-form select,.solar-agent-panel>textarea,.solar-agent-schedule select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;color:var(--text);font:inherit;resize:vertical}
+.solar-agent-form fieldset{border:1px solid var(--line);border-radius:15px;display:grid;gap:10px;padding:15px}.solar-agent-form legend{font-size:12px;color:var(--muted);padding:0 4px}.solar-agent-form .solar-agent-check{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:400}.solar-agent-check input{accent-color:var(--text)}
+.solar-agent-actions{margin-top:16px}.solar-agent-toolbar{margin-bottom:18px}.solar-agent-status{font-size:11px;border:1px solid var(--line);border-radius:99px;padding:7px 10px;color:var(--muted);margin-right:auto}
+.solar-agent-columns{display:grid;grid-template-columns:1fr 1fr;gap:16px}.solar-agent-record{border-top:1px solid var(--line);padding:15px 0;display:grid;gap:6px;min-width:0}.solar-agent-record strong{font-size:13px;font-weight:560}.solar-agent-record small{font-size:11px;color:var(--muted)}.solar-agent-record p{font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;margin:3px 0}.solar-agent-record details{font-size:11px;color:var(--muted)}.solar-agent-record summary{cursor:pointer}.solar-agent-empty-note{font-size:12px;color:var(--muted)}
+.solar-agent-inline,.solar-agent-schedule{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.solar-agent-inline input{flex:1;min-width:160px}.solar-agent-schedule input:first-child{flex:2;min-width:190px}.solar-agent-schedule select,.solar-agent-schedule input[type=time]{flex:0 1 150px}
+.solar-agent-page :is(button,input,textarea,select,summary):focus-visible{outline:2px solid var(--selection-color,#6b91d8);outline-offset:2px}
+.solar-agent-privacy-note{border:1px solid var(--line);border-radius:13px;padding:12px 15px;font-size:12px;line-height:1.5;color:var(--muted)}
+@media(max-width:760px){.solar-agent-page{padding:86px 18px 42px}.solar-agent-header{align-items:flex-start;flex-direction:column;gap:18px;margin-bottom:24px}.solar-agent-columns{grid-template-columns:1fr}.solar-agent-panel{padding:18px}.solar-agent-empty{min-height:330px}}
+@media(prefers-reduced-motion:reduce){.solar-agent-card{transition:none}.solar-agent-card:hover{transform:none}}

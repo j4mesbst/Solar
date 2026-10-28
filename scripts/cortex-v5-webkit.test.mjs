@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {render} from './solar-bench/webkit.mjs';
+import {compareReference} from '../src/lib/cortex/visual-intelligence.ts';
+import {assessMotionContracts} from '../src/lib/cortex/motion-engine.ts';
+
+const signal=new AbortController().signal;
+const viewport={width:640,height:400};
+const html=color=>`<!doctype html><html><head><style>body{margin:0;background:${color}} #box{position:absolute;left:10px;top:20px;width:40px;height:40px;background:#000}</style></head><body><div id="box"></div></body></html>`;
+const original=await render(html('#fff'),[0],signal,undefined,{viewport});
+assert.equal(original.errors.length,0,JSON.stringify(original.errors));
+const reference=original.frames[0].image;
+const analysis=await render('',[0],signal,reference,{referenceOnly:true});
+assert(analysis.referenceAnalysis.width>=640);assert.equal(analysis.referenceAnalysis.width/analysis.referenceAnalysis.height,640/400);assert.equal(analysis.referenceAnalysis.cells.length,16);
+assert.equal(analysis.frames.length,0);
+const changed=await render(html('#aaa'),[0],signal,reference,{viewport});
+assert.equal(changed.errors.length,0,JSON.stringify(changed.errors));
+assert.equal(changed.referenceComparison.aspectCompatible,true);
+assert(changed.referenceComparison.meanError>.01);
+assert.equal(compareReference(changed,.001)[0].status,'failed');
+assert.equal(compareReference(original)[0],undefined);
+const incompatible=await render(html('#fff'),[0],signal,reference,{viewport:{width:640,height:480}});
+assert.equal(incompatible.referenceComparison.aspectCompatible,false);
+assert.equal(compareReference(incompatible,.1)[0].status,'unavailable');
+
+const gsapPath=process.env.CORTEX_TEST_GSAP_PATH;
+if(gsapPath){
+  const gsap=await readFile(gsapPath,'utf8');
+  const motion=`<!doctype html><html><head><style>body{margin:0}#box{width:40px;height:40px;background:coral}</style></head><body><div id="box"></div><script>${gsap}</script><script>const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;window.__cortexGsapTimeline=gsap.timeline({paused:true});if(reduced){gsap.set('#box',{x:100});}else{window.__cortexGsapTimeline.fromTo('#box',{x:0},{x:100,duration:1,ease:'none'});}</script></body></html>`;
+  const times=[0,250,500,750,1000];
+  const normal=await render(motion,times,signal,undefined,{viewport,selectors:['#box'],motionClock:'gsap'});
+  assert.deepEqual(normal.errors,[],JSON.stringify(normal.errors));
+  assert.equal(normal.motionClock,'gsap');
+  const x=normal.frames.map(frame=>frame.elements.find(e=>e.selector==='#box').x);
+  assert(x[1]>x[0]+10&&x[3]>x[2]+10&&Math.abs(x[4]-x[0]-100)<3,JSON.stringify(x));
+  const c={id:'gsap-x',selector:'#box',property:'x',startMs:0,endMs:1000,from:x[0],to:x[0]+100,requireMovement:true,tolerance:3};
+  assert.equal(assessMotionContracts(normal,[c])[0].status,'passed');
+  const reduced=await render(motion,times,signal,undefined,{viewport,selectors:['#box'],motionClock:'gsap',reducedMotion:true});
+  assert.deepEqual(reduced.errors,[],JSON.stringify(reduced.errors));
+  assert.equal(assessMotionContracts(reduced,[{...c,id:'gsap-reduced',from:reduced.frames[0].elements.find(e=>e.selector==='#box').x,to:reduced.frames[0].elements.find(e=>e.selector==='#box').x,reducedMotion:true}])[0].status,'passed');
+  const noTimeline=await render(html('#fff'),[0],signal,undefined,{viewport,motionClock:'gsap'});
+  assert(noTimeline.errors.some(error=>error.includes('timeline exposée absente')));
+  console.log('Cortex V5 WebKit: reference dimensions/regions, GSAP sampled positions and reduced motion — PASS');
+}else console.log('Cortex V5 WebKit: reference dimensions/regions PASS; GSAP SKIP (CORTEX_TEST_GSAP_PATH absent)');

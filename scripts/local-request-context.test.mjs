@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {localRequestContext} from '../src/services/localRequestContext.ts';
+const msg=text=>[{role:'user',content:text}];
+assert.equal(localRequestContext(262144,msg('Bonjour'),[],8192),16384);
+assert.equal(localRequestContext(262144,msg('Bonjour'),[],384),8192);
+const long=msg('a'.repeat(180000));const snapshot=JSON.stringify(long);
+assert(localRequestContext(262144,long,[],8192)>=65536);
+assert(localRequestContext(262144,long,[],8192)<=262144);
+assert.equal(JSON.stringify(long),snapshot);
+assert(localRequestContext(262144,msg('a'.repeat(550000)),[],8192)>131072);
+assert.equal(localRequestContext(4096,msg('Bonjour'),[],512),4096);
+assert.equal(localRequestContext(20000,msg('a'.repeat(30000)),[],8192),20000);
+assert.equal(localRequestContext(262144,[{role:'user',content:'Image',images:['data']}],[],8192),262144);
+assert.equal(localRequestContext(262144,[{role:'user',content:[{type:'image_url',image_url:{url:'fixture'}}]}],[],8192),262144);
+assert(localRequestContext(262144,msg('Bonjour'),[{schema:'x'.repeat(120000)}],8192)>32768);
+assert.throws(()=>localRequestContext(NaN,msg('Bonjour'),[],8192));
+console.log('Local request context: PASS — short, long, huge, non-power-of-two and small windows, output reserve, tool schemas, images, no message mutation.');

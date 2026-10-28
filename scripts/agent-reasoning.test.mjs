@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';import{agentLocalReasoning}from'../src/services/agentReasoning.ts';
+const caps=['reasoning','tools'];
+assert.equal(agentLocalReasoning(caps,'medium','Résume mes trois derniers mails Gmail.',true),false);
+assert.equal(agentLocalReasoning(caps,'high','Résume mes trois derniers mails Gmail.',true),true);
+assert.equal(agentLocalReasoning(caps,'medium','Compare les risques de ces contrats.',true),true);
+assert.equal(agentLocalReasoning(caps,'medium','Analyse en détail les changements.',true),true);
+assert.equal(agentLocalReasoning(caps,'medium','À partir de cette note, donne les actions.'),false);
+assert.equal(agentLocalReasoning(caps,'medium','Traduis ce texte en anglais.'),false);
+assert.equal(agentLocalReasoning(caps,'medium','À partir de cette note, démontre que le système est correct.'),true);
+assert.equal(agentLocalReasoning(caps,'medium','Résous cette équation et explique le calcul.'),true);
+assert.equal(agentLocalReasoning(caps,'medium','Que dois-je faire ?'),true);
+assert.equal(agentLocalReasoning(caps,'low','Réfléchis longtemps.'),false);
+assert.equal(agentLocalReasoning([],'ultra','Analyse approfondie.'),false);
+console.log('Agent local reasoning: PASS — direct complete reads/text transformations, high effort, complex requests, unknown tasks and non-reasoning models.');

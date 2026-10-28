@@ -1,214 +1,98 @@
 <div align="center">
 
-<img src="assets/readme/logo.png" alt="Solar app icon" width="128" />
+<img src="assets/readme/logo.png" alt="Solar" width="112" />
 
-# Solar
+# Solar 0.13.2
 
-**A beautiful, local-first AI workspace for macOS.**
+**Votre équipe d’agents IA, dans une application macOS.**
 
-Chat with your models. Work with your files. Create more, with less clutter.
+Des conversations courtes, des agents personnalisables et le modèle de votre choix.
 
-<p>
-  <a href="https://nightly.link/j4mesbst/Solar/workflows/macos-package/main/Solar-macOS-arm64.zip"><img alt="Download the latest Apple Silicon build (ZIP containing the DMG)" src="https://img.shields.io/badge/Download_latest_macOS_build-Apple_Silicon-111111?style=for-the-badge&logo=apple&logoColor=white" /></a>
-  <a href="https://github.com/j4mesbst/Solar/stargazers"><img alt="Star on GitHub" src="https://img.shields.io/github/stars/j4mesbst/Solar?style=for-the-badge&label=Star&color=111111" /></a>
-</p>
+[![Télécharger pour macOS Apple Silicon](https://img.shields.io/badge/Télécharger_macOS-Apple_Silicon-007AFF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/j4mesbst/Solar/releases/download/v0.13.2/Solar-0.13.2-macOS-arm64.dmg)
 
-<p>
-  <img alt="macOS" src="https://img.shields.io/badge/Platform-macOS-242424?style=flat-square" />
-  <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-242424?style=flat-square" />
-  <img alt="React" src="https://img.shields.io/badge/React-18-242424?style=flat-square" />
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-242424?style=flat-square" />
-  <img alt="Local-first" src="https://img.shields.io/badge/Local--first-242424?style=flat-square" />
-</p>
-
-[Features](#features) · [Screenshots](#screenshots) · [Installation](#installation) · [Run locally](#run-locally) · [Contributing](#contributing)
+[Notes de version](https://github.com/j4mesbst/Solar/releases/tag/v0.13.2) · [Signaler un problème](https://github.com/j4mesbst/Solar/issues) · [Licence MIT](LICENSE)
 
 </div>
 
----
+## Solar aujourd’hui
 
-## Meet Solar
+Solar est une application open source construite avec Tauri, React et TypeScript. Créez vos agents, donnez-leur une mission et échangez avec eux dans une messagerie native. Chaque agent garde son identité, sa conversation et ses autorisations.
 
-Solar is a macOS desktop application that brings AI chat, project-aware assistance, and file creation into one carefully designed workspace. Use **local Ollama models**, connect supported cloud providers, or switch between them as your task changes.
+![Équipe et conversation Solar](assets/readme/screenshots/solar-0132-chat.png)
 
-Solar puts a clean interface first, without hiding your control over models, files, tools, or privacy.
+- **Une équipe à votre image.** Cinq formes animées, couleur personnalisable et messages assortis. Déplacez un agent en haut de la barre latérale pour en faire un manager, ou réordonnez-le par glisser-déposer. Le clic droit permet de le supprimer de l’équipe ; Annuler le restaure. Son historique est conservé et ses routines restent désactivées après restauration.
+- **Une conversation à la fois.** Réponses en bulles successives, choix multiples quand ils sont utiles, brouillons et pièces jointes. Le statut d’un connecteur apparaît uniquement pendant une opération réelle. Après une absence prolongée, Solar peut proposer de reprendre une demande existante, sans lancer de requête avant votre choix.
+- **Des autorisations explicites.** Lecture seule, accès standard ou accès complet, choisis pour chaque agent. Le rôle d’un agent ne lui accorde pas de permissions supplémentaires. Les accès dépendent aussi du compte connecté et de ses autorisations.
+- **Une bibliothèque simple.** Ajoutez un dossier pour retrouver son nom et sa liste de fichiers dans la bibliothèque de l’agent. L’ajout n’envoie pas automatiquement son contenu à un modèle et ne lui accorde pas de droit d’écriture.
+- **Votre apparence.** Modes clair, sombre et personnalisé, typographie native et respect du mouvement réduit.
 
-<p align="center">
-  <img src="assets/readme/screenshots/solar-chat.png" alt="Solar chat interface with a generated presentation artifact" width="100%" />
-</p>
+## Trois façons de choisir un modèle
 
-## Features
+![Choix du modèle](assets/readme/screenshots/solar-0132-models.png)
 
-The features below are implemented in the current development build. Availability of provider services and native macOS behavior still depends on your configuration and platform.
+| Choix | Fonctionnement |
+| --- | --- |
+| **Modèle local** | Lancez [Ollama](https://ollama.com), installez un modèle, puis cliquez sur **Détecter**. Solar sélectionne un modèle installé. Aucun abonnement cloud n’est nécessaire pour l’inférence locale. |
+| **Clé OpenAI** | Entrez votre clé personnelle dans Solar. Elle reste dans le Trousseau macOS ; les requêtes sont facturées par OpenAI selon votre compte. Solar vérifie le catalogue accessible avant de sélectionner un modèle compatible. |
+| **Solar Cloud** | Option gratuite lorsque le service est configuré sur votre compte. Cette version open source ne distribue aucune clé privée ni accès cloud universel ; la disponibilité dépend du fournisseur et de ses limites. |
 
-| Feature | Availability |
-| :--- | :--- |
-| **Chat & Work** | Available. Switch between conversations and a project workspace that reviews proposed file changes before applying them. |
-| **Local and cloud models** | Available when configured: Ollama, OpenAI-compatible providers, Anthropic, and GonkaRouter. |
-| **Artifacts** | Available: create, preview, edit, and export presentations, documents, spreadsheets, code, and diagrams. |
-| **Controls** | Available: model and effort selection, conversation search, drafts, and local performance settings. |
-| **Web search** | Available as an opt-in feature; engines depend on configuration and service availability. |
-| **Appearance** | Available: light/dark themes, custom appearance settings, and adjustable transparency. |
-| **GitHub & Gmail** | Available with user-provided credentials and required configuration, for read-only repository README and email access. |
-| **Personal extensions & skills** | Available: HTTPS shortcuts and reusable Markdown instructions. Shortcuts do not connect to service APIs. |
+Solar utilise le modèle sélectionné, sans basculer silencieusement vers un autre fournisseur. Un modèle local peut avoir moins de capacités d’outils ou de vision qu’un modèle cloud.
 
-### In development
+## Applications connectées
 
-- The first official macOS release; no V1 release or official DMG has been published yet.
-- Further native macOS and live-provider validation.
-- Additional public integrations and broader cross-device workflows. Some catalog entries are marked Coming soon and are not functional.
+La galerie permet de connecter les services dont les adaptateurs sont implémentés, notamment Gmail, Google Agenda et GitHub selon la configuration de l’application et de votre compte. Les icônes et états de connexion reflètent les services réels. Certaines entrées nécessitent votre propre configuration OAuth, une clé ou un serveur MCP ; leur présence dans la galerie ne signifie pas qu’elles sont déjà utilisables.
 
-### Chat with the models you choose
+Les clés personnelles sont conservées dans le Trousseau. Les lectures concurrentes du même secret sont regroupées et mises en cache en mémoire pendant la session. macOS peut demander une autorisation initiale ; Solar ne désactive pas les protections du système.
 
-Solar supports Ollama for local inference and configurable cloud providers. Discover locally installed Ollama models and select the model you want. Response effort controls the instruction and output budget; actual reasoning capabilities and speed depend on the provider, model, and hardware.
+## Télécharger et installer
 
-**Local-first does not mean everything runs offline:** remote providers, optional web search, online accounts, and connected services require network access. A local Ollama setup can be used without a cloud model subscription.
+**[Télécharger Solar 0.13.2 pour macOS — Apple Silicon (.dmg)](https://github.com/j4mesbst/Solar/releases/download/v0.13.2/Solar-0.13.2-macOS-arm64.dmg)**
 
-### Work on real projects, with review built in
+1. Ouvrez le DMG et déplacez **Solar.app** dans **Applications**.
+2. Lancez Solar et choisissez un modèle dans **Modèles**.
+3. Créez votre premier agent. Les connexions de services sont facultatives.
 
-Work mode can inspect files you **explicitly select**, generate proposed changes, and show a **before/after review** before applying them. Where supported, you can accept, reject, or undo changes with safeguards against overwriting later edits.
+Le téléchargement fourni est destiné aux Mac **Apple Silicon (arm64)** sous **macOS 11 ou version ultérieure**. Il est signé localement (ad hoc), sans notarisation Apple : macOS peut afficher un avertissement de provenance. Une version Intel précompilée n’est pas fournie. Les sommes SHA-256 sont jointes à la release.
 
-Solar does **not** automatically execute generated code or terminal commands. Cloud models only receive selected project context after your authorization.
+## Limites actuelles
 
-### Make more than chat messages
+- **Ordinateur : bientôt.** L’onglet annonce le navigateur Solar ; il ne promet ni machine virtuelle ni contrôle autonome du Mac.
+- L’exécution d’agents dépend du modèle, des intégrations configurées et de leurs limites. Les résultats importants doivent être vérifiés.
+- Une routine nécessite une application en cours d’exécution ; Quitter et la veille interrompent le travail. Le code du moteur et des routines reste présent, même si leurs anciens formulaires ne sont plus affichés dans le panneau Détails.
+- Les conversations, brouillons et paramètres sont stockés localement. Un compte en ligne ne constitue pas une sauvegarde ou synchronisation complète.
+- « Local » concerne l’inférence : un connecteur, une recherche web ou un modèle cloud utilise le réseau. Les services OAuth et Solar Cloud nécessitent une configuration côté opérateur ; aucun secret de déploiement n’est fourni dans le dépôt.
 
-Ask Solar to produce structured artifacts such as:
+## Développer
 
-- **Presentations** — export to PowerPoint (`.pptx`).
-- **Documents** — export to PDF or Word (`.pdf`, `.docx`).
-- **Tables** — export to CSV or Excel (`.csv`, `.xlsx`).
-- **Code & diagrams** — export source files or Mermaid diagrams (`.svg`, `.mmd`).
+Prérequis : Node.js 24, Rust stable, Xcode Command Line Tools sur macOS et les [prérequis Tauri](https://v2.tauri.app/start/prerequisites/).
 
-Artifact creation depends on a compatible model response. Solar validates the returned structure rather than pretending an incomplete file was created.
-
-### Search, integrations & skills
-
-Solar offers optional web search and a growing extensions interface. **GitHub README access** and **Gmail message search/reading** are supported with user-provided credentials and appropriate configuration; they do not grant Solar permission to push code or send email. Custom HTTPS shortcuts are bookmarks, **not API integrations**.
-
-Some integrations in the directory are marked **Coming soon** and are not yet functional. You can also import reusable Markdown instructions as skills.
-
-## Screenshots
-
-<p align="center"><strong>Stay focused in Work mode</strong></p>
-<p align="center"><img src="assets/readme/screenshots/solar-work.png" alt="Solar Work mode showing project, files, and plugins controls" width="100%" /></p>
-
-<table>
-  <tr>
-    <td width="50%" align="center"><strong>Extensions & plugins</strong></td>
-    <td width="50%" align="center"><strong>Make Solar yours</strong></td>
-  </tr>
-  <tr>
-    <td><img src="assets/readme/screenshots/solar-plugins.png" alt="Solar plugin directory" width="100%" /></td>
-    <td><img src="assets/readme/screenshots/solar-appearance.png" alt="Solar appearance and theme settings" width="100%" /></td>
-  </tr>
-</table>
-
-<p align="center"><strong>Light mode, a little lighter</strong></p>
-<p align="center"><img src="assets/readme/screenshots/solar-light.png" alt="Solar light mode with a cloud-inspired background" width="100%" /></p>
-
-## Installation
-
-> **Solar V1 has not been released.** The download button fetches the latest successful Apple Silicon build from the macOS packaging workflow. GitHub Actions provides it as a ZIP containing `Solar-macOS-arm64.dmg`, its SHA-256 checksum, and a verification report; extract the ZIP, then open the DMG. The current development version is `0.1.0`.
-
-The download uses [nightly.link](https://nightly.link/) so it can follow the latest successful build without requiring a GitHub login. GitHub Actions artifacts expire after 30 days; the link may be unavailable if no recent installer build exists. This build is for Apple Silicon (arm64), not Intel Macs.
-
-**macOS security note:** This is a development build, not an official release. The latest verified installer is not signed with an Apple Developer ID and is not notarized, so Gatekeeper may show a warning. Read the included verification report before installing it. [GitHub Releases](https://github.com/j4mesbst/Solar/releases) will list an official release when one is published.
-
-### Ollama (optional)
-
-To use a local model, install [Ollama](https://ollama.com/), start the Ollama service, and select a model in Solar. Solar can detect an existing Ollama installation and guide you through model setup. Local inference speed and supported models depend on your Mac's hardware.
-
-For remote providers, you will need the corresponding endpoint and credentials. Solar does not include free API credits.
-
-## Run locally
-
-### Requirements
-
-- macOS and the **Xcode Command Line Tools** for native development.
-- **Node.js 24** and npm (the version used by CI).
-- **Rust** stable toolchain for the native Tauri app.
-- Ollama only if you want to run a local model.
-
-```bash
-# Clone the project
+```sh
 git clone https://github.com/j4mesbst/Solar.git
 cd Solar
-
-# Install dependencies
 npm ci
-
-# Start the native macOS app
-npm run tauri dev
+npm run tauri -- dev
 ```
 
-For a browser-only development preview:
+L’interface seule peut s’ouvrir avec `npm run dev`. Les commandes natives, le Trousseau et les sélecteurs de fichiers doivent être vérifiés dans l’application macOS.
 
-```bash
-npm run dev
-```
+Copiez `.env.example` vers `.env.local` seulement si vous configurez un service optionnel. Les identifiants publics OAuth et Supabase sont distincts des secrets serveur. N’ajoutez jamais de clé privée à une variable `VITE_` ou à Git.
 
-Open **http://127.0.0.1:1420**. Some native filesystem, Keychain, and integration behavior differs from the browser preview.
-
-### Build a macOS DMG
-
-On a correctly configured macOS development machine:
-
-```bash
-npm run tauri build -- --bundles dmg
-```
-
-The output is generally in `src-tauri/target/release/bundle/dmg/`. A locally built DMG is **not automatically signed or notarized**. For public distribution, validate the actual packaged app and the installation process on a clean Mac.
-
-### Development checks
-
-```bash
-npm run test:providers
-npm run test:chat
-npm run test:features
-npm run test:evolution
+```sh
 npm run build
+node scripts/messenger-contract.test.mjs
+npm run test:chat
+npm run test:agent:durable
+cargo test --locked --manifest-path src-tauri/Cargo.toml
 ```
 
-Other contract and browser UI suites are available in `package.json`. For implementation notes and known limitations, see [PROGRESS.md](PROGRESS.md) and [ROADMAP.md](ROADMAP.md).
+Pour compiler un bundle macOS :
 
-## Privacy & safety
+```sh
+npm run tauri -- build --bundles app,dmg
+```
 
-Solar is designed around explicit user control, but its privacy properties depend on the features you enable:
+## Contribuer
 
-- **Local conversation history:** Chat data and drafts are stored locally; account sign-in does not currently synchronize your history between devices.
-- **Credentials:** The native application uses macOS Keychain for supported secrets. Avoid sharing credentials, tokens, or private project files in GitHub issues.
-- **Cloud providers:** Messages and intentionally selected attachments or project files are sent to the configured provider when you make a request.
-- **Work actions:** File changes require review and authorization; there is no automatic code execution.
-- **Optional search & plugins:** External services receive information needed for explicitly enabled requests. Review each service's policies and permissions.
+Les problèmes reproductibles, captures sans données privées et pull requests sont les bienvenus. Précisez macOS, architecture, version de Solar et modèle utilisé. N’incluez pas de conversation privée, jeton, clé API ou fichier personnel dans un rapport.
 
-See [account and plugin configuration](docs/ACCOUNTS_AND_PLUGINS.md) for supported capabilities and limitations.
-
-## Roadmap
-
-Solar is actively being developed. The roadmap covers first-release preparation, native macOS and live-provider validation, additional integrations, and larger-project workflows. For engineering details, read the [roadmap](ROADMAP.md) and [implementation notes](PROGRESS.md).
-
-## Contributing
-
-Feedback, bug reports, and focused pull requests are welcome.
-
-1. [Open an issue](https://github.com/j4mesbst/Solar/issues) to describe a bug or propose an improvement.
-2. For code changes, fork the repository and create a dedicated branch.
-3. Run the relevant checks, then open a pull request explaining the change and how it was tested.
-
-Please do not include secrets, personal data, or private files in issue reports.
-
-## License
-
-Solar is released under the [MIT License](LICENSE). Third-party dependencies and included resources may have separate copyright and license terms; their notices remain applicable. See [plugin icon attributions](public/plugin-icons/LICENSE.txt).
-
----
-
-<div align="center">
-
-**Solar — a calmer way to work with AI.**
-
-Made with care for macOS. Built with [Tauri](https://tauri.app/), [React](https://react.dev/), and [TypeScript](https://www.typescriptlang.org/).
-
-[Back to top](#solar) · [Report an issue](https://github.com/j4mesbst/Solar/issues) · [See releases](https://github.com/j4mesbst/Solar/releases)
-
-</div>
+Solar est distribué sous [licence MIT](LICENSE). Les marques des services connectés appartiennent à leurs propriétaires.

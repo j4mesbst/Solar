@@ -1,4 +1,5 @@
 import type { HTMLAttributes } from "react";
+import './animated-text-01.css';
 
 /** Supplied shine pattern, driven by actual operation state rather than a timer. */
 export default function AnimatedShinyText({ children, className = "", ...props }: HTMLAttributes<HTMLSpanElement>) {

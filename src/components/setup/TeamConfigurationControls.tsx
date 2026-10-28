@@ -1,0 +1,11 @@
+import {useEffect,useState} from 'react';
+import {Pause,Play} from 'lucide-react';
+import {solarAgentStore,type AgentData} from '../../services/solarAgentStore';
+import {cancelManager} from '../../services/teamManager';
+export function TeamConfigurationControls(){
+ const [data,setData]=useState<AgentData>(),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ useEffect(()=>{let live=true;const refresh=()=>void solarAgentStore.snapshot().then(d=>{if(live)setData(d);}).catch(()=>{if(live)setError('Impossible de restaurer la configuration.');});refresh();window.addEventListener('solar-team-missions-updated',refresh);return()=>{live=false;window.removeEventListener('solar-team-missions-updated',refresh);};},[]);
+ const manager=data?.manager;
+ const toggle=async()=>{setBusy(true);setError('');try{if(manager?.enabled)cancelManager();const next=await solarAgentStore.updateManager(m=>{m.enabled=!m.enabled;if(m.enabled)m.nextCheckAt=new Date(Date.now()+60000).toISOString();});setData(next);window.dispatchEvent(new Event('solar-automations-changed'));}catch{setError('Impossible de modifier le suivi.');}finally{setBusy(false);}};
+ return <section className="team-setup-controls"><h2>Suivi de l’équipe</h2><div className="team-manager-actions">{manager&&<button className="team-customize-button" disabled={busy} onClick={()=>void toggle()}>{manager.enabled?<Pause size={14}/>:<Play size={14}/>} {manager.enabled?'Mettre le suivi en pause':'Reprendre le suivi autorisé'}</button>}</div>{manager&&<><p role="status">{manager.enabled?'Suivi actif · au plus trois contrôles par jour, espacés d’une heure.':'Suivi en pause.'} Solar doit rester en fonctionnement ; la veille du Mac suspend les missions.</p>{manager.lastReport&&<div className="team-manager-report">{manager.lastReport}</div>}{manager.tasks.slice(-8).reverse().map(task=><details className="team-manager-task" key={task.id}><summary>{data?.agents.find(a=>a.id===task.assigneeId)?.name??'Agent'} · {task.status==='completed'?'Terminé':task.status==='blocked'?'À débloquer':task.status==='running'?'En cours':task.status==='queued'?'En attente':'Interrompu'}</summary><p>{task.instruction}</p>{task.result&&<p>{task.result}</p>}</details>)}</>}{error&&<p role="alert">{error}</p>}</section>;
+}

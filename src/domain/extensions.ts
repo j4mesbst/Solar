@@ -15,6 +15,8 @@ export interface SearchSource {
   site: string;
   date?: string;
   snippet: string;
+  content?:string;
+  readAt?:string;
 }
 export interface SearchResult {
   sources: SearchSource[];
@@ -40,14 +42,16 @@ export interface Metrics {
   tokens?: number;
   tokensPerSecond?: number;
   loadMs?: number;
+  promptMs?: number;
+  decodeMs?: number;
+  promptTokens?: number;
+  promptCachedTokens?: number;
+  contextTokens?: number;
+  contextFiles?: number;
+  repairIterations?: number;
+  agentMode?: "fast" | "balanced" | "deep" | "ultra";
 }
 export type ArtifactKind = "code" | "slides" | "document" | "table" | "diagram";
-export interface SlideVisual {
- type: "cards" | "metrics" | "process" | "chart";
- items: {label:string;detail?:string;value?:number;display?:string}[];
- unit?:string;
-}
-export interface ArtifactSlide {title:string;body:string;visual?:SlideVisual}
 export interface Artifact {
   id: string;
   conversationId: string;
@@ -55,7 +59,7 @@ export interface Artifact {
   kind: ArtifactKind;
   content?: string;
   language?: string;
-  slides?: ArtifactSlide[];
+  slides?: { title: string; body: string }[];
   sections?: { title: string; body: string }[];
   columns?: string[];
   rows?: string[][];
@@ -66,6 +70,7 @@ export interface WorkChange {
   path: string;
   before: string;
   after: string;
+  created?: boolean;
 }
 export interface WorkOperation {
   projectToken?: string;

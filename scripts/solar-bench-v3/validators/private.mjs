@@ -1,0 +1,35 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { runProcess } from '../lib/process.mjs';
+
+const tests = {
+  '01-broken-react': `import assert from 'node:assert/strict';import {seed,removeTask,increment} from './src/state.ts';assert.equal(increment(5),6);assert.deepEqual(seed.map(x=>x.id),['a','b']);assert.deepEqual(removeTask(seed,'b').map(x=>x.id),['a']);const jsx=await import('node:fs/promises').then(x=>x.readFile('src/TaskList.tsx','utf8'));assert(jsx.includes('key={item.id}'));assert(jsx.includes('onRemove(item.id)'));`,
+  '02-multifile-refactor': `import assert from 'node:assert/strict';import {products,label,formatPrice,affordable,total} from './src/index.ts';assert.deepEqual(products.map(x=>x.id),['p1','p2']);assert(products.every(x=>['EUR','USD'].includes(x.currency)));assert.match(formatPrice(products[0]),/18/);assert.match(label(products[0]),/Solar Mug/);assert.equal(affordable(products).length,1);assert.equal(total(products),50);`,
+  '03-feature-integration': `import assert from 'node:assert/strict';import {notes,search,rename,toggleFavorite,favorites,summary} from './src/index.ts';const next=toggleFavorite(notes,'1');assert.equal(notes[0].favorite,false);assert.equal(next[0].favorite,true);assert.deepEqual(favorites(next).map(x=>x.id),['1']);assert.deepEqual(summary(next),{total:2,favorites:1});assert.equal(search(next,'beta')[0].id,'2');assert.equal(rename(next,'2','B')[1].title,'B');`,
+  '04-phased-task': `import assert from 'node:assert/strict';import {invoices} from './src/model.ts';import {advance,total} from './src/workflow.ts';import {report} from './src/report.ts';assert.deepEqual(invoices.map(x=>x.id),['i1','i2']);assert.equal(total(invoices),50);assert.equal(advance(invoices[0]).status,'sent');assert.equal(advance(advance(invoices[0])).status,'paid');assert.deepEqual(report(invoices),{count:2,total:50,byStatus:{draft:2,sent:0,paid:0}});`,
+  '05-non-regression': `import assert from 'node:assert/strict';import {items,sortItems,select,add,remove} from './src/list.ts';const sorted=sortItems(items);assert.equal(select(sorted,'z').label,'Zulu');assert.deepEqual(items.map(x=>x.id),['z','a']);assert.equal(add(items,{id:'b',label:'Beta'}).length,3);assert.deepEqual(remove(items,'z').map(x=>x.id),['a']);const html=await import('node:fs/promises').then(x=>x.readFile('src/view.html','utf8'));for(const id of ['app','add','items','selection'])assert(html.includes('id="'+id+'"'));`,
+  '06-diagnosis-to-fix': `import assert from 'node:assert/strict';import {memo,clear} from './src/cache.ts';clear();let calls=0;assert.equal(await memo('a',async()=>{calls++;return 'A'}),'A');assert.equal(await memo('a',async()=>{calls++;return 'X'}),'A');assert.equal(await memo('b',async()=>{calls++;return 'B'}),'B');assert.equal(calls,2);clear();await assert.rejects(()=>memo('x',async()=>{throw Error('x')}));assert.equal(await memo('x',async()=> 'retry'),'retry');`,
+  '07-large-context': `import assert from 'node:assert/strict';import {localHour} from './src/time.ts';assert.equal(localHour(23,120),1);assert.equal(localHour(1,-180),22);assert.equal(localHour(0,0),0);`,
+  '08-api-recovery': `import assert from 'node:assert/strict';import {deadline} from './src/deadline.ts';assert.equal(deadline('2024-02-28T00:00:00Z',1),'2024-02-29');const source=await import('node:fs/promises').then(x=>x.readFile('src/deadline.ts','utf8'));assert.doesNotMatch(source,/formatDate/);assert.match(source,/formatIso/);`,
+  '09-responsive-ui': `import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';const app=await readFile('src/App.tsx','utf8'),css=await readFile('src/styles.css','utf8');for(const value of ['<nav','<article','<input','<select','<dialog','aria-label','useMemo','useState'])assert(app.includes(value));for(const value of ['grid-template-columns','@media','max-width','prefers-reduced-motion','color-scheme'])assert(css.includes(value));`,
+  '10-long-context': `import assert from 'node:assert/strict';import {canEdit,invite,audit,csv} from './src/index.ts';const owner={id:'alice',name:'Alice',role:'owner'},viewer={id:'bob',name:'Bob',role:'viewer'};assert.equal(canEdit(owner),true);assert.equal(canEdit(viewer),false);const xs=[owner];assert.equal(invite(xs,{...viewer,id:'BOB'})[1].id,'bob');assert.equal(invite(xs,owner),xs);assert.match(audit('invite','bob'),/Action|Invit|Ajout/);assert(csv([owner]).startsWith('id;nom;rôle'));assert.doesNotMatch(csv([owner]),/,/);const files=await Promise.all(['src/access.ts','src/team.ts','src/audit.ts','src/csv.ts'].map(p=>import('node:fs/promises').then(x=>x.readFile(p,'utf8'))));assert.doesNotMatch(files.join(''),/Date\.now/);`,
+  '11-tool-loop': `import assert from 'node:assert/strict';import {normalize} from './src/normalize.ts';assert.equal(normalize('  SOLAR    CODE  '),'solar code');assert.equal(normalize('İSTANBUL'),'istanbul');assert.equal(normalize('ÉTÉ'),'été'.normalize('NFKD').toLocaleLowerCase('en-US'));`,
+  '12-multilingual': `import assert from 'node:assert/strict';import {calcularTotal,resumenMensual} from './src/index.ts';const registros=[{fecha:'2026-01-02',importe:2},{fecha:'2026-01-20',importe:3},{fecha:'2026-02-01',importe:4}];assert.equal(calcularTotal(registros),9);assert.deepEqual(resumenMensual(registros),[{month:'2026-01',total:5,label:'Total 2026-01 : 5'},{month:'2026-02',total:4,label:'Total 2026-02 : 4'}]);assert.equal(registros.length,3);const src=await import('node:fs/promises').then(x=>x.readFile('src/reporte.ts','utf8'));assert(src.includes('calcularTotal'));assert(src.includes('registros'));assert(src.includes('// Suma importes'));`,
+};
+
+const check = (id, status, output, extra = {}) => ({ id, status, success: status === 'passed', output, ...extra });
+
+export async function validateFixture(fixture, workspace, { timeoutMs = 45_000 } = {}) {
+  const checks = [];
+  const publicResult = await runProcess('/usr/local/bin/npm', ['test', '--silent'], { cwd: workspace, timeoutMs });
+  checks.push(check('public-tests', publicResult.code === 0 ? 'passed' : 'failed', publicResult.code === 0 ? 'Tests publics réussis.' : publicResult.stderr || publicResult.stdout, { durationMs: publicResult.durationMs }));
+  const source = tests[fixture.id];
+  if (!source) checks.push(check('private-acceptance', 'unavailable', 'Oracle privé absent.'));
+  else {
+    const result = await runProcess(process.execPath, ['--experimental-strip-types', '--input-type=module', '--eval', source], { cwd: workspace, timeoutMs });
+    checks.push(check('private-acceptance', result.code === 0 ? 'passed' : 'failed', result.code === 0 ? 'Critères fonctionnels privés réussis.' : result.stderr || result.stdout, { durationMs: result.durationMs }));
+  }
+  const packageFile = JSON.parse(await readFile(join(workspace, 'package.json'), 'utf8').catch(() => '{}'));
+  checks.push(check('project-integrity', packageFile.private === true && packageFile.scripts?.test ? 'passed' : 'failed', 'Package privé et commande de test préservés.'));
+  return { passed: checks.length > 0 && checks.every(item => item.status === 'passed'), checks };
+}

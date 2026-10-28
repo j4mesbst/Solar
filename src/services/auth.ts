@@ -9,3 +9,9 @@ const storage={
 };
 export const authClient=url && key ? createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:"solar.auth.v1",storage}}):null;
 export const authSetupMessage="Les comptes Solar ne sont pas encore activés sur cette installation. Le projet Supabase doit être configuré avec son URL et sa clé publique.";
+
+export function authRedirectUrl(){
+ const value=import.meta.env.VITE_SOLAR_AUTH_REDIRECT_URL as string|undefined;
+ if(!value)return undefined;
+ const url=new URL(value);return url.protocol==='https:'?url.href:undefined;
+}

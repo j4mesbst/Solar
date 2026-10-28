@@ -1,3 +1,4 @@
+import {planName} from '../../services/solarPlans';
 import { Button } from "./button";
 import { appearanceStyle } from "../../services/appearance";
 import { resolveTheme } from "../../services/theme";
@@ -7,6 +8,10 @@ import type { Hardware } from "../../domain/extensions";
 import { detectHardware, recommendModels } from "../../services/performance";
 import { pullModel, type PullProgress } from "../../services/modelInstall";
 import { refreshOllama } from "../../services/ollama";
+import { inspectOllama, type OllamaStatus } from "../../services/ollamaNative";
+import type { WorkBridge } from "./work-surface";
+import { SubscriptionPage } from "./settings-overview";
+import { readUsage, type SolarPlan } from "../../services/usage";
 const presets = [
   {
     name: "Ollama",
@@ -14,7 +19,7 @@ const presets = [
     baseUrl: "http://127.0.0.1:11434",
   },
   {
-    name: "GonkaRouter",
+    name: "Solar Cloud",
     protocol: "openai-compatible" as const,
     baseUrl: "https://api.gonkarouter.io/v1",
   },
@@ -42,6 +47,7 @@ export function Onboarding({
   reload,
   renderForm,
   renderProviders,
+  workBridge,
 }: {
   settings: AppSettings;
   providers: Provider[];
@@ -53,8 +59,11 @@ export function Onboarding({
     onDone: () => void,
   ) => ReactNode;
   renderProviders: (onEdit:(preset:{id?:string;name:string;protocol:Provider["protocol"];baseUrl:string})=>void) => ReactNode;
+  workBridge: React.MutableRefObject<WorkBridge | null>;
 }) {
   const [step, setStep] = useState(0);
+  const [planStep, setPlanStep] = useState(false);
+  const [plan] = useState<SolarPlan>(() => { try { return readUsage().plan; } catch { return "starter"; } });
   const [chosen, setChosen] = useState<string[]>([]);
   const [editing, setEditing] = useState<string>();
   const [existingForm,setExistingForm]=useState<((typeof presets)[number] & {id?:string})>();
@@ -63,8 +72,14 @@ export function Onboarding({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [download, setDownload] = useState("");
+  const [ollamaStatus, setOllamaStatus] = useState<OllamaStatus | null>(null);
+  const native = Boolean((window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__);
+  const [pendingFolder, setPendingFolder] = useState<NonNullable<Awaited<ReturnType<WorkBridge["chooseDefaultProject"]>>> | null>(null);
+  const [folderBusy, setFolderBusy] = useState(false);
   const controller = useRef<AbortController>();
+  const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
+    if (!dialog.current?.open) dialog.current?.showModal();
     void detectHardware()
       .then(setHardware)
       .catch(() => {});
@@ -79,10 +94,12 @@ export function Onboarding({
   };
   const detect = async () => {
     setBusy(true);
+    setError("");
     try {
-      await refreshOllama();
+      const status = await inspectOllama("http://127.0.0.1:11434");
+      setOllamaStatus(status);
+      if (status.running) await refreshOllama();
       await reload();
-      setError("");
     } catch (e) {
       setError(String(e));
     } finally {
@@ -117,8 +134,8 @@ export function Onboarding({
     }
   };
   return (
-    <div
-      className="onboarding"
+    <dialog ref={dialog} onCancel={event => event.preventDefault()}
+      className="onboarding premium-onboarding"
       style={
         appearanceStyle(
           settings,
@@ -130,8 +147,9 @@ export function Onboarding({
       aria-label="Configuration de Solar"
     >
       <div className="onboarding-content">
-        <span className="wordmark">Solar</span>
-        {step === 0 ? (
+        <div className={`solar-banner onboarding-banner ${plan}`}><img src="/solar-icon.png" alt=""/><span className="wordmark">Solar</span></div>
+        <p className="onboarding-step-label">{planStep ? "TON OFFRE" : `CONFIGURATION · ${step + 1} / 6`}</p>
+        {planStep ? <><h1>Ton Solar, à ton rythme.</h1><p>Starter est gratuit. Les offres Pro et Max sont des abonnements mensuels gérés par Stripe.</p><SubscriptionPage cloudOnly/><Button className="primary-button" onClick={() => { setPlanStep(false); setStep(1); }}>Continuer avec {planName(plan)}</Button><Button variant="ghost" onClick={() => setPlanStep(false)}>Retour</Button></> : step === 0 ? (
           <>
             <h1>Welcome to Solar</h1>
             <p>
@@ -139,7 +157,7 @@ export function Onboarding({
               <br />
               Local ou connecté, sans compte obligatoire.
             </p>
-            <Button className="primary-button" onClick={() => setStep(1)}>
+            <Button className="primary-button" onClick={() => setPlanStep(true)}>
               Commencer
             </Button>
             <button className="text-button" onClick={() => void finish()}>
@@ -189,7 +207,7 @@ export function Onboarding({
             <h1>Connectons tes modèles</h1>
             {editing || existingForm ? (
               renderForm(
-                presets.find((p) => p.name === editing)!,
+                existingForm ?? presets.find((p) => p.name === editing)!,
                 () => {
                   setEditing(undefined);setExistingForm(undefined);
                 },
@@ -220,12 +238,16 @@ export function Onboarding({
                   démarré pour que Solar puisse les détecter.
                 </p>
                 <Button
-                  className="small-button"
+                  variant="outline"
+                  className="small-button ollama-detect-button"
                   disabled={busy}
                   onClick={() => void detect()}
                 >
-                  Oui · détecter Ollama
+                  {busy ? "Détection en cours…" : "Lancer la détection"}
                 </Button>
+                {ollamaStatus && <p className="ollama-onboarding-status" role="status">{!ollamaStatus.supported ? "La détection est disponible dans l’application macOS." : ollamaStatus.running ? ollamaStatus.models.length ? `Ollama actif · ${ollamaStatus.models.length} modèle(s) détecté(s).` : "Ollama actif · aucun modèle téléchargé." : ollamaStatus.installed ? "Ollama est installé mais arrêté. Démarre-le puis relance la détection." : "Ollama n’est pas installé sur ce Mac."}</p>}
+                {ollamaStatus?.downloaded_models.length ? <p className="ollama-onboarding-status">Modèles téléchargés : {ollamaStatus.downloaded_models.join(", ")}</p> : null}
+                {ollamaStatus?.error && <details className="ollama-technical"><summary>Détail technique</summary><code>{ollamaStatus.error}</code></details>}
                 <a
                   className="small-button"
                   href="https://ollama.com/download/mac"
@@ -320,6 +342,20 @@ export function Onboarding({
               Continuer
             </Button>
           </>
+        ) : step === 4 ? (
+          <>
+            <h1>Ton dossier de référence</h1>
+            <p>Choisis un dossier si tu veux que le chat normal puisse retrouver des fichiers pertinents quand tu en parles. L’historique des conversations, lui, reste enregistré localement par Solar.</p>
+            {!native && <p className="settings-note">Le dossier de référence persistant se configure dans l’application Solar installée.</p>}
+            {workBridge.current?.defaultProject() && <p className="settings-note">Dossier déjà validé : {workBridge.current.defaultProject()!.name}</p>}
+            {pendingFolder && <p className="settings-note">Sélection : {pendingFolder.name}</p>}
+            <div className="onboarding-folder-actions">
+              <Button className="small-button" disabled={folderBusy || !native || !workBridge.current} onClick={() => void (async () => { setFolderBusy(true); setError(""); try { setPendingFolder(await workBridge.current?.chooseDefaultProject() ?? null); } catch (e) { setError(e instanceof Error ? e.message : "Impossible d’ouvrir le sélecteur de dossier."); } finally { setFolderBusy(false); } })()}>{folderBusy ? "Ouverture…" : "Choisir un dossier"}</Button>
+              {pendingFolder && <Button className="small-button" disabled={folderBusy} onClick={() => void (async () => { setFolderBusy(true); setError(""); try { if (!workBridge.current) throw new Error("Le service de dossiers n’est pas prêt."); await workBridge.current.confirmDefaultProject(pendingFolder); setPendingFolder(null); } catch (e) { setError(e instanceof Error ? e.message : "Impossible d’enregistrer ce dossier."); } finally { setFolderBusy(false); } })()}>Valider</Button>}
+              {workBridge.current?.defaultProject() && <Button variant="ghost" className="small-button" disabled={folderBusy} onClick={() => void workBridge.current?.clearDefaultProject().then(() => setPendingFolder(null)).catch(e => setError(e instanceof Error ? e.message : "Impossible de retirer ce dossier."))}>Retirer</Button>}
+              <Button className="primary-button" onClick={() => setStep(5)}>Continuer</Button>
+            </div>
+          </>
         ) : (
           <>
             <h1>
@@ -337,7 +373,7 @@ export function Onboarding({
             </Button>
           </>
         )}
-        {step > 0 && step < 4 && (
+        {!planStep && step > 0 && step < 5 && (
           <button className="text-button" onClick={() => setStep((s) => s - 1)}>
             Retour
           </button>
@@ -348,6 +384,6 @@ export function Onboarding({
           </p>
         )}
       </div>
-    </div>
+    </dialog>
   );
 }

@@ -1,0 +1,373 @@
+/* Solar — native hierarchy, focused results, restrained spatial motion. */
+.team-app{--apple-panel:color-mix(in srgb,var(--team-side) 92%,transparent);--apple-card:color-mix(in srgb,var(--text) 7%,var(--team-bg));--apple-separator:color-mix(in srgb,var(--text) 9%,transparent);--apple-blue:#65b7ff;--apple-event:#07283f;--apple-green:#73dfa1;--apple-green-bg:#102c1d;--apple-sheet:color-mix(in srgb,var(--text) 5%,var(--team-bg));}
+.team-app[data-theme=light]{--apple-event:#e6f2ff;--apple-blue:#0763b7;--apple-green:#1e7043;--apple-green-bg:#e4f4e9;--apple-card:color-mix(in srgb,var(--text) 5%,var(--team-bg));}
+.team-app .team-sidebar{transition:transform .3s cubic-bezier(.2,.8,.2,1),clip-path .3s cubic-bezier(.2,.8,.2,1);clip-path:inset(0 round 0);width:280px;padding:0 12px 12px;border-color:var(--apple-separator);}
+.team-app.sidebar-collapsed .team-sidebar{clip-path:inset(7px 0 7px 0 round 0 24px 24px 0);}
+.team-app.shell{grid-template-columns:280px minmax(0,1fr)!important;}
+.team-app.sidebar-collapsed{grid-template-columns:0 minmax(0,1fr)!important;}
+.team-app .team-sidebar-top{padding-right:3px;}
+.team-app .team-search{height:35px;border-radius:11px;margin:2px 3px 13px;background:color-mix(in srgb,var(--text) 4%,transparent);}
+.team-app .team-search kbd{font-size:10px;opacity:1;color:var(--subtle);}
+.team-app .team-agent-row{border-radius:15px;padding:12px 11px;gap:11px;}
+.team-app .team-agent-row.selected{background:color-mix(in srgb,var(--text) 7%,transparent);}
+.team-app .team-agent-row-heading strong{font-size:14px;font-weight:570;}
+.team-app .team-agent-preview{font-size:11.5px;color:var(--muted);}
+.team-app .team-agent-row-heading time{font-size:10px;}
+.team-app .team-icon-button{width:32px;height:32px;border-radius:9px;color:var(--muted);}
+.team-app .team-conversation-header{gap:13px;padding:0 21px 0 18px;border-bottom:0;background:var(--team-bg);}
+.team-app .team-conversation-header>.team-icon-button svg{width:19px;height:19px;stroke-width:1.55;}
+.team-app .team-active-identity{gap:8px;border-radius:10px;padding:5px 8px 5px 0;}
+.team-app .team-active-identity .team-mascot{width:26px!important;height:26px!important;}
+.team-app .team-active-identity>svg{width:10px;opacity:.8;}
+.team-app .team-header-right{opacity:.9;}
+.team-app .atlas-fade-top{height:20px;}
+.team-app .atlas-messages{max-width:744px;padding-top:96px;padding-bottom:calc(var(--atlas-composer-height,110px) + 32px);}
+.team-app .atlas-message-row[data-role=atlas]{align-items:flex-start;padding:0 3px;margin-bottom:20px;}
+.team-app .atlas-message-row[data-role=atlas]>.atlas-message-bubble{background:none;border:0;border-radius:0;box-shadow:none;color:var(--text);padding:0;max-width:62ch;font-size:17px;line-height:1.46;letter-spacing:-.18px;overflow-wrap:anywhere;}
+.team-app .atlas-message-row[data-role=atlas] .atlas-message-bubble p{margin:0 0 .65em;}
+.team-app .atlas-message-row[data-role=atlas] .atlas-message-bubble p:last-child{margin-bottom:0;}
+.team-app .atlas-message-row[data-role=user]>.atlas-message-bubble{border-radius:22px;max-width:83%;padding:11px 16px;font-size:14px;line-height:1.45;}
+.team-app .atlas-composer-inner{max-width:744px;padding-bottom:24px;gap:12px;}
+.team-app .atlas-capsule{min-height:47px;background:color-mix(in srgb,var(--text) 4%,var(--team-bg));border-color:var(--apple-separator);}
+.team-app .atlas-context-button{width:45px;height:45px;border-color:var(--apple-separator);background:color-mix(in srgb,var(--text) 4%,var(--team-bg));}
+.team-app .atlas-capsule textarea{font-size:14px;}
+.team-app .atlas-copy-response{margin-top:9px;}
+.team-app .team-role-suggestions{margin-bottom:16px;}
+.team-app .team-role-suggestions button{font-size:14px;min-height:50px;border-radius:15px;}
+.team-app .team-account-trigger{margin-top:10px;padding:9px;border:1px solid transparent;border-radius:14px;}
+.team-app .team-account-trigger:hover,.team-app .team-account-trigger[data-state=open]{background:color-mix(in srgb,var(--text) 5%,transparent);border-color:var(--apple-separator);}
+.team-app .team-account-avatar{width:30px;height:30px;font-size:10px;}
+.apple-account-panel{z-index:170;width:264px;border-radius:23px;padding:8px;background:var(--apple-panel);color:var(--text);border:1px solid color-mix(in srgb,var(--text) 13%,transparent);box-shadow:0 18px 55px #0004;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);transform-origin:var(--radix-popover-content-transform-origin);}
+.apple-account-panel[data-state=open]{animation:apple-panel-in .2s cubic-bezier(.22,1,.36,1);}
+.apple-account-panel[data-state=closed]{animation:apple-panel-out .14s ease;}
+.apple-account-panel>header{display:flex;gap:11px;align-items:center;padding:12px 11px 15px;}
+.apple-account-panel>header>.team-account-avatar{width:38px;height:38px;}
+.apple-account-panel>header>span:last-child{display:grid;gap:4px;min-width:0;}
+.apple-account-panel strong{font-size:14px;font-weight:560;overflow:hidden;text-overflow:ellipsis;}
+.apple-account-panel small{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;}
+.apple-account-panel nav{display:grid;gap:2px;}
+.apple-account-panel button{background:none;border:0;color:var(--text);display:flex;align-items:center;gap:11px;border-radius:12px;padding:11px;width:100%;font-size:13px;text-align:left;}
+.apple-account-panel nav button>span{flex:1;}
+.apple-account-panel nav button>svg:last-child{color:var(--muted);}
+.apple-account-panel button:hover{background:color-mix(in srgb,var(--text) 6%,transparent);}
+.apple-account-panel footer{margin-top:7px;padding-top:7px;border-top:1px solid var(--apple-separator);}
+.apple-account-panel footer button{color:var(--muted);font-size:12px;}
+.apple-settings-backdrop,.apple-dialog-backdrop{position:fixed;inset:0;z-index:190;background:#0006;animation:apple-overlay-in .18s ease;}
+.apple-settings-window{position:fixed;z-index:191;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1030px,calc(100vw - 64px));height:min(740px,calc(100dvh - 64px));display:grid;grid-template-columns:190px minmax(0,1fr);background:var(--team-bg);color:var(--text);border:1px solid color-mix(in srgb,var(--text) 15%,transparent);border-radius:25px;overflow:hidden;box-shadow:0 32px 100px #0006;animation:apple-window-in .24s cubic-bezier(.22,1,.36,1);font:14px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;}
+.apple-settings-nav{background:var(--team-side);padding:27px 12px;border-right:1px solid var(--apple-separator);}
+.apple-settings-title{padding:0 12px 29px;display:grid;gap:6px;}
+.apple-settings-title>span:last-child{color:var(--muted);font-size:11px;}
+.apple-settings-nav nav{display:grid;gap:5px;}
+.apple-settings-nav nav button{display:flex;align-items:center;gap:10px;border:0;border-radius:11px;padding:12px 11px;color:var(--muted);background:transparent;font-size:13px;text-align:left;}
+.apple-settings-nav nav button[aria-current=page]{background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text);font-weight:530;}
+.apple-settings-nav nav button:hover{background:color-mix(in srgb,var(--text) 5%,transparent);}
+.apple-settings-body{min-width:0;min-height:0;display:flex;flex-direction:column;}
+.apple-settings-toolbar{height:57px;min-height:57px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;}
+.apple-close{width:29px;height:29px;display:grid;place-items:center;border:0;border-radius:50%;background:color-mix(in srgb,var(--text) 7%,transparent);color:var(--muted);cursor:pointer;}
+.apple-close:hover{color:var(--text);background:color-mix(in srgb,var(--text) 12%,transparent);}
+.apple-settings-return{display:flex;gap:6px;align-items:center;border:0;background:none;color:var(--muted);font-size:11px;padding:8px;border-radius:9px;}
+.apple-settings-return:hover{color:var(--text);background:var(--apple-sheet);}
+.apple-settings-scroll{overflow:auto;min-height:0;padding:15px 35px 35px;overscroll-behavior:contain;scrollbar-gutter:stable;}
+.apple-settings-scroll h1{font-size:25px;font-weight:570;letter-spacing:-.8px;margin:0 0 10px;}
+.apple-settings-scroll .team-page-description{margin-bottom:30px;}
+.apple-settings-scroll .team-account-page,.apple-settings-scroll .team-usage-page{margin:0 auto 25px;max-width:650px;}
+.apple-settings-scroll .team-avatar-editor{margin:24px 0 30px;}
+.apple-settings-scroll .team-avatar-editor>button{width:76px;height:76px;}
+.apple-settings-scroll .team-account-page input{border-radius:13px;background:var(--apple-sheet);}
+.apple-settings-scroll .team-account-address{margin:25px 0;}
+.apple-settings-scroll .team-account-page .team-primary-button{margin-top:23px;min-width:125px;font-size:12px;}
+.apple-settings-scroll .team-usage-windows{gap:24px;padding:2px 0 0;}
+.apple-settings-scroll .team-usage-windows article{padding:18px 20px;border-radius:19px;background:var(--apple-sheet);}
+.apple-settings-scroll .team-usage-windows h2{font-size:14px;margin-bottom:18px;}
+.apple-settings-scroll .team-quota-track{height:4px;}
+.apple-settings-scroll .team-usage-note{font-size:11px;}
+.apple-settings-scroll .team-token-stats>div{font-size:12px;padding:15px 0;}
+.apple-settings-scroll .team-table-title{margin-top:29px;}
+.apple-settings-scroll .extension-layout{display:block;}
+.team-app .apple-settings-scroll .extension-directory{height:auto;overflow:visible;animation:none;padding:0!important;width:100%;max-width:none;margin:0;padding:0;}
+.apple-settings-scroll .directory-header{display:flex;flex-direction:column;align-items:stretch;gap:21px;margin:0 0 20px;}
+.apple-settings-scroll .directory-header h1{font-size:25px;}
+.apple-settings-scroll .directory-header p{font-size:12px;max-width:45ch;line-height:1.5;margin:0;color:var(--muted);}
+.apple-settings-scroll .directory-toolbar{width:100%;gap:7px;}
+.apple-settings-scroll .directory-search{flex:1;min-width:0;max-width:none;border-radius:12px;background:var(--apple-sheet);border-color:var(--apple-separator);}
+.apple-settings-scroll .directory-toolbar button{border-radius:10px;width:32px;height:32px;}
+.apple-settings-scroll .directory-tabs{margin:0 0 21px;border-bottom:1px solid var(--apple-separator);}
+.apple-settings-scroll .plugin-group{margin:20px 0 28px;}
+.apple-settings-scroll .plugin-group h2{font-size:13px;font-weight:550;margin-bottom:14px;}
+.apple-settings-scroll .plugin-group h2>svg{display:none;}
+.apple-settings-scroll .plugin-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.apple-settings-scroll .plugin-entry{display:flex;align-items:center;gap:11px;min-height:78px;padding:15px 12px;border:1px solid transparent;background:var(--apple-sheet);border-radius:16px;}
+.apple-settings-scroll .plugin-entry:hover{border-color:var(--apple-separator);}
+.apple-settings-scroll .plugin-entry>.plugin-logo{width:33px;height:33px;min-width:33px;border-radius:9px;}
+.apple-settings-scroll .plugin-entry>.plugin-logo img{width:25px;height:25px;}
+.apple-settings-scroll .plugin-copy{min-width:0;flex:1;}
+.apple-settings-scroll .plugin-copy h3{font-size:12px;line-height:1.3;margin-bottom:5px;}
+.apple-settings-scroll .plugin-copy p{color:var(--muted);font-size:11px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.apple-settings-scroll .plugin-entry>button{position:static;width:27px;height:27px;min-width:27px;}
+.apple-subscription-page{max-width:650px;margin:auto;}
+.apple-current-plan{display:flex;align-items:center;gap:16px;padding:25px 23px;background:var(--apple-sheet);border-radius:22px;}
+.apple-plan-symbol{width:52px;height:52px;border-radius:16px;background:var(--text);color:var(--team-bg);display:grid;place-items:center;font-size:27px;font-weight:570;}
+.apple-current-plan>div{flex:1;}
+.apple-current-plan>div>span{font-size:11px;color:var(--muted);}
+.apple-current-plan h2{font-size:24px;font-weight:550;margin:5px 0;letter-spacing:-.7px;}
+.apple-current-plan p{font-size:11px;color:var(--muted);margin:0;}
+.apple-current-badge{display:flex;gap:5px;align-items:center;color:var(--muted);font-size:11px;}
+.apple-plan-features{padding:15px 0 25px;}
+.apple-plan-features p{font-size:13px;color:var(--muted);padding:13px 0;margin:0;border-bottom:1px solid var(--apple-separator);}
+.apple-plan-option{display:flex;align-items:center;gap:20px;padding:21px;border:1px solid var(--apple-separator);border-radius:20px;}
+.apple-plan-option>div{flex:1;}
+.apple-plan-option h2{font-size:16px;font-weight:550;margin:0 0 7px;}
+.apple-plan-option p,.apple-plan-note,.apple-plan-confirm p{font-size:11px;line-height:1.6;color:var(--muted);margin:0;}
+.apple-plan-option button,.apple-detail-copy,.apple-plan-confirm button{display:flex;align-items:center;gap:7px;border:1px solid var(--apple-separator);border-radius:20px;padding:9px 14px;background:var(--apple-sheet);color:var(--text);font-size:11px;}
+.apple-plan-note{margin-top:20px;}
+.apple-plan-confirm{border:1px solid var(--apple-separator);border-radius:20px;margin-top:15px;padding:21px;}
+.apple-plan-confirm h3{font-size:15px;margin:0 0 12px;font-weight:550;}
+.apple-plan-confirm>div{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;}
+.apple-plan-confirm .apple-primary{background:var(--text);color:var(--team-bg);}
+/* Content cards follow the supplied Siri notification/calendar compositions. */
+.apple-results{width:min(440px,100%);gap:13px;margin:20px 0 2px;}
+.apple-results .team-result-card{position:relative;padding:16px 18px;border:0;border-radius:34px;background:var(--apple-card);color:var(--text);box-shadow:none;overflow:hidden;animation:apple-result-in .32s cubic-bezier(.22,1,.36,1) backwards;animation-delay:calc(var(--card-index,0)*35ms);transition:box-shadow .16s ease;}
+.apple-results .team-result-card:hover{transform:none;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--text) 14%,transparent);}
+.apple-results .result-card-open{position:absolute;inset:0;z-index:2;background:none;border:0;border-radius:inherit;cursor:pointer;padding:0;}
+.apple-results .result-card-open:focus-visible{outline:2px solid var(--selection-color,#5c9eff);outline-offset:-3px;}
+.apple-results h3{font-size:15px;font-weight:570;letter-spacing:-.2px;line-height:1.35;margin:0;overflow-wrap:anywhere;}
+.apple-results .result-card-body{font-size:13px;line-height:1.45;color:var(--muted);margin:8px 0 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.apple-results .result-notification{display:flex;align-items:center;gap:13px;}
+.apple-results .result-avatar{width:42px;height:42px;border-radius:50%;font-size:17px;font-weight:500;letter-spacing:-.3px;}
+.apple-results .result-avatar.is-person{background:#82699a;color:#fff;}
+.apple-results .team-result-card:nth-child(3n+2) .result-avatar.is-person{background:#507f75;}
+.apple-results .team-result-card:nth-child(3n) .result-avatar.is-person{background:#4f739c;}
+.apple-results .result-brand-badge{width:19px;height:19px;border-radius:6px;right:-1px;bottom:-1px;box-shadow:0 0 0 2px var(--apple-card);background:#fff;}
+.apple-results .result-notification-copy{min-width:0;}
+.apple-results .result-card-heading{gap:10px;min-height:18px;margin:0 0 3px;}
+.apple-results .result-sender{font-size:15px;font-weight:600;}
+.apple-results .result-card-heading time{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap;}
+.apple-results .is-notification{padding:16px 18px;border-radius:36px;}
+.apple-results .is-notification h3{font-size:13px;font-weight:500;line-height:1.4;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;}
+.apple-results .is-notification .result-card-body{margin:2px 0 0;font-size:13px;-webkit-line-clamp:2;}
+.result-open-hint{position:absolute;right:15px;bottom:13px;color:var(--muted);opacity:0;transition:opacity .15s;}
+.team-result-card:hover .result-open-hint,.team-result-card:focus-within .result-open-hint{opacity:1;}
+.result-service{display:flex;gap:7px;align-items:center;color:var(--muted);font-size:11px;}
+.result-service .plugin-logo,.result-service .plugin-logo img,.result-service .plugin-logo svg{width:16px;height:16px;opacity:1;border:0;}
+.apple-results .kind-event{background:transparent!important;padding:0 0 2px;border-radius:0;overflow:visible;}
+.apple-results .kind-event:hover{box-shadow:none;}
+.apple-results .kind-event>.result-service{padding:0 3px;margin-bottom:12px;}
+.result-calendar-day{text-transform:none;margin:0 0 12px;font-size:16px;font-weight:580;letter-spacing:-.2px;}
+.result-event-entry{position:relative;padding:16px 18px 16px 24px;border-radius:17px;background:var(--apple-event);color:var(--apple-blue);}
+.result-event-entry:before{content:'';position:absolute;left:12px;top:12px;bottom:12px;width:3px;border-radius:3px;background:currentColor;}
+.apple-results .result-event-entry h3{color:var(--apple-blue);font-size:17px;font-weight:550;}
+.result-event-time{display:flex;align-items:center;gap:5px;margin:5px 0 0;font-size:13px;line-height:1.4;color:var(--apple-blue);}
+.apple-results .result-event-entry .result-card-body{color:var(--apple-blue);font-size:12px;}
+.result-receipt{margin-top:14px;display:flex;justify-content:center;color:var(--apple-green);background:var(--apple-green-bg);border-radius:24px;padding:10px 16px;font-size:12px;font-weight:550;}
+.result-receipt>span{display:inline-flex;align-items:center;gap:7px;}
+.result-receipt.is-uncertain{color:var(--muted);background:color-mix(in srgb,var(--text) 6%,transparent);font-size:11px;}
+.apple-results .kind-repository{padding:16px 20px;color:#d9eee2;background:#000!important;border-radius:34px;}
+.result-repository-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:6px;color:#d9eee2;font-size:11px;}
+.result-repository-head>.plugin-logo{width:23px;height:23px;border:0;background:none;}
+.result-repository-head>.plugin-logo img{width:21px;height:21px;filter:invert(1)!important;opacity:1;}
+.apple-results .kind-repository h3{color:#eef9f2;font-size:17px;letter-spacing:-.4px;font-weight:520;max-width:90%;}
+.result-repository-metrics{display:flex;align-items:end;gap:25px;margin:12px 0 0;}
+.result-repository-metrics>div{display:grid;gap:4px;min-width:0;}
+.result-repository-metrics strong{color:#73dfa1;font-size:21px;font-weight:440;letter-spacing:-.6px;line-height:1;font-variant-numeric:tabular-nums;}
+.result-repository-metrics .is-primary strong{font-size:39px;letter-spacing:-1.7px;}
+.result-repository-metrics span{display:flex;align-items:center;gap:4px;font-size:10px;line-height:1.4;}
+.apple-results .kind-repository .result-card-body{color:#d9eee2;font-size:12px;-webkit-line-clamp:2;margin-top:10px;}
+.result-language{font-size:10px;margin-top:9px;display:block;}
+.result-repository-date{color:#73dfa1;font-size:22px;letter-spacing:-.6px;margin:12px 0 0;}
+.apple-results .kind-repository .result-open-hint{color:#fff;}
+.result-object-head{display:flex;align-items:center;gap:13px;}
+.result-object-head>div{min-width:0;flex:1;}
+.result-object-icon{width:40px;height:40px;display:grid;place-items:center;flex-shrink:0;border-radius:12px;background:color-mix(in srgb,var(--text) 6%,transparent);}
+.result-object-icon .plugin-logo,.result-object-icon .plugin-logo img,.result-object-icon .plugin-logo svg{width:27px;height:27px;border:0;opacity:1;}
+.result-object-service{font-size:10px;color:var(--muted);display:block;margin-bottom:4px;}
+.result-object-subtitle{font-size:11px;color:var(--muted);margin:5px 0 0;overflow-wrap:anywhere;}
+.result-object-meta{display:flex;justify-content:space-between;gap:14px;margin-top:10px;font-size:10px;color:var(--muted);overflow-wrap:anywhere;}
+.result-object-meta>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:54%;}
+.result-items{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:0;}
+.result-items li{display:flex;align-items:center;gap:9px;min-height:31px;border-top:1px solid var(--apple-separator);padding:7px 0;font-size:12px;color:var(--muted);}
+.result-items li>span:not(.result-check){flex:1;min-width:0;}
+.result-items b{font-weight:450;color:var(--text);display:block;overflow-wrap:anywhere;}
+.result-items small{display:block;font-size:10px;line-height:1.4;margin-top:2px;}
+.result-check{display:grid;place-items:center;width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);flex-shrink:0;}
+.result-check.is-checked{background:var(--apple-green);border-color:var(--apple-green);color:var(--apple-green-bg);}
+.result-task-complete{color:var(--apple-green);}
+.result-sheet-preview{margin-top:10px;border-radius:14px;overflow:hidden;border:1px solid var(--apple-separator);}
+.result-sheet-preview table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:11px;color:var(--text);}
+.result-sheet-preview td{border:1px solid var(--apple-separator);padding:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.result-sheet-preview tr:first-child{background:color-mix(in srgb,#24975b 13%,transparent);font-weight:550;}
+.apple-result-detail{position:fixed;z-index:201;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--team-side);color:var(--text);padding:30px;width:min(500px,calc(100vw - 32px));max-height:calc(100dvh - 50px);overflow:auto;border-radius:25px;border:1px solid var(--apple-separator);box-shadow:0 25px 75px #0005;}
+.apple-result-detail>.apple-close{position:absolute;right:16px;top:16px;}
+.apple-result-detail h2{font-size:22px;line-height:1.3;font-weight:550;letter-spacing:-.5px;margin:23px 0 10px;overflow-wrap:anywhere;}
+.apple-result-detail p{font-size:13px;color:var(--muted);line-height:1.5;}
+.result-detail-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.6;margin:23px 0;}
+.apple-detail-copy{margin-top:24px;}
+.team-app .apple-settings-scroll button:focus-visible,.apple-account-panel button:focus-visible{outline:2px solid var(--selection-color,#5c9eff);outline-offset:2px;}
+@keyframes apple-result-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes apple-panel-in{from{opacity:0;transform:translateY(5px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes apple-panel-out{to{opacity:0;transform:translateY(3px)}}
+@keyframes apple-overlay-in{from{opacity:0}to{opacity:1}}
+@keyframes apple-window-in{from{opacity:0;transform:translate(-50%,-48.8%) scale(.985)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@media(max-width:1050px){.team-app.shell{grid-template-columns:252px minmax(0,1fr)!important;}.team-app .team-sidebar{width:252px;}.team-app.sidebar-collapsed{grid-template-columns:0 minmax(0,1fr)!important;}.apple-settings-window{grid-template-columns:164px minmax(0,1fr);width:calc(100vw - 36px);}.apple-settings-scroll{padding-inline:25px;}}
+@media(max-width:759px){.team-app.shell{display:block!important;}.team-app .team-sidebar{width:min(280px,85vw);}.team-app .team-conversation-header{padding:0 14px;gap:10px;}.team-app[data-native=true].sidebar-collapsed .team-conversation-header{padding-left:126px;}.team-app .atlas-messages{padding-top:82px;}.team-app .atlas-message-row[data-role=atlas]>.atlas-message-bubble{font-size:16px;}.team-app .atlas-composer-inner{padding-inline:15px;padding-bottom:17px;}.apple-settings-window{width:calc(100vw - 20px);height:calc(100dvh - 24px);grid-template-columns:1fr;border-radius:22px;grid-template-rows:auto minmax(0,1fr);}.apple-settings-nav{padding:12px 13px 0;border:0;background:var(--team-bg);}.apple-settings-title{display:none;}.apple-settings-nav nav{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;}.apple-settings-nav nav button{font-size:10px;gap:5px;padding:10px 5px;flex-direction:column;}.apple-settings-toolbar{height:43px;min-height:43px;padding-inline:13px;}.apple-settings-scroll{padding:17px 21px 25px;}.apple-settings-scroll .plugin-grid{grid-template-columns:1fr;}.apple-settings-scroll .plugin-entry{min-height:75px;}.apple-settings-scroll .team-usage-windows{grid-template-columns:1fr;gap:10px;}.apple-current-plan{padding:20px 16px;gap:13px;}.apple-current-badge{font-size:10px;}.apple-plan-symbol{width:44px;height:44px;}.apple-plan-option{flex-wrap:wrap;}.apple-plan-option button{margin-left:auto;}.apple-results .is-notification{padding:15px 16px;}.apple-results .team-result-card{max-width:100%;}.result-repository-metrics{gap:18px;}.result-repository-metrics .is-primary strong{font-size:38px;}.result-repository-metrics span{font-size:9px;}}
+@media(prefers-reduced-motion:reduce){.apple-account-panel,.apple-settings-window,.apple-settings-backdrop,.apple-dialog-backdrop,.apple-results .team-result-card{animation:none!important;transition:none!important;}}
+@media(prefers-reduced-transparency:reduce){.apple-account-panel{background:var(--team-side);backdrop-filter:none;-webkit-backdrop-filter:none;}.apple-settings-backdrop,.apple-dialog-backdrop{background:#0009;}}
+@media(prefers-contrast:more){.team-app{--apple-separator:var(--muted);}.apple-results .team-result-card:not(.kind-event){outline:1px solid var(--muted);}.apple-account-panel{background:var(--team-side);}.result-open-hint{opacity:1;}}
+
+.apple-plan-symbol img{width:100%;height:100%;object-fit:cover;border-radius:inherit;}
+
+
+.team-app .plugin-logo img{filter:none;opacity:1;}
+.team-app[data-theme=dark] .plugin-logo[data-brand=github] img{filter:invert(1);}
+.team-app[data-theme=light] .plugin-logo[data-brand=github] img{filter:none;}
+.apple-results .kind-repository .plugin-logo[data-brand=github] img{filter:invert(1)!important;}
+
+.apple-account-panel nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:0 3px 3px;}
+.apple-account-panel nav button{flex-direction:column;align-items:flex-start;justify-content:center;gap:9px;min-height:68px;font-size:11px;background:color-mix(in srgb,var(--text) 4%,transparent);padding:12px;border-radius:13px;}
+.apple-account-panel nav button:hover{background:color-mix(in srgb,var(--text) 8%,transparent);}
+.apple-account-panel nav button>span{flex:none;}
+.apple-account-panel nav button>svg:last-child{display:none;}
+
+.apple-settings-window .plugin-connect-modal{max-height:calc(100% - 30px);}
+
+.team-app .atlas-fade-bottom{height:calc(var(--atlas-composer-height,110px) + 24px);}
+
+/* 25 October — full-canvas settings, quieter gallery and readable human text. */
+.team-app .atlas-message-row[data-role=user]>.atlas-message-bubble{font-size:16px;line-height:1.48;}
+.apple-settings-window{inset:0;left:0;top:0;transform:none;width:100%;height:100dvh;max-width:none;border:0;border-radius:0;box-shadow:none;display:flex;flex-direction:column;background:var(--team-bg);animation:apple-settings-enter .18s ease;}
+.apple-settings-header{height:68px;min-height:68px;display:flex;align-items:center;justify-content:center;position:relative;padding:0 100px;}
+.apple-settings-header nav{display:flex;align-items:center;justify-content:center;gap:8px;}
+.apple-settings-header nav button{border:0;background:none;border-radius:12px;min-height:38px;padding:9px 14px;color:var(--muted);display:flex;align-items:center;gap:8px;font-size:13px;white-space:nowrap;}
+.apple-settings-header nav button[aria-current=page]{color:var(--text);background:color-mix(in srgb,var(--text) 7%,transparent);}
+.apple-settings-header nav button:hover{color:var(--text);}
+.apple-settings-header>.apple-close{position:absolute;right:24px;top:20px;}
+.apple-settings-body{flex:1;overflow:hidden;}
+.apple-settings-scroll{padding:25px 48px 44px;}
+.apple-settings-scroll>section,.apple-settings-scroll>.extension-layout{max-width:1080px;margin-inline:auto;}
+.apple-settings-scroll .team-account-page,.apple-settings-scroll .team-usage-page{max-width:1080px;}
+.apple-settings-scroll h1{font-size:27px;margin:0 0 26px;}
+.apple-settings-scroll .directory-tabs{border:0;background:none;box-shadow:none;}
+.apple-settings-scroll .directory-tabs::after,.apple-settings-scroll .directory-tabs::before,.apple-settings-scroll .directory-tabs button::after{display:none;}
+.apple-settings-scroll .directory-tabs [data-slot=tabs-trigger]{box-shadow:none;background:none;border:0;}
+.apple-settings-scroll .directory-tabs [data-state=active]{background:color-mix(in srgb,var(--text) 6%,transparent);}
+.apple-settings-scroll .directory-search{background:transparent;}
+.apple-settings-scroll .directory-search:focus-within{outline:none;box-shadow:none;border-color:var(--muted);}
+.apple-settings-scroll .directory-search:has(input:focus-visible){outline:2px solid var(--selection-color,#5c9eff);outline-offset:2px;}
+.apple-settings-scroll .directory-search input,.apple-settings-scroll .directory-search input:focus{box-shadow:none!important;background:transparent!important;outline:none!important;}
+.apple-settings-scroll .plugin-entry,.apple-settings-scroll .plugin-entry:hover{background:transparent;border-color:transparent;}
+.apple-settings-scroll .plugin-entry>button{background:transparent;box-shadow:none;}
+.apple-settings-scroll .plugin-entry>button:hover{background:color-mix(in srgb,var(--text) 5%,transparent);}
+.apple-settings-scroll .plugin-grid{gap:6px 34px;}
+.apple-settings-scroll .apple-subscription-page{max-width:900px;}
+.apple-subscription-page .plan-cards{max-width:none!important;gap:24px;}
+.apple-subscription-page .section-title{margin-bottom:24px;}
+.apple-subscription-page .section-title h2{font-size:23px;font-weight:540;letter-spacing:-.5px;}
+.apple-subscription-page .plan-card{background:transparent;}
+.apple-subscription-page .plan-banner{height:160px;}
+.apple-subscription-page .plan-disclosure{font-size:12px;line-height:1.6;color:var(--muted);margin-top:22px;}
+.team-account-banner{height:180px;border-radius:26px;display:flex;align-items:center;justify-content:center;margin:0 0 24px;}
+.team-account-banner>span{display:flex;gap:10px;align-items:center;color:#fff;font-size:26px;letter-spacing:-.7px;font-weight:560;}
+.team-account-banner img{width:42px;height:42px;border-radius:12px;}
+.team-account-banner i{font-style:normal;opacity:.6;font-weight:400;margin:0 3px;}
+.team-profile-summary{display:flex;align-items:center;gap:17px;padding:0 3px 29px;}
+.team-profile-photo{width:64px;height:64px;flex-shrink:0;}
+.team-profile-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.team-profile-summary>div{min-width:0;flex:1;}
+.team-profile-summary h2{margin:0 0 5px;font-size:20px;font-weight:550;letter-spacing:-.4px;overflow-wrap:anywhere;}
+.team-profile-summary p{margin:0;font-size:12px;color:var(--muted);overflow-wrap:anywhere;}
+.team-customize-button,.team-develop-button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:38px;border:1px solid var(--apple-separator,var(--line));border-radius:22px;padding:9px 15px;background:transparent;color:var(--text);font-size:12px;white-space:nowrap;}
+.team-profile-editor{max-width:600px;border:1px solid var(--apple-separator);border-radius:22px;padding:24px;margin-bottom:25px;}
+.team-profile-editor-actions{display:flex;align-items:center;justify-content:flex-end;gap:16px;}
+.apple-settings-scroll .team-profile-editor .team-primary-button{margin:0;}
+.team-profile-saved{display:flex;gap:7px;align-items:center;font-size:12px;color:var(--muted);}
+.team-account-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--apple-separator);border-radius:23px;padding:24px 0;margin:7px 0 20px;}
+.team-account-stats>div{padding:3px 13px;text-align:center;border-left:1px solid var(--apple-separator);display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:0;}
+.team-account-stats>div:first-child{border-left:0;}
+.team-account-stats dd{order:-1;margin:0;font-size:22px;line-height:1.35;font-variant-numeric:tabular-nums;}
+.team-account-stats dt{font-size:13px;color:var(--muted);line-height:1.55;}
+.team-usage-section-title{font-size:20px;font-weight:520;letter-spacing:-.4px;margin:35px 0 10px;}
+.team-usage-page>.team-usage-note{font-size:13px;line-height:1.65;max-width:80ch;}
+.team-usage-limit-panel{border:1px solid var(--apple-separator);border-radius:24px;background:color-mix(in srgb,var(--text) 6%,var(--team-bg));padding:26px 27px;margin:24px 0 17px;}
+.team-usage-limit-panel article+article{margin-top:28px;}
+.team-usage-limit-panel h3{font-size:17px;font-weight:520;margin:0 0 9px;}
+.team-usage-limit-meta{display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:13px;color:var(--muted);margin-bottom:9px;}
+.team-usage-limit-panel .team-quota-track{height:6px;background:color-mix(in srgb,var(--text) 13%,transparent);border-radius:5px;}
+.team-usage-limit-panel p{font-size:12px;color:var(--muted);margin:9px 0 0;}
+.team-usage-limit-panel strong{color:var(--text);font-weight:500;}
+.team-profile-dialog.team-identity-dialog{width:min(418px,calc(100vw - 32px));padding:26px;}
+.team-profile-dialog .team-profile-actions{gap:8px;}
+.team-profile-action-spacer{flex:1;}
+.team-profile-dialog .team-primary-button,.team-profile-dialog .team-develop-button{min-height:40px;font-size:12px;padding:9px 12px;}
+.team-role-original{border-left:2px solid var(--muted);padding-left:12px;margin:0 0 18px;}
+.team-role-original span{font-size:10px;color:var(--muted);}
+.team-role-original p{font-size:12px;line-height:1.5;margin:5px 0;white-space:pre-wrap;overflow-wrap:anywhere;max-height:90px;overflow:auto;}
+.team-role-review,.team-role-developing{font-size:11px;line-height:1.6;color:var(--muted);}
+@keyframes apple-settings-enter{from{opacity:0;translate:0 5px}to{opacity:1;translate:0 0}}
+@media(max-width:759px){.apple-settings-header{height:68px;min-height:68px;padding:0 54px 0 10px;}.apple-settings-header nav{gap:0;width:100%;}.apple-settings-header nav button{font-size:11px;gap:5px;padding:10px 9px;}.apple-settings-header nav button svg{display:none;}.apple-settings-header>.apple-close{right:13px;}.apple-settings-scroll{padding:16px 22px 32px;}.team-account-banner{height:145px;}.team-profile-summary{flex-wrap:wrap;gap:12px;}.team-profile-summary h2{font-size:18px;}.team-customize-button{margin-left:auto;}.team-account-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 0;padding:22px 0;}.team-account-stats>div:nth-child(odd){border-left:0;}.team-account-stats>div:last-child{grid-column:1/-1;}.team-account-stats dd{font-size:21px;}.team-profile-editor{padding:18px;}.team-usage-limit-panel{padding:22px 19px;}.team-usage-limit-meta{font-size:11px;gap:8px;flex-wrap:wrap;}.apple-subscription-page .plan-cards{grid-template-columns:1fr;}.apple-settings-scroll .plugin-grid{gap:5px;}}
+@media(prefers-reduced-motion:reduce){.apple-settings-window{animation:none;}}
+.team-account-banner.starter>span{color:#263b58;}
+
+/* Three offers, with the same center and quiet, distinct brand banners. */
+.apple-settings-scroll .apple-subscription-page{max-width:1140px;}
+.plan-cards.plan-cards-three{grid-template-columns:repeat(3,minmax(0,1fr));max-width:1140px!important;margin-inline:auto;}
+.plan-cards-three .plan-card-body{padding:24px 22px;}
+.plan-cards-three .plan-banner{display:flex;align-items:center;justify-content:center;}
+.plan-cards-three .plan-banner>span{font-size:29px;font-weight:560;letter-spacing:-.7px;position:relative;z-index:1;}
+.plan-cards-three .starter .plan-banner>span{color:#263b58;}
+.solar-banner.max{background:radial-gradient(ellipse at 80% 0%,#b8d9cf 0%,transparent 48%),radial-gradient(ellipse at 10% 110%,#48645d 0%,transparent 65%),#0d2421;}
+.solar-banner.max::before{background:none;}
+.solar-banner.max::after{border-color:#d9f6e14d;transform:rotate(-25deg);}
+.plan-card.max .plan-banner>span,.team-account-banner.max>span{color:#e5f3e9;}
+.plan-card.max .plan-cta{background:#c4e1d2;color:#0c211b;border:0;}
+.plan-card.max .plan-cta:hover{background:#dcefe4;}
+.team-usage-limit-panel .team-quota-track{overflow:hidden;}
+.team-usage-limit-panel .team-quota-track>span{display:block;width:100%;height:100%;background:var(--text);transform-origin:left center;border-radius:inherit;}
+@media(max-width:900px){.plan-cards.plan-cards-three{grid-template-columns:1fr;max-width:500px!important;}.plan-cards-three .plan-banner{height:130px;}}
+
+/* A single grounded continuation, aligned with the composer’s leading control. */
+.team-continuation{align-self:flex-start;max-width:100%;padding:0 0 8px}
+.team-continuation>button{display:flex;align-items:center;gap:10px;max-width:min(650px,100%);padding:10px 13px;border:1px solid var(--border);border-radius:19px;background:color-mix(in srgb,var(--text) 4%,transparent);color:var(--text);text-align:left;font:inherit;font-size:13px;line-height:1.45;cursor:pointer;transition:background .18s,transform .18s}
+.team-continuation>button:hover{background:color-mix(in srgb,var(--text) 8%,transparent);transform:translateY(-1px)}
+.team-continuation>button:focus-visible{outline:2px solid var(--accent,#7ed5c4);outline-offset:3px}
+.team-continuation>button:disabled{opacity:.5;cursor:default;transform:none}
+.team-continuation>button>span:not(.plugin-logo){display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.team-continuation .plugin-logo,.team-continuation svg{flex-shrink:0;width:20px;height:20px}
+.team-continuation>button>svg:last-child{width:14px;height:14px;opacity:.5}
+@media(prefers-reduced-motion:reduce){.team-continuation>button{transition:none}.team-continuation>button:hover{transform:none}}
+
+/* Focused refinements: keep the existing pages, palette and navigation. */
+.team-unread-dot{flex:0 0 6px;width:6px;height:6px;border-radius:50%;background:var(--selection-color,#459cff);margin-left:7px;align-self:center;}
+.team-agent-row-heading>time{margin-left:auto;}
+.apple-subscription-page .plan-card-body .plan-cta{border-radius:999px;min-height:40px;}
+.apple-subscription-page .plan-cards-three .plan-card-body{padding:20px;}
+.apple-subscription-page .plan-card-body>p{margin:10px 0 16px;}
+.apple-subscription-page .plan-card-body ul{margin-bottom:18px;}
+.apple-settings-scroll .directory-search:has(input:focus-visible){outline:none;box-shadow:none;}
+.apple-settings-scroll .directory-search[data-pointer-focus=false]:focus-within{outline:2px solid var(--selection-color,#5c9eff);outline-offset:2px;}
+.team-profile-editor{max-width:760px;}
+.team-profile-editor-fields{display:grid;grid-template-columns:minmax(200px,.9fr) minmax(220px,1.1fr);gap:26px;align-items:center;}
+.team-profile-editor-fields>label{min-width:0;}
+.apple-settings-scroll .team-profile-editor .team-avatar-editor{margin:0;gap:16px;}
+.team-profile-editor .team-avatar-editor>button{display:grid;place-items:center;flex-shrink:0;}
+.team-profile-editor .team-avatar-editor>button>svg{display:block;margin:auto;}
+.team-profile-editor .team-profile-editor-actions{margin-top:22px;}
+.team-logout>svg{display:block;margin-inline:auto;}
+.account-dialog .account-intro{text-align:center;}
+.team-suggestions-retry{border:0;background:none;color:var(--muted);font:inherit;font-size:11px;padding:7px 0;cursor:pointer;}
+.team-suggestions-retry:focus-visible{outline:2px solid var(--selection-color,#5c9eff);outline-offset:3px;}
+@media(max-width:680px){.team-profile-editor-fields{grid-template-columns:1fr;gap:20px;}}
+/* Account preferences — real choices and two compact conversation previews. */
+.account-preferences{margin:30px 0 0;border-top:1px solid var(--line);padding-top:27px;max-width:760px}
+.account-preferences>section+section{margin-top:34px}.account-preferences h2{font-size:16px;font-weight:550;letter-spacing:-.02em;margin:0 0 7px}.account-preferences section>p{font-size:12px;color:var(--muted);line-height:1.65;margin:0 0 17px}
+.account-theme-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:510px}.account-theme-choice{border:1px solid var(--line);border-radius:14px;background:var(--bg);padding:8px;text-align:left;color:var(--text)}.account-theme-choice[aria-pressed=true],.account-response-choice[aria-pressed=true]{border-color:#007aff;box-shadow:0 0 0 1px #007aff}.account-theme-choice>span:last-child{display:flex;align-items:center;gap:7px;padding:9px 3px 3px;font-size:11px}.account-theme-choice>span:last-child svg:last-child{margin-left:auto}.account-theme-mini{height:72px;display:flex;background:#fbfbfd;border:1px solid #e8e8ee;border-radius:8px;overflow:hidden;gap:10px}.account-theme-mini>i{display:block;width:24%;background:#ececf2}.account-theme-mini>span{display:grid;gap:5px;align-content:center;width:55%}.account-theme-mini>span>i{height:4px;background:#d0d0d8;border-radius:5px}.dark .account-theme-mini{background:#161619;border-color:#29292e}.dark .account-theme-mini>i{background:#29292d}.dark .account-theme-mini>span>i{background:#55555c}.system .account-theme-mini{background:linear-gradient(110deg,#fbfbfd 49%,#161619 50%)}
+.account-response-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;max-width:670px}.account-response-choice{padding:10px;border:1px solid var(--line);border-radius:17px;background:var(--bg);color:var(--text);text-align:left;min-width:0}.account-response-preview{height:201px;border-radius:10px;background:var(--surface);padding:17px;display:flex;flex-direction:column;gap:12px;font-size:11px;line-height:1.6;overflow:hidden}.preview-user{align-self:flex-end;background:#007aff;color:#fff;border-radius:10px;padding:5px 9px;font-size:10px}.preview-answer{display:block;max-width:100%;color:var(--text)}.messages .preview-answer{align-self:flex-start;border-radius:10px;background:var(--hover);padding:6px 9px}.account-response-preview.messages{gap:6px}.preview-result{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid var(--line);border-radius:9px;background:var(--bg);font-size:9px;margin-top:2px}.preview-mail-icon{font-weight:650;font-size:15px;color:#d64f43}.preview-result small{display:block;font-size:8px;color:var(--muted);line-height:1.4}.account-choice-caption{display:flex;align-items:center;justify-content:space-between;padding:13px 4px 5px;font-size:13px}.account-choice-caption strong{font-weight:550}.account-response-choice>small{display:block;color:var(--muted);padding:0 4px 6px;font-size:10px;line-height:1.6}.account-response-sound{display:flex!important;align-items:center;gap:9px!important;font-size:12px!important;color:var(--muted);margin:17px 0 0;max-width:670px}.account-response-sound input{width:16px!important;height:16px!important;padding:0!important;margin:0 0 0 auto!important;accent-color:#007aff}
+@media(max-width:600px){.account-response-choices{grid-template-columns:1fr}.account-theme-choices{gap:8px}.account-theme-choice{padding:6px}.account-theme-choice>span:last-child{font-size:10px;gap:4px}.account-response-preview{height:190px}}
+/* Optional Messages presentation. Result cards remain below the original answer. */
+.atlas-answer-parts{display:flex;flex-direction:column;gap:7px;max-width:100%;min-width:0}
+.team-app .response-display-messages .atlas-row[data-role=atlas] .atlas-answer-parts{align-items:flex-start;max-width:min(520px,90%)}
+.team-app .response-display-messages .atlas-row[data-role=atlas] .atlas-message-bubble{border-radius:17px 17px 17px 5px;background:var(--hover);color:var(--text);padding:10px 14px;max-width:100%;font-size:14px;line-height:1.6;animation:message-part-in .18s ease-out both}
+.team-app .response-display-messages .atlas-message-bubble p{margin-block:0 8px}.team-app .response-display-messages .atlas-message-bubble p:last-child{margin-bottom:0}
+@keyframes message-part-in{from{transform:translateY(3px)}to{transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.team-app .response-display-messages .atlas-message-bubble{animation:none!important}}
+/* Classic keeps its original open reading surface; the optional wrapper must not shrink it. */
+.team-app .response-display-standard .atlas-row[data-role=atlas] .atlas-answer-parts{width:100%;max-width:100%;align-self:stretch}
+.team-app .response-display-standard .atlas-row[data-role=atlas] .atlas-answer-parts>.atlas-message-bubble{max-width:62ch;width:auto;background:transparent;border:0;border-radius:0;padding:0;box-shadow:none;color:var(--text);font-size:17px;line-height:1.46;letter-spacing:-.18px}

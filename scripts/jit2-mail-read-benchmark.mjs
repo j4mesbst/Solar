@@ -1,0 +1,10 @@
+import {build} from 'esbuild';import{mkdir,writeFile}from'node:fs/promises';import{pathToFileURL}from'node:url';import path from'node:path';import assert from'node:assert/strict';
+const out=path.resolve('output/jit2/mail-reads');await mkdir(out,{recursive:true});const rows=[];
+const variants={jit1:'output/jit2/baseline/src',jit2:'src'};const apis={};
+for(const [variant,source]of Object.entries(variants)){
+ const built=await build({stdin:{contents:`export {mailTools} from ${JSON.stringify(path.resolve(source,'services/mailTools.ts'))};`,resolveDir:process.cwd()},bundle:true,format:'esm',platform:'node',write:false,plugins:[{name:'fake-api-latency',setup(b){b.onLoad({filter:/integrationApi\.ts$/},()=>({loader:'ts',contents:'export const integrationRequest=(...args)=>globalThis.mailFixture(...args);'}));}}]});const file=path.join(out,variant+'.mjs');await writeFile(file,built.outputFiles[0].text);apis[variant]=(await import(pathToFileURL(file))).mailTools.find(t=>t.name==='gmail.latest_messages');
+}
+for(let repetition=0;repetition<3;repetition++)for(const variant of repetition%2?['jit2','jit1']:['jit1','jit2']){
+ let active=0,peak=0,reads=0;globalThis.mailFixture=async(_service,url)=>{if(url.startsWith('/messages?'))return{messages:Array.from({length:9},(_,i)=>({id:'M'+i}))};peak=Math.max(peak,++active);reads++;await new Promise(r=>setTimeout(r,60));active--;const id=url.match(/M\d/)[0];return{id,payload:{mimeType:'text/plain',body:{data:Buffer.from('Fictitious '+id).toString('base64url')}}};};const start=performance.now();const result=await apis[variant].execute({limit:9},new AbortController().signal);assert.equal(reads,9);assert.deepEqual(result.messages.map(m=>m.id),Array.from({length:9},(_,i)=>'M'+i));assert.equal(active,0);rows.push({variant,repetition,latencyMs:Math.round(performance.now()-start),peak,reads,correct:true});
+}
+await writeFile(path.join(out,'results.json'),JSON.stringify({protocol:'Actual mailTools implementation; fictitious API 60ms/body, 9 bodies, no LLM/no private account; 3 alternating repetitions',rows},null,2));console.log(JSON.stringify(rows));

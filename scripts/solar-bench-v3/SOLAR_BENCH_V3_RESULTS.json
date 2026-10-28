@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "campaign": "full",
+  "status": "NOT_RUN",
+  "expectedRuns": 108,
+  "results": [],
+  "note": "La campagne complète n'a pas été exécutée. Ce fichier ne contient aucune mesure fictive."
+}

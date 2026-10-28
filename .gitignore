@@ -4,7 +4,9 @@ src-tauri/target/
 .env
 .env.*
 !.env.example
-
-
-# Generated release installer and verification files
-/artifacts/
+output/
+artifacts/
+.DS_Store
+.aider*
+node_modules
+src-tauri/gen/

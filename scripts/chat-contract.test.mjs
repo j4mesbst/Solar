@@ -10,7 +10,7 @@ await streamChat({ provider, model: "model-a", messages, effort: "high", vault: 
 assert(answer === "Hello", "SSE chunks should be concatenated");
 assert(JSON.parse(request.body).stream === true, "request should ask for real streaming");
 assert(JSON.parse(request.body).model === "model-a", "request should use selected model");
-assert(JSON.parse(request.body).max_tokens === 3072, "high effort should reserve enough output tokens");
+assert(JSON.parse(request.body).max_tokens === 16384, "high effort should reserve enough output tokens");
 assert(JSON.parse(request.body).messages[0].role === "system", "effort should add a response instruction");
 assert(!answer.includes("<think>"), "internal reasoning tags must not reach the chat UI");
 globalThis.fetch = async () => new Response("", { status: 401 });
@@ -33,10 +33,21 @@ const snapshot = text => `data: ${JSON.stringify({ choices: [{ message: { conten
 assert(await runChunks([snapshot("Salut"), snapshot("Salut !"), snapshot("Salut !"), "data: [DONE]\n\n"]) === "Salut !", "explicit snapshots must not replay content");
 const local = { ...provider, protocol: "ollama", baseUrl: "http://localhost:11434" };
 assert(await runChunks(['{"message":{"content":"Bon"},"done":false}\n', '{"message":{"content":"jour"},"done":true}'], { provider: local, vault: { get: async () => { throw new Error("local inference must not require a key"); } } }) === "Bonjour", "Ollama NDJSON must stream without a key");
+let ollamaRequest;
+globalThis.fetch=async(_url,init)=>{ollamaRequest=JSON.parse(init.body);return new Response('{"message":{"content":"OK"},"done":true}\n');};
+await streamChat({provider:local,model:"model-a",messages,effort:"medium",vault:{get:async()=>{throw new Error("local inference must not require a key");}},signal:new AbortController().signal,onDelta:()=>{}});
+assert(ollamaRequest.think===false,"Ollama requests must disable internal thinking so the local pipeline receives visible answer tokens");
 try { await runChunks([delta("partial")]); throw new Error("truncated stream must fail"); } catch (error) { assert(error instanceof ChatError && error.code === "network", "truncated stream must retain partial response with a meaningful error"); }
 try { await runChunks(['data: {broken}\n\n']); throw new Error("bad JSON must fail"); } catch (error) { assert(error instanceof ChatError && error.code === "invalid-response", "malformed chunks must fail clearly"); }
 const cancelled = new AbortController(); cancelled.abort();
 try { await runChunks([delta("hello"), "data: [DONE]\n\n"], { signal: cancelled.signal }); throw new Error("cancel must fail"); } catch (error) { assert(error instanceof ChatError && error.code === "interrupted", "cancellation should normalize"); }
 console.log("stream-regression-tests: ok");
+
+globalThis.fetch=async()=>new Response(JSON.stringify({message:{content:"",tool_calls:[{function:{name:"propose_actions",arguments:{actions:[{type:"finish",message:"Ready"}]}}}]},done:true,done_reason:"stop",eval_count:12})+'\n');
+const toolCompletion=await streamChat({provider:local,model:"fixture",messages,effort:"low",vault:{get:async()=>null},signal:new AbortController().signal,onDelta:()=>{throw Error('Tool-only output must not become visible text');}});
+assert(toolCompletion.stopReason==="tool_calls"&&toolCompletion.toolCalls.length===1,"tool-only completion must be returned to Cortex");
+globalThis.fetch=async()=>new Response(JSON.stringify({message:{content:'{"actions":['},done:true,done_reason:"length"})+'\n');
+const limited=await streamChat({provider:local,model:"fixture",messages,effort:"low",vault:{get:async()=>null},signal:new AbortController().signal,onDelta:()=>{}});
+assert(limited.stopReason==="length","a token limit must be distinguishable from task success");
 
 const activityStages=[];const hidden=await runChunks([`data: ${JSON.stringify({choices:[{delta:{reasoning_content:"hidden private content"}}]})}\n\n`,delta("<think>private</think>"),delta("Visible"),"data: [DONE]\n\n"],{onActivity:s=>activityStages.push(s)});assert(hidden==="Visible","activity events never reveal reasoning");assert(activityStages.join(",")==="connecting,waiting,thinking,writing","stages reflect received stream events");console.log("activity-contracts: ok (real connection/reasoning/writing events without reasoning exposure)");

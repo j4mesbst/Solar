@@ -1,0 +1,1 @@
+campaignId,fixtureId,agent,repetition,profile,status,durationMs,inputTokens,outputTokens,peakAgentRssBytes,peakOllamaVramBytes,changedFiles,reason

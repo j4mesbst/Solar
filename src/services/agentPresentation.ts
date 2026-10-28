@@ -1,0 +1,24 @@
+import {pluginCatalog,type DirectPluginId} from './pluginCatalog';
+import type {TeamProfile} from './solarAgentStore';
+import {safeMemoryText} from './agentNotebook';
+const normalized=(text:string)=>text.normalize('NFD').replace(/\p{M}/gu,'').toLowerCase();
+export function validRoleTitle(value:unknown):value is string{return typeof value==='string'&&value.trim().length<=42&&value.trim().split(/\s+/).length<=2&&/^[\p{L}][\p{L}\p{N} ’'-]*$/u.test(value)&&safeMemoryText(value)===value;}
+export function roleSummary(role:string,proposed?:unknown){
+ if(validRoleTitle(proposed))return proposed.trim();
+ const r=normalized(role);
+ const categories:[RegExp,string][]=[[/market|prospect|commercial|vente|campagne/,'Agent marketing'],[/comptab|financ|factur|depense|budget/,'Analyste financier'],[/recrut|candidat|talent|ressources humaines/,'Agent recrutement'],[/support|service client|satisfaction/,'Support client'],[/github|depot|pull request/,'Mainteneur GitHub'],[/developp|logiciel|programm|code/,'Assistant développement'],[/linear|ticket|issue/,'Suivi projets'],[/agenda|calend|rendez.vous|planning|reunion/,'Assistant agenda'],[/gmail|outlook|e.mail|courriel|boite mail/,'Gestionnaire e-mails'],[/recherch|etude|veille|actualite/,'Analyste recherche'],[/document|drive|note|redact|rapport/,'Assistant rédaction'],[/contact|relation/,'Gestionnaire contacts'],[/tache|priorit|organis|coordonn|manager/,'Assistant organisation']];
+ for(const[pattern,label]of categories)if(pattern.test(r))return label;
+ const words=role.replace(/^(?:(?:tu es|vous êtes|agis comme|un|une|mon|ma|notre)\s+)+/i,'').replace(/[^\p{L}\p{N} '-]/gu,' ').trim().split(/\s+/).slice(0,2).join(' ');
+ return validRoleTitle(words)&&! /^(?:aide|aider|faire|fais|tu|je|pour|dois|peux)\b/i.test(words)?words.charAt(0).toUpperCase()+words.slice(1):'Assistant personnel';
+}
+export interface RoleIdea{id:string;text:string;service?:DirectPluginId}
+/** Immediate, honest fallback from the saved role. Never reads private data. */
+export function localRoleIdeas(profile:TeamProfile):RoleIdea[]{
+ const role=profile.role?.trim();if(!role)return[];
+ const r=normalized(role),title=roleSummary(role),explicit=pluginCatalog.filter(p=>p.connection==='direct'&&p.aliases.some(a=>new RegExp(`(^|[^\\p{L}\\p{N}])${normalized(a).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}(?=$|[^\\p{L}\\p{N}])`,'u').test(r))).map(p=>p.id as DirectPluginId);
+ if(!explicit.length&&/recherch|etude|veille/.test(r))return[{id:'role-local:research',text:'Identifie les trois questions à explorer en priorité pour mon rôle.'}];
+ let candidates=explicit;if(explicit.includes('ms-calendar')||explicit.includes('ms-contacts'))candidates=candidates.filter(id=>id!=='outlook'&&id!=='gmail');else if(explicit.includes('outlook')&&!/\bgmail\b/i.test(role))candidates=candidates.filter(id=>id!=='gmail');
+ const preferred:DirectPluginId[]=/github|developp|logiciel|code|linear/.test(r)?['github','linear','slack']:/market|commercial|prospect/.test(r)?['gmail','slack','google-docs']:/financ|budget|comptab/.test(r)?['google-sheets','google-drive','gmail']:/agenda|calend|rendez|planning|reunion/.test(r)?['google-calendar','gmail','google-tasks']:['gmail','google-calendar','google-drive'];
+ const tasks:Record<DirectPluginId,string>={gmail:/market|commercial|prospect/.test(r)?'Repère les demandes commerciales à traiter dans mes derniers e-mails Gmail.':'Repère les demandes auxquelles répondre dans mes trois derniers e-mails Gmail.',outlook:'Repère les demandes auxquelles répondre dans mes trois derniers e-mails Outlook.',github:'Vérifie les dépôts GitHub que je maintiens et repère les points à suivre.',slack:'Repère les questions encore sans réponse dans mes conversations Slack récentes.',linear:'Repère les tickets Linear à prioriser et les éventuels blocages.','google-drive':'Retrouve les documents Google Drive utiles à mon travail en cours.','google-calendar':'Prépare mes prochains rendez-vous Google Agenda et repère les conflits.','google-contacts':'Repère les fiches incomplètes parmi mes contacts Google.','google-docs':'Retrouve les documents Google Docs à reprendre pour mon travail.','google-sheets':'Retrouve les tableaux Google Sheets utiles à mes priorités.','google-tasks':'Repère les tâches Google Tasks à prioriser et les échéances proches.','ms-calendar':'Prépare mes prochains rendez-vous du Calendrier Microsoft.','onedrive':'Retrouve les fichiers OneDrive utiles à mon travail en cours.','ms-todo':'Repère les tâches Microsoft To Do prioritaires et les échéances proches.','ms-contacts':'Repère les fiches incomplètes parmi mes contacts Microsoft.','onenote':'Retrouve les notes OneNote à reprendre pour mon travail.'};
+ return [...new Set([...candidates.sort((a,b)=>(preferred.indexOf(a)<0?99:preferred.indexOf(a))-(preferred.indexOf(b)<0?99:preferred.indexOf(b))),...preferred])].slice(0,3).map(service=>({id:`role-local:${service}:${title}`,service,text:tasks[service]}));
+}

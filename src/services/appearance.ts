@@ -9,7 +9,7 @@ export function paletteFor(settings:AppSettings,theme:"light"|"dark"):Palette { 
 export function appearanceStyle(settings:AppSettings,theme:"light"|"dark") {
  const p=paletteFor(settings,theme);const onBackground=contrastText(p.background);const radius=Math.min(36,Math.max(12,settings.appearance?.radius??26));
  const glass=(value:number|undefined)=>Math.max(0,Math.min(100,Number.isFinite(value)?value!:0));
- const rail=glass(settings.appearance?.glassRail),chat=glass(settings.appearance?.glassChat);
+ const rail=0,chat=0;
  const alpha=(color:string,amount:number)=>`${color}${Math.round((1-amount/100*.6)*255).toString(16).padStart(2,"0")}`;
  return {"--wallpaper":"none","--rail-bg":alpha(p.sidebar,rail),"--chat-bg":alpha(p.background,chat*.75),"--rail-blur":`${rail*.3}px`,"--chat-blur":`${chat*.3}px`,"--bg":p.background,"--side":p.sidebar,"--surface":p.surface,"--text":p.text,"--accent":p.accent,"--accent-soft":`${p.accent}18`,"--button":p.accent,"--button-text":contrastText(p.accent),"--muted":onBackground==="#ffffff"?"#b4b4bc":"#62626b","--subtle":onBackground==="#ffffff"?"#9696a0":"#74747d","--line":p.border,"--selection-color":p.selection,"--selection-soft":`${p.selection}18`,"--hover":onBackground==="#ffffff"?"#ffffff0f":"#00000006","--user-bubble":p.userBubble,"--user-text":contrastText(p.userBubble),"--caret":contrastText(p.surface),"--radius":`${radius}px`,fontFamily:settings.appearance?.font==="rounded"?'"SF Pro Rounded", ui-rounded, system-ui, sans-serif':settings.appearance?.font==="serif"?'"New York", Georgia, serif':undefined};
 }

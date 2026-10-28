@@ -1,0 +1,22 @@
+import {useState,useRef} from 'react';
+import {Dialog} from 'radix-ui';
+import {X} from 'lucide-react';
+import {AgentMascot,mascots} from '../team/AgentMascot';
+import {AccountDialog} from '../ui/account-dialog';
+import type {AppSettings,Model,Provider} from '../../domain/types';
+import {solarAgentStore,type MascotId} from '../../services/solarAgentStore';
+import {solarStore} from '../../services/store';
+import {teamCloud} from '../../services/teamCloud';
+
+const titles=['Un peu d’aide, au quotidien.','Tes applications, à portée de main.','Donne une mission à chaque agent.'];
+export function MessengerOnboarding({providers,models,settings,onClose,onDone}:{providers:Provider[];models:Model[];settings:AppSettings;onClose:()=>void;onDone:(id?:string)=>Promise<void>}){
+ const [step,setStep]=useState(0),[name,setName]=useState(''),[mascot,setMascot]=useState<MascotId>('orbit'),[busy,setBusy]=useState(false),[error,setError]=useState(''),[account,setAccount]=useState(false);const lock=useRef(false);
+ const create=async()=>{if(lock.current||!name.trim())return;lock.current=true;setBusy(true);setError('');try{const cloud=teamCloud(providers,models,settings.agent?.defaultModelId),profile=await solarAgentStore.createTeamAgent(name,mascot,{providerId:cloud?.provider.id??'',modelId:cloud?.model.id??''},undefined,'messenger-first-agent-v1');await solarStore.saveSettings({...settings,onboardingComplete:true});await onDone(profile.agentId);}catch(e){setError(e instanceof Error?e.message:'Impossible de créer cet agent.');}finally{lock.current=false;setBusy(false);}};
+ return <><Dialog.Root open onOpenChange={open=>{if(!open&&!busy)onClose();}}><Dialog.Portal container={document.querySelector<HTMLElement>('.team-app')??undefined}><Dialog.Overlay className="messenger-intro-overlay"/><Dialog.Content className="messenger-onboarding" aria-describedby="messenger-intro-description" onOpenAutoFocus={e=>{e.preventDefault();}}>
+  <div className="messenger-intro-drag" data-tauri-drag-region/><span className="wordmark messenger-intro-wordmark">Solar</span><Dialog.Close disabled={busy} className="team-icon-button messenger-intro-close" aria-label="Fermer l’accueil"><X size={18}/></Dialog.Close>
+  <Dialog.Title key={step} className="messenger-intro-title">{step<3?titles[step]:'Comment s’appelle ton agent ?'}</Dialog.Title><Dialog.Description id="messenger-intro-description" className="sr-only">{step<3?'Découvre Solar, puis crée ton premier agent.':'Choisis son nom et sa mascotte ; son rôle se précise dans la conversation.'}</Dialog.Description>
+  <div className={`messenger-intro-scene scene-${step}`} aria-hidden="true"><AgentMascot kind={step===3?mascot:'orbit'} size={80} active/>{step===1&&<><span className="intro-app intro-app-mail">@</span><span className="intro-app intro-app-calendar">31</span><span className="intro-app intro-app-document">≡</span></>}{step===2&&<><span className="intro-companion companion-a"><AgentMascot kind="drop" size={48} active/></span><span className="intro-companion companion-b"><AgentMascot kind="pebble" size={48} active/></span><span className="intro-companion companion-c"><AgentMascot kind="spark" size={48} active/></span></>}</div>
+  {step===3&&<form id="messenger-first-agent" className="messenger-intro-form" onSubmit={e=>{e.preventDefault();void create();}}><label>Nom de l’agent<input autoFocus value={name} onChange={e=>setName(e.target.value)} maxLength={60} placeholder="Par exemple, Milo" disabled={busy}/></label><fieldset disabled={busy}><legend>Sa mascotte</legend><div className="team-avatar-options">{mascots.map(m=><button type="button" key={m.id} aria-label={m.label} aria-pressed={mascot===m.id} onClick={()=>setMascot(m.id)}><AgentMascot kind={m.id} size={36}/></button>)}</div></fieldset></form>}
+  <div className="messenger-intro-actions">{error&&<p role="alert" className="team-error">{error}</p>}{step<3?<button autoFocus className="messenger-intro-next" onClick={()=>setStep(v=>v+1)}>Suivant</button>:<button className="messenger-intro-next" type="submit" form="messenger-first-agent" disabled={busy||!name.trim()}>{busy?'Création…':'Rencontrer mon agent'}</button>}{step>0&&<button className="messenger-intro-back" disabled={busy} onClick={()=>setStep(v=>v-1)}>Retour</button>}{step===0&&!settings.profile?.name&&<button className="messenger-intro-account" onClick={()=>setAccount(true)}>Se connecter à Solar</button>}</div>
+ </Dialog.Content></Dialog.Portal></Dialog.Root><AccountDialog open={account} onClose={()=>setAccount(false)}/></>;
+}

@@ -28,3 +28,18 @@ For these and/or other purposes and motivations, and without any expectation of 
     4. Affirmer understands and acknowledges that Creative Commons is not a party to this document and has no duty or obligation with respect to this CC0 or use of the Work.
 
 For more information, please see <https://creativecommons.org/publicdomain/zero/1.0>.
+
+Notion, Slack, Linear, Todoist and Discord: Simple Icons 14.15.0 (CC0), original brand proportions. Source: https://github.com/simple-icons/simple-icons/tree/14.15.0/icons . Brand names and logos remain their owners’ trademarks.
+
+Additional Google and API service SVGs: Simple Icons 14.15.0 (CC0). Microsoft OneDrive, OneNote and Outlook-based Calendar/Contacts marks: Simple Icons 11.15.0 (CC0). Four services use semantic Lucide icons, under the Lucide ISC license, rather than downloaded brand marks: Google Contacts, Microsoft To Do, monday.com and Readwise.
+
+Additional official product marks (downloaded 2026-10-22; not covered by CC0):
+Google Drive, Calendar, Contacts, Docs and Sheets color PNG marks are unmodified
+assets from https://www.gstatic.com/images/branding/product/1x/ (drive_2020q4_48dp.png,
+calendar_2020q4_48dp.png, contacts_2022_48dp.png, docs_2020q4_48dp.png,
+sheets_2020q4_48dp.png). Google product names and marks belong to Google.
+Microsoft To Do color SVG: https://res.cdn.office.net/files/fabric-cdn-prod_20221201.001/assets/brand-icons/product/svg/todo_48x1.svg
+Microsoft names and marks belong to Microsoft. These marks identify the connected
+service; no endorsement is implied.
+
+Microsoft Calendar and People color glyphs: official Microsoft Fluent System Icons (MIT), used to identify the calendar and contact functions; not presented as standalone product logos. Sources: https://github.com/microsoft/fluentui-system-icons/tree/main/assets/Calendar/SVG/ic_fluent_calendar_24_color.svg and https://github.com/microsoft/fluentui-system-icons/tree/main/assets/People/SVG/ic_fluent_people_24_color.svg . License retained in FLUENT-LICENSE.txt.

@@ -1,0 +1,3 @@
+.animated-shiny-text{display:inline-block;font-weight:500;background-image:linear-gradient(120deg,transparent 40%,color-mix(in srgb,var(--text,var(--atlas-text,#151515)) 90%,transparent) 50%,transparent 60%);background-size:200% 100%;background-clip:text;-webkit-background-clip:text;color:color-mix(in srgb,var(--text,var(--atlas-text,#151515)) 65%,transparent);animation:shine 2200ms linear infinite;}
+@keyframes shine{0%{background-position:100%}100%{background-position:-100%}}
+@media(prefers-reduced-motion:reduce){.animated-shiny-text{animation:none;background:none;color:var(--text,var(--atlas-text,#151515));}}

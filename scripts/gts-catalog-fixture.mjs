@@ -1,0 +1,13 @@
+import {build} from 'esbuild';import{mkdtemp,readFile,writeFile,mkdir,rm}from'node:fs/promises';import{tmpdir}from'node:os';import path from'node:path';import{pathToFileURL}from'node:url';import{createHash}from'node:crypto';
+// Import the real registry with every I/O boundary replaced by a fail-closed
+// stub. Only schemas are serialized; no user account or integration is opened.
+const dir=await mkdtemp(path.join(tmpdir(),'solar-catalog-')),out=path.resolve(process.argv[2]??'output/gts2/catalog.json');
+try{const result=await build({stdin:{contents:'export {pluginTools} from "./src/services/pluginRuntime.ts";',resolveDir:process.cwd()},bundle:true,format:'esm',platform:'node',write:false,define:{'import.meta.env':'{}'},plugins:[{name:'no-account-io',setup(b){
+ const blocked='async()=>{throw Error("Unexpected I/O during catalog capture")};';
+ const modules={pluginConnections:['listPluginItems','readPluginItem','readGitHubFile','listGitHubIssues','pluginIdentity'],solarConnect:['savedConnection','connectionToken'],pluginAccounts:['savedConnection','saveConnection','removeConnection'],integrationApi:['integrationRequest','integrationFetch','identifyIntegration'],mcpConnections:['listMcpServers','connectMcp','callMcp','mcpFingerprint']};
+ for(const [file,names]of Object.entries(modules))b.onLoad({filter:new RegExp('[/\\\\]'+file+'\\.ts$')},()=>({loader:'ts',contents:names.map(n=>'export const '+n+'='+blocked).join('\n')}));
+ b.onLoad({filter:/nativeVault\.ts$/},()=>({loader:'ts',contents:'export const secretVault={get:async()=>{throw Error("Unexpected credential read")}};'}));
+ }}]});const file=path.join(dir,'catalog.mjs');await writeFile(file,result.outputFiles[0].text);const{pluginTools}=await import(pathToFileURL(file));const tools=pluginTools.list().map(({name,pluginId,description,parameters,permissions,risk,parallelSafe,externalEffects})=>({name,pluginId,description,parameters,permissions,risk,parallelSafe,externalEffects}));
+ const files=['pluginRuntime','agentTools','integrationTools','mailTools','productivityTools','keyIntegrationTools','draftTools','followupTools'];const sourceHashes=Object.fromEntries(await Promise.all(files.map(async n=>[n,createHash('sha256').update(await readFile('src/services/'+n+'.ts')).digest('hex')])));
+ await mkdir(path.dirname(out),{recursive:true});await writeFile(out,JSON.stringify({source:'Real Solar pluginTools registry; no I/O; all execution functions removed',sourceHashes,tools},null,2)+'\n');console.log(JSON.stringify({file:out,tools:tools.length,services:Object.fromEntries(['gmail','outlook','github','slack','linear'].map(id=>[id,tools.filter(t=>t.pluginId===id&&(t.risk??'read')==='read').length]))}));
+}finally{await rm(dir,{recursive:true,force:true});}

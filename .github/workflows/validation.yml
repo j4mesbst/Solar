@@ -12,7 +12,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run test:features && npm run test:chat && npm run test:providers && npm run test:evolution
+      - run: node scripts/messenger-contract.test.mjs && npm run test:features && npm run test:chat && npm run test:providers && npm run test:evolution && npm run test:agent:durable
       - run: npm run build
   native-macos:
     runs-on: macos-14

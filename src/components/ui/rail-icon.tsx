@@ -1,10 +1,12 @@
+import { Settings2 } from "lucide-react";
+
 // Icons are split into independently choreographed vector parts. No whole-icon spin.
 export function RailIcon({ name }: { name?: string }) {
-  const common = { viewBox: "0 0 24 24", width: 18, height: 18, fill: "none", stroke: "currentColor", strokeWidth: 1.65, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true as const };
-  if (name === "Accueil") return <svg {...common} className="motion-home"><path className="icon-part roof" d="M3.5 10.5 10 4.8a3 3 0 0 1 4 0l6.5 5.7"/><path className="icon-part walls" d="M5 9.5v8.8A2.7 2.7 0 0 0 7.7 21h8.6a2.7 2.7 0 0 0 2.7-2.7V9.5"/><path className="icon-part door" d="M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6"/></svg>;
-  if(name === "Work") return <svg {...common}><rect className="icon-part work-frame" x="3" y="5" width="18" height="15" rx="4"/><path className="icon-part work-glyph" d="m9 10-3 3 3 3m6-6 3 3-3 3"/></svg>;
-  if (name === "Plugins") return <svg {...common} className="motion-blocks">{[[4,4],[13,4],[4,13],[13,13]].map(([x,y],i) => <rect key={i} className={`icon-part tile tile-${i}`} x={x} y={y} width="7" height="7" rx="2.2"/>)}</svg>;
-  if (name === "Skills") return <svg {...common} className="motion-skills"><path className="icon-part wand" d="m4.8 18.8 10-10a2.1 2.1 0 0 1 3 3l-10 10a2.1 2.1 0 0 1-3-3ZM12.5 11l3 3"/><path className="icon-part star star-one" d="M5 3v6M2 6h6"/><path className="icon-part star star-two" d="M17 2v4M15 4h4"/><path className="icon-part star star-three" d="M21 17v4M19 19h4"/></svg>;
-  if (name === "Favoris") return <svg {...common} className="motion-heart"><path className="icon-part heart-line" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/><path className="heart-echo" d="m8 12 4 4 4-4"/></svg>;
-  return <svg {...common} className="motion-settings"><g className="icon-part gear-teeth"><path d="M9.4 3.8 10 2h4l.6 1.8 2.2 1.3 1.9-.4 2 3.5-1.3 1.4v2.8l1.3 1.4-2 3.5-1.9-.4-2.2 1.3-.6 1.8h-4l-.6-1.8-2.2-1.3-1.9.4-2-3.5 1.3-1.4V9.6L3.3 8.2l2-3.5 1.9.4Z"/></g><circle className="icon-part gear-center" cx="12" cy="11" r="3"/></svg>;
+  const common = { viewBox: "0 0 24 24", width: 16, height: 16, fill: "none", stroke: "currentColor", strokeWidth: 1.55, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true as const };
+  if (name === "Accueil") return <svg {...common} className="motion-home"><path className="icon-part roof" d="m4 10.2 6.4-5.5a2.45 2.45 0 0 1 3.2 0l6.4 5.5"/><path className="icon-part walls" d="M5.7 9.4v8.35c0 .86.7 1.55 1.55 1.55h9.5c.86 0 1.55-.7 1.55-1.55V9.4"/><path className="icon-part door" d="M10 19.3v-4.15c0-.64.52-1.15 1.15-1.15h1.7c.64 0 1.15.52 1.15 1.15v4.15"/></svg>;
+  if(name === "Work") return <svg {...common}><rect className="icon-part work-frame" x="4" y="5.5" width="16" height="13" rx="2.5"/><path className="icon-part work-glyph" d="m10 10-2.4 2.1 2.4 2.1m4-4.2 2.4 2.1-2.4 2.1"/></svg>;
+  if (name === "Plugins") return <svg {...common} className="motion-blocks">{[[4.5,4.5],[13.5,4.5],[4.5,13.5],[13.5,13.5]].map(([x,y],i) => <rect key={i} className={`icon-part tile tile-${i}`} x={x} y={y} width="6" height="6" rx="1.45"/>)}</svg>;
+  if (name === "Skills") return <svg {...common} className="motion-skills"><path className="icon-part wand" d="m5.7 18.3 9.5-9.5a2.15 2.15 0 1 1 3.05 3.05l-9.5 9.5a2.15 2.15 0 0 1-3.05-3.05ZM12.9 11.1l3 3"/><path className="icon-part star star-one" d="M5 4v4M3 6h4"/><path className="icon-part star star-two" d="M18 3v3M16.5 4.5h3"/></svg>;
+  if (name === "Favoris") return <svg {...common} className="motion-heart"><path className="icon-part heart-line" d="M20 8.4c0 4.6-8 10.1-8 10.1S4 13 4 8.4A4.2 4.2 0 0 1 11.3 5.5L12 6.2l.7-.7A4.2 4.2 0 0 1 20 8.4Z"/><path className="heart-echo" d="m8.7 11.3 3.3 3.2 3.3-3.2"/></svg>;
+  return <Settings2 {...common} className="motion-settings" />;
 }
