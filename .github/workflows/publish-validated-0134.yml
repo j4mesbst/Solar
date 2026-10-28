@@ -1,0 +1,40 @@
+name: Publish validated Solar 0.13.4
+on:
+  push:
+    branches: [codex/solar-0134-installer]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Reassemble and verify release media
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,hashlib
+          root=Path('_release')
+          sums=[]
+          for item in json.loads((root/'manifest.json').read_text()):
+              data=b''.join((root/p).read_bytes() for p in item['parts'])
+              assert hashlib.sha256(data).hexdigest()==item['sha256'],item['name']
+              Path(item['name']).write_bytes(data)
+              sums.append(item['sha256']+'  '+item['name'])
+          Path('SHA256SUMS.txt').write_text('\n'.join(sums)+'\n')
+          PY
+      - name: Publish latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > /tmp/notes.md <<'EOF_NOTES'
+          Solar 0.13.4 — QCM et réponses fiabilisés, déplacement de fenêtre, thèmes clair/sombre et sélection grise des managers.
+
+          Code source : 1110188e922903246f077dfc86aeb3aef6ef071b.
+          Installeur macOS Apple Silicon arm64, signé ad hoc, non notarisé. Ouvrez le DMG puis glissez Solar.app dans Applications. Les connexions et le fournisseur nécessitent votre configuration personnelle. Aucune clé privée ni accès développeur personnel inclus.
+
+          La démonstration MP4 et les captures du README ont été fournies et autorisées par James. Elles précèdent les dernières finitions de cette version.
+          EOF_NOTES
+          gh release create v0.13.4 --target 1110188e922903246f077dfc86aeb3aef6ef071b --title 'Solar 0.13.4' --notes-file /tmp/notes.md --latest Solar-0.13.4-macOS-arm64.dmg Solar-demo.mp4 SHA256SUMS.txt
