@@ -133,7 +133,14 @@ fn ollama_app() -> PathBuf {
 }
 
 fn binary_candidates() -> Vec<PathBuf> {
-    vec![
+    #[cfg(windows)] {
+      let mut paths=Vec::new();
+      if let Some(base)=std::env::var_os("LOCALAPPDATA"){paths.push(PathBuf::from(base).join("Programs/Ollama/ollama.exe"));}
+      if let Some(base)=std::env::var_os("ProgramFiles"){paths.push(PathBuf::from(base).join("Ollama/ollama.exe"));}
+      if let Some(path)=std::env::var_os("PATH"){paths.extend(std::env::split_paths(&path).map(|p|p.join("ollama.exe")));}
+      return paths;
+    }
+    #[cfg(not(windows))] vec![
         PathBuf::from("/opt/homebrew/bin/ollama"),
         PathBuf::from("/usr/local/bin/ollama"),
         ollama_app().join("Contents/Resources/ollama"),
@@ -245,7 +252,7 @@ pub async fn ollama_status(app: tauri::AppHandle, base_url: String) -> Result<Ol
         .collect();
 
     Ok(OllamaStatus {
-        supported: cfg!(target_os = "macos"),
+        supported: cfg!(any(target_os = "macos",target_os = "windows")),
         installed,
         running,
         version,
@@ -259,9 +266,9 @@ pub async fn ollama_status(app: tauri::AppHandle, base_url: String) -> Result<Ol
 #[tauri::command]
 pub async fn ollama_start() -> Result<(), String> {
     if !installed() {
-        return Err("Ollama n’est pas installé. Télécharge-le depuis ollama.com/download/mac.".into());
+        return Err("Ollama n’est pas installé. Télécharge-le depuis ollama.com/download.".into());
     }
-    if ollama_app().is_dir() {
+    if cfg!(target_os="macos") && ollama_app().is_dir() {
         if Command::new("/usr/bin/open")
             .args(["-a", "Ollama"])
             .stdin(Stdio::null())
@@ -276,7 +283,7 @@ pub async fn ollama_start() -> Result<(), String> {
     let binary = binary_candidates()
         .into_iter()
         .find(|path| is_executable(path))
-        .ok_or_else(|| "Le binaire Ollama n’a pas été trouvé dans les emplacements macOS habituels.".to_string())?;
+        .ok_or_else(|| "Le binaire Ollama n’a pas été trouvé dans les emplacements habituels.".to_string())?;
     Command::new(binary)
         .arg("serve")
         .stdin(Stdio::null())

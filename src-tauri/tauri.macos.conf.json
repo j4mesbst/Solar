@@ -1,1 +1,22 @@
-{"app":{"macOSPrivateApi":true,"windows":[{"label":"main","title":"Solar","width":1160,"height":760,"minWidth":760,"minHeight":560,"transparent":true,"titleBarStyle":"Overlay","hiddenTitle":true,"trafficLightPosition":{"x":42,"y":43}}]}}
+{
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Solar",
+        "width": 1160,
+        "height": 760,
+        "minWidth": 760,
+        "minHeight": 560,
+        "transparent": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": {
+          "x": 20,
+          "y": 20
+        }
+      }
+    ]
+  }
+}

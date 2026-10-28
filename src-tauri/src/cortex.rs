@@ -398,7 +398,11 @@ fn patch_snapshot(root: &Path, copy: &Path, changes: &[Change]) -> Result<(), St
     Ok(())
 }
 fn binary(name: &str) -> Option<PathBuf> {
-    [
+    #[cfg(windows)] {
+      let names=if name=="npm"{vec!["npm.cmd".to_string()]}else{vec![format!("{name}.exe")]};
+      return std::env::var_os("PATH").and_then(|path|std::env::split_paths(&path).flat_map(|p|names.iter().map(move|n|p.join(n))).find(|p|p.is_file()));
+    }
+    #[cfg(not(windows))] [
         format!("/opt/homebrew/bin/{name}"),
         format!("/usr/local/bin/{name}"),
         format!("/usr/bin/{name}"),
@@ -1014,8 +1018,10 @@ mod tests {
     #[test]
     fn execution_can_be_cancelled() {
         let flag = AtomicBool::new(true);
-        let mut cmd = Command::new("/bin/sleep");
-        cmd.arg("10");
+        #[cfg(not(windows))] let mut cmd = Command::new("/bin/sleep");
+        #[cfg(windows)] let mut cmd = Command::new("ping.exe");
+        #[cfg(not(windows))] cmd.arg("10");
+        #[cfg(windows)] cmd.args(["-n","10","127.0.0.1"]);
         let before = Instant::now();
         assert!(run(cmd, &flag, Duration::from_secs(20)).is_err());
         assert!(before.elapsed() < Duration::from_secs(2));

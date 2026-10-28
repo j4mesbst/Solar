@@ -20,6 +20,12 @@ fn valid(value:&str)->bool{!value.is_empty()&&value.len()<=80&&value.bytes().all
  let file=std::fs::OpenOptions::new().create(true).read(true).write(true).mode(0o600).open(path).map_err(|_|"Verrou de mission indisponible.".to_string())?;
  if unsafe{libc::flock(file.as_raw_fd(),libc::LOCK_EX|libc::LOCK_NB)}==0{Ok(Some(file))}else{let error=std::io::Error::last_os_error();if error.raw_os_error()==Some(libc::EWOULDBLOCK){Ok(None)}else{Err("Verrou système indisponible.".into())}}
 }
+#[cfg(windows)]fn lock_file(path:&std::path::Path)->Result<Option<File>,String>{
+ use std::os::windows::fs::OpenOptionsExt;
+ match std::fs::OpenOptions::new().create(true).read(true).write(true).share_mode(0).open(path){
+  Ok(file)=>Ok(Some(file)),Err(e) if matches!(e.raw_os_error(),Some(32|33))=>Ok(None),Err(_)=>Err("Verrou système indisponible.".into())
+ }
+}
 #[tauri::command]
 pub fn mission_lock(app:tauri::AppHandle,state:tauri::State<'_,MissionLocks>,account:String,key:String)->Result<bool,String>{
  use tauri::Manager;
@@ -27,12 +33,12 @@ pub fn mission_lock(app:tauri::AppHandle,state:tauri::State<'_,MissionLocks>,acc
  let mut held=state.0.lock().map_err(|_|"Verrou indisponible.".to_string())?;let id=format!("{account}:{key}");if held.contains_key(&id){return Ok(false);}
  let directory=app.path().app_local_data_dir().map_err(|_|"Dossier local indisponible.".to_string())?.join("mission-locks").join(account);
  std::fs::create_dir_all(&directory).map_err(|_|"Dossier de verrous indisponible.".to_string())?;
- #[cfg(unix)]{if let Some(file)=lock_file(&directory.join(format!("{key}.lock")))?{held.insert(id,file);return Ok(true);}Ok(false)}
- #[cfg(not(unix))]{let _=(held,id,directory);Err("Verrou de mission non pris en charge sur cette plateforme.".into())}
+ #[cfg(any(unix,windows))]{if let Some(file)=lock_file(&directory.join(format!("{key}.lock")))?{held.insert(id,file);return Ok(true);}Ok(false)}
+ #[cfg(not(any(unix,windows)))]{let _=(held,id,directory);Err("Verrou de mission non pris en charge sur cette plateforme.".into())}
 }
 #[tauri::command]
 pub fn mission_unlock(state:tauri::State<'_,MissionLocks>,account:String,key:String)->Result<(),String>{state.0.lock().map_err(|_|"Verrou indisponible.".to_string())?.remove(&format!("{account}:{key}"));Ok(())}
-#[cfg(all(test,unix))]mod lease_tests{
+#[cfg(all(test,any(unix,windows)))]mod lease_tests{
  use super::*;
  #[test]fn file_lease_excludes_second_owner_and_drop_releases(){let path=std::env::temp_dir().join(format!("solar-lease-test-{}",std::process::id()));let first=lock_file(&path).unwrap().unwrap();assert!(lock_file(&path).unwrap().is_none());drop(first);assert!(lock_file(&path).unwrap().is_some());let _=std::fs::remove_file(path);}
  #[test]fn lock_paths_reject_traversal(){assert!(valid("guest"));assert!(!valid("../other"));assert!(!valid(".."));assert!(!valid("a/b"));}

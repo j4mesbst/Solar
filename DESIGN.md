@@ -17,3 +17,8 @@ Avant une livraison, vérifier les états désactivés et erreur, clair/sombre/p
 ## Finition 0.13.4
 
 Chat clair #fcfcfc, sidebar #f5f5f5 ; sombre #121212 et #0e0e0e. Managers sélectionnés sur gris neutre ; palettes personnalisées prioritaires. Zone de déplacement supérieure, boutons natifs à 10 px des bords. QCM contextuels et réponses limitées à trois bulles, sans perte des livrables structurés.
+
+
+## 0.14.0 — Windows et macOS
+
+Même interface Windows, boutons et barre de titre natifs, clés Windows Credential Manager, OAuth navigateur et Ollama locaux, capture micro explicite. macOS : marges de 20 points logiques, espacement natif. Publication Windows après compilation, tests et démarrage natif ; microphone et connexions personnelles à vérifier sur matériel réel. Aucun accès développeur dans les builds publics.

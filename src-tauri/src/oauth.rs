@@ -47,7 +47,15 @@ pub fn oauth_open(url: String) -> Result<(), String> {
   crate::integration_network::safe_destination(&url, false)?;
   #[cfg(target_os = "macos")]
   { std::process::Command::new("open").arg(&url).spawn().map_err(|e| e.to_string())?; Ok(()) }
-  #[cfg(not(target_os = "macos"))]
+  #[cfg(target_os = "windows")]
+  {
+    use std::os::windows::ffi::OsStrExt;
+    #[link(name="shell32")] extern "system" {fn ShellExecuteW(hwnd:*mut std::ffi::c_void,op:*const u16,file:*const u16,args:*const u16,dir:*const u16,show:i32)->*mut std::ffi::c_void;}
+    let wide:Vec<u16>=std::ffi::OsStr::new(&url).encode_wide().chain(Some(0)).collect();
+    let result=unsafe{ShellExecuteW(std::ptr::null_mut(),std::ptr::null(),wide.as_ptr(),std::ptr::null(),std::ptr::null(),1)};
+    if result as isize>32{Ok(())}else{Err("Impossible d’ouvrir le navigateur par défaut.".into())}
+  }
+  #[cfg(not(any(target_os = "macos",target_os = "windows")))]
   { let _ = url; Err("Navigateur système non configuré sur cette plateforme.".into()) }
 }
 

@@ -1,6 +1,7 @@
 mod agent_jobs;
 mod secret_session;
 mod voice;
+#[cfg(windows)]mod voice_windows;
 mod background;
 mod scheduler;
 mod work;
@@ -132,7 +133,7 @@ async fn artifact_save(app:tauri::AppHandle,content:Vec<u8>,suggested_name:Strin
 #[cfg(test)]
 mod release_tests {
   #[test]
-  #[ignore = "Explicit macOS Keychain round-trip using a disposable test-only namespace"]
+  #[ignore = "Explicit platform credential-store round-trip using a disposable test-only namespace"]
   fn macos_keychain_disposable_roundtrip() {
     let service=format!("fr.j4mesbst.solar.release-test.{}",std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos());
     let entry=keyring::Entry::new(&service,"disposable-test-only").unwrap();

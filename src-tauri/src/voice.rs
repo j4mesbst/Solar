@@ -13,8 +13,8 @@ fn folder(app:&tauri::AppHandle)->Result<PathBuf,String>{let p=app.path().app_da
 #[cfg(target_os="macos")]extern "C"{fn solar_voice_permission()->i32;fn solar_voice_start(path:*const std::ffi::c_char)->i32;fn solar_voice_stop();fn solar_voice_level()->f64;}
 #[tauri::command]pub async fn voice_status(app:tauri::AppHandle,state:State<'_,VoiceState>)->Result<VoiceStatus,String>{
  let path=folder(&app)?.join("ggml-base.bin");let recording=state.recording.lock().map_err(|_|"Capture indisponible.")?.is_some();
- #[cfg(target_os="macos")]let level=if recording{unsafe{solar_voice_level()}}else{-160.};#[cfg(not(target_os="macos"))]let level=-160.;
- Ok(VoiceStatus{supported:cfg!(target_os="macos"),ready:path.metadata().map(|m|m.len()==MODEL_BYTES).unwrap_or(false),recording,busy:state.busy.load(Ordering::SeqCst),level})
+ #[cfg(target_os="macos")]let level=if recording{unsafe{solar_voice_level()}}else{-160.};#[cfg(windows)]let level=if recording{crate::voice_windows::level()}else{-160.};#[cfg(not(any(target_os="macos",windows)))]let level=-160.;
+ Ok(VoiceStatus{supported:cfg!(any(target_os="macos",windows)),ready:path.metadata().map(|m|m.len()==MODEL_BYTES).unwrap_or(false),recording,busy:state.busy.load(Ordering::SeqCst),level})
 }
 #[tauri::command]pub async fn voice_model_download(app:tauri::AppHandle,state:State<'_,VoiceState>,on_event:Channel<DownloadProgress>)->Result<(),String>{
  let _guard=state.claim()?;if state.recording.lock().map_err(|_|"Capture indisponible.")?.is_some(){return Err("Arrête d’abord l’enregistrement.".into());}
@@ -33,9 +33,10 @@ fn folder(app:&tauri::AppHandle)->Result<PathBuf,String>{let p=app.path().app_da
  let path=root.join(format!("recording-{}.wav",std::process::id()));let target=path.clone();let cancel=state.cancel.clone();
  let result=tauri::async_runtime::spawn_blocking(move||{
  #[cfg(target_os="macos")]{if unsafe{solar_voice_permission()}!=1{return Err("Autorise Solar dans Réglages Système → Confidentialité et sécurité → Microphone.".to_string());}if cancel.load(Ordering::SeqCst){return Err("Écoute annulée.".into());}let c=std::ffi::CString::new(target.to_string_lossy().as_bytes()).map_err(|_|"Capture impossible.")?;if unsafe{solar_voice_start(c.as_ptr())}!=1{return Err("Le micro est indisponible. Vérifie qu’il est connecté.".into());}Ok(())}
- #[cfg(not(target_os="macos"))]{let _=(target,cancel);Err("La voix locale est disponible dans Solar pour macOS.".to_string())}
+ #[cfg(windows)]{if cancel.load(Ordering::SeqCst){return Err("Écoute annulée.".into());}crate::voice_windows::start(target)}
+ #[cfg(not(any(target_os="macos",windows)))]{let _=(target,cancel);Err("La voix locale est disponible dans Solar pour macOS.".to_string())}
  }).await.map_err(|_|"Capture interrompue.")?;
- if result.is_ok(){let mut recording=state.recording.lock().map_err(|_|"Capture indisponible.")?;if state.cancel.load(Ordering::SeqCst){#[cfg(target_os="macos")]unsafe{solar_voice_stop();}let _=std::fs::remove_file(path);return Err("Écoute annulée.".into());}*recording=Some(path);}result
+ if result.is_ok(){let mut recording=state.recording.lock().map_err(|_|"Capture indisponible.")?;if state.cancel.load(Ordering::SeqCst){#[cfg(target_os="macos")]unsafe{solar_voice_stop();}#[cfg(windows)]{crate::voice_windows::cancel();}let _=std::fs::remove_file(path);return Err("Écoute annulée.".into());}*recording=Some(path);}result
 }
 fn audio_samples(path:&Path)->Result<Vec<f32>,String>{
  let mut wav=hound::WavReader::open(path).map_err(|_|"Enregistrement illisible.")?;let spec=wav.spec();if spec.channels!=1||spec.sample_rate!=16000||spec.bits_per_sample!=16||spec.sample_format!=hound::SampleFormat::Int{return Err("Format vocal invalide.".into());}
@@ -53,23 +54,24 @@ fn transcribe(path:&Path,model:&Path,cancel:Arc<AtomicBool>)->Result<String,Stri
  unsafe{params.set_abort_callback(Some(aborted));params.set_abort_callback_user_data(Arc::as_ptr(&cancel) as *mut std::ffi::c_void);}
  s.full(params,&samples).map_err(|_|if cancel.load(Ordering::SeqCst){"Transcription annulée."}else{"Transcription impossible. Réessaie."}.to_string())?;if cancel.load(Ordering::SeqCst){return Err("Transcription annulée.".into());}
  let text=s.as_iter().map(|segment|segment.to_str_lossy().map(|s|s.into_owned()).unwrap_or_default()).collect::<Vec<_>>().join("").trim().to_string();if text.is_empty(){return Err("Aucune parole reconnue. Réessaie.".into());}Ok(text)};
- let gpu=decode(true);if gpu.is_err()&&!cancel.load(Ordering::SeqCst){decode(false)}else{gpu}
+ let gpu=decode(cfg!(target_os="macos"));if gpu.is_err()&&!cancel.load(Ordering::SeqCst){decode(false)}else{gpu}
 }
 #[tauri::command]pub async fn voice_record_stop(app:tauri::AppHandle,state:State<'_,VoiceState>)->Result<String,String>{
- let _guard=state.claim()?;#[cfg(target_os="macos")]unsafe{solar_voice_stop();}let path=state.recording.lock().map_err(|_|"Capture indisponible.")?.take().ok_or("Aucun enregistrement en cours.")?;let model=folder(&app)?.join("ggml-base.bin");let cancel=state.cancel.clone();
+ let _guard=state.claim()?;#[cfg(target_os="macos")]unsafe{solar_voice_stop();}#[cfg(windows)]crate::voice_windows::stop()?;let path=state.recording.lock().map_err(|_|"Capture indisponible.")?.take().ok_or("Aucun enregistrement en cours.")?;let model=folder(&app)?.join("ggml-base.bin");let cancel=state.cancel.clone();
  tauri::async_runtime::spawn_blocking(move||{let result=transcribe(&path,&model,cancel);let _=std::fs::remove_file(path);result}).await.map_err(|_|"Transcription interrompue.".to_string())?
 }
 #[tauri::command]pub async fn voice_cancel(state:State<'_,VoiceState>)->Result<(),String>{
- state.cancel.store(true,Ordering::SeqCst);let mut recording=state.recording.lock().map_err(|_|"Capture indisponible.")?;#[cfg(target_os="macos")]unsafe{solar_voice_stop();}if let Some(path)=recording.take(){let _=std::fs::remove_file(path);}drop(recording);voice_speech_stop(state)
+ state.cancel.store(true,Ordering::SeqCst);#[cfg(windows)]crate::voice_windows::cancel();let mut recording=state.recording.lock().map_err(|_|"Capture indisponible.")?;#[cfg(target_os="macos")]unsafe{solar_voice_stop();}if let Some(path)=recording.take(){let _=std::fs::remove_file(path);}drop(recording);voice_speech_stop(state)
 }
 #[tauri::command]pub async fn voice_speak(text:String,state:State<'_,VoiceState>)->Result<(),String>{
  if text.trim().is_empty()||text.len()>16000{return Err("Réponse trop longue pour la lecture vocale.".into());}let mut speech=state.speech.lock().map_err(|_|"Voix indisponible.")?;if let Some(mut child)=speech.take(){let _=child.kill();let _=child.wait();}
  #[cfg(target_os="macos")]{let mut child=Command::new("/usr/bin/say").args(["-v","Amélie"]).stdin(Stdio::piped()).stdout(Stdio::null()).stderr(Stdio::null()).spawn().map_err(|_|"Voix système indisponible.")?;if let Some(mut input)=child.stdin.take(){input.write_all(text.as_bytes()).map_err(|_|"Lecture interrompue.")?;}*speech=Some(child);Ok(())}
- #[cfg(not(target_os="macos"))]{let _=text;Err("Voix macOS indisponible.".into())}
+ #[cfg(windows)]{let script="Add-Type -AssemblyName System.Speech; $v = New-Object System.Speech.Synthesis.SpeechSynthesizer; $v.Speak([Console]::In.ReadToEnd())";let mut child=Command::new("powershell.exe").args(["-NoProfile","-NonInteractive","-Command",script]).stdin(Stdio::piped()).stdout(Stdio::null()).stderr(Stdio::null()).spawn().map_err(|_|"Voix système indisponible.")?;if let Some(mut input)=child.stdin.take(){input.write_all(text.as_bytes()).map_err(|_|"Lecture interrompue.")?;}*speech=Some(child);Ok(())}
+ #[cfg(not(any(target_os="macos",windows)))]{let _=text;Err("Voix système indisponible.".into())}
 }
 #[tauri::command]pub fn voice_speech_stop(state:State<'_,VoiceState>)->Result<(),String>{if let Some(mut child)=state.speech.lock().map_err(|_|"Voix indisponible.")?.take(){let _=child.kill();let _=child.wait();}Ok(())}
 #[cfg(test)]mod tests{use super::*;#[test]fn rejects_silence_and_wrong_format(){let path=std::env::temp_dir().join(format!("solar-voice-test-{}.wav",std::process::id()));let spec=hound::WavSpec{channels:1,sample_rate:16000,bits_per_sample:16,sample_format:hound::SampleFormat::Int};{let mut w=hound::WavWriter::create(&path,spec).unwrap();for _ in 0..16000{w.write_sample(0i16).unwrap();}w.finalize().unwrap();}assert!(audio_samples(&path).unwrap_err().contains("Aucune parole"));std::fs::remove_file(path).unwrap();}
  #[test]#[ignore="Explicit synthetic French WAV and verified local model, no microphone"]fn french_fixture(){let path=PathBuf::from(std::env::var("SOLAR_VOICE_TEST_WAV").unwrap());let model=PathBuf::from(std::env::var("SOLAR_VOICE_TEST_MODEL").unwrap());let started=std::time::Instant::now();let text=transcribe(&path,&model,Arc::new(AtomicBool::new(false))).unwrap();println!("Synthetic transcription: {} ({:?})",text,started.elapsed());assert!(text.to_lowercase().contains("bonjour"));}}
 
 pub fn cleanup_stale(app:&tauri::AppHandle){if let Ok(root)=folder(app){#[cfg(unix)]{use std::os::unix::fs::PermissionsExt;let _=std::fs::set_permissions(&root,std::fs::Permissions::from_mode(0o700));}if let Ok(entries)=std::fs::read_dir(root){for entry in entries.flatten(){let name=entry.file_name().to_string_lossy().to_string();if name.starts_with("recording-")&&name.ends_with(".wav"){let _=std::fs::remove_file(entry.path());}}}}}
-pub fn shutdown(state:&VoiceState){state.cancel.store(true,Ordering::SeqCst);#[cfg(target_os="macos")]unsafe{solar_voice_stop();}if let Ok(mut recording)=state.recording.try_lock(){if let Some(path)=recording.take(){let _=std::fs::remove_file(path);}}if let Ok(mut speech)=state.speech.try_lock(){if let Some(mut child)=speech.take(){let _=child.kill();let _=child.wait();}}}
+pub fn shutdown(state:&VoiceState){state.cancel.store(true,Ordering::SeqCst);#[cfg(windows)]crate::voice_windows::cancel();#[cfg(target_os="macos")]unsafe{solar_voice_stop();}if let Ok(mut recording)=state.recording.try_lock(){if let Some(path)=recording.take(){let _=std::fs::remove_file(path);}}if let Ok(mut speech)=state.speech.try_lock(){if let Some(mut child)=speech.take(){let _=child.kill();let _=child.wait();}}}

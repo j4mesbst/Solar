@@ -1,0 +1,37 @@
+{
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Solar",
+        "width": 1160,
+        "height": 760,
+        "minWidth": 760,
+        "minHeight": 560,
+        "decorations": true,
+        "transparent": false,
+        "titleBarStyle": "Visible",
+        "hiddenTitle": false,
+        "backgroundThrottling": "disabled"
+      }
+    ]
+  },
+  "bundle": {
+    "targets": [
+      "nsis"
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": [
+          "French",
+          "English"
+        ],
+        "displayLanguageSelector": true
+      }
+    }
+  }
+}
