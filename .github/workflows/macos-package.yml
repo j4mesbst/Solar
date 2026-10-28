@@ -32,6 +32,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin
+      - name: Pin reproducible npm
+        run: npm install --global npm@10.9.4 --ignore-scripts
       - name: Install locked dependencies
         run: npm ci
       - name: Validate frontend and exports before release compilation

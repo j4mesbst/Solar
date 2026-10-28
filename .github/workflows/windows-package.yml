@@ -30,6 +30,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+      - name: Pin reproducible npm
+        run: npm install --global npm@10.9.4 --ignore-scripts
       - run: npm ci
       - name: Frontend contracts
         run: |

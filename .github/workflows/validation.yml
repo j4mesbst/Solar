@@ -11,6 +11,8 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - name: Pin reproducible npm
+        run: npm install --global npm@10.9.4 --ignore-scripts
       - run: npm ci
       - run: node scripts/messenger-contract.test.mjs && npm run test:features && npm run test:chat && npm run test:providers && npm run test:evolution && npm run test:agent:durable
       - run: npm run build
@@ -23,5 +25,7 @@ jobs:
           node-version: 24
           cache: npm
       - uses: dtolnay/rust-toolchain@stable
+      - name: Pin reproducible npm
+        run: npm install --global npm@10.9.4 --ignore-scripts
       - run: npm ci && npm run build
       - run: cargo test --manifest-path src-tauri/Cargo.toml
