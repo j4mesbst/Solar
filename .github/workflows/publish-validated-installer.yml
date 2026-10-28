@@ -1,0 +1,33 @@
+name: Publish validated Solar 0.13.2 installer
+on:
+  push:
+    branches: [codex/solar-0132-installer]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Reassemble and verify the validated public installer
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          data=b''.join(p.read_bytes() for p in sorted(Path('_installer').glob('part-*')))
+          digest=hashlib.sha256(data).hexdigest()
+          assert digest=='b5f71fc1d670ac977fdf8e9a302aa6182b39441eb288f9d16623fa799fc31754'
+          name='Solar-0.13.2-macOS-arm64.dmg'
+          Path(name).write_bytes(data)
+          Path('SHA256SUMS.txt').write_text(digest+'  '+name+'\n')
+          PY
+      - name: Update the downloadable installer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload v0.13.2 Solar-0.13.2-macOS-arm64.dmg SHA256SUMS.txt --clobber
+          gh release view v0.13.2 --json body --jq .body > /tmp/release-body.md
+          printf '\n\nBuild final : bd42eee197c70959d74afa02a46c4de57f45d072 (rafraîchissement de la bibliothèque corrigé). Le tag initial reste conservé.\n' >> /tmp/release-body.md
+          gh release edit v0.13.2 --notes-file /tmp/release-body.md
