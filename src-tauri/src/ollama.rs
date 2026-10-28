@@ -284,8 +284,9 @@ pub async fn ollama_start() -> Result<(), String> {
         .into_iter()
         .find(|path| is_executable(path))
         .ok_or_else(|| "Le binaire Ollama n’a pas été trouvé dans les emplacements habituels.".to_string())?;
-    Command::new(binary)
-        .arg("serve")
+    let mut command=Command::new(binary);
+    #[cfg(windows)]{use std::os::windows::process::CommandExt;command.creation_flags(0x08000000);}
+    command.arg("serve")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())

@@ -438,6 +438,7 @@ fn run(
         use std::os::unix::process::CommandExt;
         command.process_group(0);
     }
+    #[cfg(windows)]{use std::os::windows::process::CommandExt;command.creation_flags(0x08000000);}
     let mut child = command.spawn().map_err(|e| e.to_string())?;
     let stdout = child.stdout.take().ok_or("Sortie indisponible")?;
     let stderr = child.stderr.take().ok_or("Erreur indisponible")?;

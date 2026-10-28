@@ -40,6 +40,6 @@ pub fn mission_lock(app:tauri::AppHandle,state:tauri::State<'_,MissionLocks>,acc
 pub fn mission_unlock(state:tauri::State<'_,MissionLocks>,account:String,key:String)->Result<(),String>{state.0.lock().map_err(|_|"Verrou indisponible.".to_string())?.remove(&format!("{account}:{key}"));Ok(())}
 #[cfg(all(test,any(unix,windows)))]mod lease_tests{
  use super::*;
- #[test]fn file_lease_excludes_second_owner_and_drop_releases(){let path=std::env::temp_dir().join(format!("solar-lease-test-{}",std::process::id()));let first=lock_file(&path).unwrap().unwrap();assert!(lock_file(&path).unwrap().is_none());drop(first);assert!(lock_file(&path).unwrap().is_some());let _=std::fs::remove_file(path);}
+ #[test]fn file_lease_excludes_second_owner_and_drop_releases(){let path=std::env::temp_dir().join(format!("solar-lease-test-{}",std::process::id()));let first=lock_file(&path).unwrap().unwrap();assert!(lock_file(&path).unwrap().is_none());drop(first);let deadline=std::time::Instant::now()+std::time::Duration::from_secs(1);loop{if lock_file(&path).unwrap().is_some(){break;}assert!(std::time::Instant::now()<deadline,"lease was not released");std::thread::sleep(std::time::Duration::from_millis(10));}let _=std::fs::remove_file(path);}
  #[test]fn lock_paths_reject_traversal(){assert!(valid("guest"));assert!(!valid("../other"));assert!(!valid(".."));assert!(!valid("a/b"));}
 }

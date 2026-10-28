@@ -13,7 +13,7 @@ try {
     Start-Sleep -Seconds 1
     $process.Refresh()
     if ($process.HasExited) { throw 'Solar exited during startup' }
-    if ($process.MainWindowHandle -ne 0) { $window=$process.MainWindowHandle; break }
+    if ($process.MainWindowHandle -ne 0 -and $process.MainWindowTitle -eq 'Solar') { $window=$process.MainWindowHandle; break }
   }
   if (!$window) { throw 'No native Solar window appeared' }
   Start-Sleep -Seconds 8
