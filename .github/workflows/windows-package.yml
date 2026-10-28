@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 45
     env:
       CARGO_BUILD_JOBS: 2
-      WHISPER_DONT_GENERATE_BINDINGS: '1'
+      LIBCLANG_PATH: 'C:\Program Files\LLVM\bin'
       # Portable x64 CPU backend; never optimize the public binary for the runner CPU.
       GGML_NATIVE: 'OFF'
       GGML_SSE42: 'OFF'
@@ -48,6 +48,8 @@ jobs:
           npm run build
           node scripts/messenger-contract.test.mjs
           npm run test:chat
+      - name: Regenerate platform-native Whisper bindings
+        run: cargo clean --release --target x86_64-pc-windows-msvc --manifest-path src-tauri/Cargo.toml -p whisper-rs-sys
       - name: Native Windows tests
         run: cargo test --release --target x86_64-pc-windows-msvc --locked --manifest-path src-tauri/Cargo.toml --lib
       - name: Windows Credential Manager round-trip
@@ -68,4 +70,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view v0.14.0 >/dev/null 2>&1 || gh release create v0.14.0 --draft --target "$GITHUB_SHA" --title 'Solar 0.14.0' --notes 'First Windows x64 release and macOS window spacing update. Release preparation.'
-          gh release upload v0.14.0 artifacts/Solar-0.14.0-Windows-x64-setup.exe artifacts/SHA256SUMS-Windows.txt artifacts/windows-verification.json --clobber
+          if [ "$(gh release view v0.14.0 --json isDraft --jq .isDraft)" = "true" ]; then
+            gh release upload v0.14.0 artifacts/Solar-0.14.0-Windows-x64-setup.exe artifacts/SHA256SUMS-Windows.txt artifacts/windows-verification.json --clobber
+          fi

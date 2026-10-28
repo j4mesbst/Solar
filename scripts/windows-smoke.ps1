@@ -6,7 +6,11 @@ $install = Start-Process $installer.FullName -ArgumentList '/S' -PassThru -Wait
 if ($install.ExitCode -ne 0) { throw "Installer failed: $($install.ExitCode)" }
 $exe = Get-ChildItem "$env:LOCALAPPDATA/Solar" -Filter 'solar.exe' -Recurse | Select-Object -First 1
 if (!$exe) { throw 'Installed executable absent' }
+# Test process only; no registry change and no debug endpoint in the distributed app.
+$priorFlags = $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS
+$env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = '--remote-debugging-port=9222 --remote-debugging-address=127.0.0.1'
 $process = Start-Process $exe.FullName -PassThru
+$env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = $priorFlags
 try {
   $window = $null
   for ($i=0; $i -lt 30; $i++) {
@@ -19,6 +23,8 @@ try {
   Start-Sleep -Seconds 8
   $process.Refresh()
   if ($process.HasExited) { throw 'Solar exited after creating its window' }
+  node scripts/windows-webview-smoke.cjs
+  if ($LASTEXITCODE -ne 0) { throw 'Installed WebView2 validation failed' }
   @{version='0.14.0';architecture='x64';installed=$true;window=$true;startupSurvived=$true;microphone='Requires manual hardware validation';oauth='Requires user credentials';signed=$false} | ConvertTo-Json | Set-Content artifacts/windows-verification.json
 } finally { if (!$process.HasExited) { Stop-Process -Id $process.Id -Force } }
 Copy-Item $installer.FullName artifacts/Solar-0.14.0-Windows-x64-setup.exe
