@@ -10,7 +10,7 @@ pub struct OAuthState(Mutex<HashMap<String, (Option<TcpListener>, Arc<AtomicBool
 #[tauri::command]
 pub async fn oauth_google_token(id:String,body:String,requests:tauri::State<'_,crate::integration_network::IntegrationRequests>)->Result<crate::integration_network::NetworkResponse,String>{
   let client=option_env!("SOLAR_GOOGLE_DESKTOP_CLIENT_ID").ok_or("Client Google de bureau absent de ce build.")?;
-  let secret=option_env!("SOLAR_GOOGLE_DESKTOP_CLIENT_SECRET").ok_or("Paramètre du client Google absent. Installe le DMG Solar mis à jour.")?;
+  let secret=option_env!("SOLAR_GOOGLE_DESKTOP_CLIENT_SECRET").ok_or("Paramètre du client Google absent. Installe la version Solar mise à jour.")?;
   if body.len()>16000{return Err("Requête OAuth invalide.".into());}
   let mut values:HashMap<String,String>=reqwest::Url::parse(&format!("https://oauth2.googleapis.com/token?{body}")).map_err(|_|"Requête OAuth invalide.")?.query_pairs().into_owned().collect();
   if values.get("client_id").map(String::as_str)!=Some(client)||!matches!(values.get("grant_type").map(String::as_str),Some("authorization_code"|"refresh_token")){return Err("Client ou échange Google non autorisé.".into());}

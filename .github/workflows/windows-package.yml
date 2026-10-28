@@ -16,6 +16,15 @@ jobs:
     env:
       CARGO_BUILD_JOBS: 2
       WHISPER_DONT_GENERATE_BINDINGS: '1'
+      # Portable x64 CPU backend; never optimize the public binary for the runner CPU.
+      GGML_NATIVE: 'OFF'
+      GGML_SSE42: 'OFF'
+      GGML_AVX: 'OFF'
+      GGML_AVX2: 'OFF'
+      GGML_FMA: 'OFF'
+      GGML_F16C: 'OFF'
+      GGML_BMI2: 'OFF'
+      RUSTFLAGS: '-C target-feature=+crt-static'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,6 +39,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          cache-on-failure: true
       - name: Pin reproducible npm
         run: npm install --global npm@10.9.4 --ignore-scripts
       - run: npm ci
@@ -39,9 +49,9 @@ jobs:
           node scripts/messenger-contract.test.mjs
           npm run test:chat
       - name: Native Windows tests
-        run: cargo test --locked --manifest-path src-tauri/Cargo.toml --lib
+        run: cargo test --release --target x86_64-pc-windows-msvc --locked --manifest-path src-tauri/Cargo.toml --lib
       - name: Windows Credential Manager round-trip
-        run: cargo test --locked --manifest-path src-tauri/Cargo.toml disposable_roundtrip -- --ignored
+        run: cargo test --release --target x86_64-pc-windows-msvc --locked --manifest-path src-tauri/Cargo.toml disposable_roundtrip -- --ignored
       - name: Build NSIS installer
         run: npm run tauri -- build --target x86_64-pc-windows-msvc --bundles nsis
       - name: Install and launch actual Windows application

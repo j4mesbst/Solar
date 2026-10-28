@@ -14,7 +14,8 @@
         "hiddenTitle": false,
         "backgroundThrottling": "disabled"
       }
-    ]
+    ],
+    "macOSPrivateApi": true
   },
   "bundle": {
     "targets": [
