@@ -58,3 +58,7 @@ Limites de cette préparation : aucune publication 0.15.2, aucun remplacement de
 ## Publication 0.15.2 demandée par James
 
 Version et liens de téléchargement actualisés ; build frontend, contrats Messenger/chat et contrôles visuels validés. Publication conditionnée à la compilation, aux tests natifs et au démarrage des installateurs macOS/Windows, avec empreintes SHA-256. App personnelle laissée en place pour le test du nuage par James.
+
+### Livraison publique 0.15.2
+
+Release stable publiée : https://github.com/j4mesbst/Solar/releases/tag/v0.15.2. Source 45f43cd8d2bef88ef17586a2b5221f7d6e09e5df ; arborescence distante identique à la préparation locale. Runs macOS 40866796705 et Windows 40866796664 réussis ; finalisation 40868360591 réussie. DMG vérifié, signature ad hoc et fenêtre native observée ; NSIS installé et fenêtre Windows démarrée. Téléchargements publics retéléchargés et empreintes contrôlées : macOS a850bc8923680e20c60fdc4cdb696042516967e3f43a0aae3d0235a96a385de5 ; Windows 40bb00a99cc5390ee2da31bb7e004a41ac756ed35d363cc61ca65780b8057b4b. Point releases/latest vérifié : 0.15.2 avec installateurs et sommes attendus par le nuage de 0.15.1. Aucun remplacement ni relancement de l’app personnelle. OAuth personnel et microphone physique non retestés pour cette publication.
