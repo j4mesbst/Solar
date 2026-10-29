@@ -1,6 +1,6 @@
-# Architecture — Solar 0.13.2
+# Architecture — Solar 0.14.0
 
-Solar associe une interface React/TypeScript à un hôte Tauri 2 pour macOS.
+Solar associe une interface React/TypeScript à un hôte Tauri 2 pour macOS et Windows.
 
 - `src/ui/AgentApp.tsx` : équipe, navigation, conversations montées et réglages.
 - `src/components/team/` : profils, mascottes, managers, bibliothèque, modèles et intégrations.
@@ -9,7 +9,7 @@ Solar associe une interface React/TypeScript à un hôte Tauri 2 pour macOS.
 - `src/services/solarAgentRuntime.ts` et le moteur Cortex : exécution bornée, permissions, outils, vérification des résultats et reprise des missions.
 - `src/services/store.ts` et `storageCore.ts` : conversations, paramètres et sauvegardes atomiques.
 - `src/services/teamCloud.ts` : résolution du choix de modèle persistant, sans repli caché.
-- `src-tauri/src/` : stockage de secrets, fichiers, voix, Ollama, cycle de vie et commandes natives. Les clés restent dans le Trousseau et son cache de session.
+- `src-tauri/src/` : stockage de secrets, fichiers, voix, Ollama, cycle de vie et commandes natives. Les clés restent dans le Trousseau macOS ou Windows Credential Manager et leur cache de session.
 
 Les services distants demandent une configuration explicite. Les états de connexion, d’outil et de résultat proviennent du moteur, pas d’une animation simulée. Une sélection de dossier conserve son inventaire dans la bibliothèque ; elle ne déclenche pas une lecture de contenu ou un envoi au cloud.
 

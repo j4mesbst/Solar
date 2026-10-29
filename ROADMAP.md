@@ -1,6 +1,6 @@
 # Solar — suite du projet
 
-La version actuelle est **0.13.2**. Voir README.md pour les fonctions effectivement disponibles.
+La version actuelle est **0.14.0**. Voir README.md pour les fonctions effectivement disponibles.
 
 Prochaines étapes envisagées :
 
