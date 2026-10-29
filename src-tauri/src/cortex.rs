@@ -296,10 +296,7 @@ impl Scratch {
         );
         let path = std::env::temp_dir().join(name);
         std::fs::create_dir(&path).map_err(|e| e.to_string())?;
-        let canonical=path.canonicalize().map_err(|e|e.to_string())?;
-        // npm invokes cmd.exe, which rejects verbatim UNC-style working directories.
-        #[cfg(windows)]let canonical={let s=canonical.to_string_lossy();if let Some(rest)=s.strip_prefix(r"\\?\UNC\"){PathBuf::from(format!(r"\\{}",rest))}else if let Some(rest)=s.strip_prefix(r"\\?\"){PathBuf::from(rest)}else{canonical}};
-        Ok(Self(canonical))
+        Ok(Self(path.canonicalize().map_err(|e|e.to_string())?))
     }
 }
 impl Drop for Scratch {
@@ -650,6 +647,7 @@ fn check_project_with_options(
                 .current_dir(&copy.0)
                 .args(["run", key])
                 .env("CI", "1");
+            #[cfg(windows)]{let cwd=copy.0.to_string_lossy();let normal=if let Some(p)=cwd.strip_prefix(r"\\?\UNC\"){format!(r"\\{}",p)}else{cwd.strip_prefix(r"\\?\").unwrap_or(&cwd).to_string()};command.current_dir(normal);}
             #[cfg(not(windows))]command.env("PATH", "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin");
             let (ok, output) = run(command, cancel, Duration::from_secs(90))?;
             checks.push(check(
