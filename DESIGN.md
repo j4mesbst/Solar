@@ -32,3 +32,7 @@ Profil : petit rond avec icône de compte, prénom, bouton rond Plugins indépen
 MAJ bleu Messages avant Rechercher, mêmes dimensions et espacements. Visible uniquement pour une version stable publique plus récente avec installateur adapté et SHA-256 disponible. Clic : téléchargement depuis le seul dépôt Solar, vérification de l’empreinte, installation et réouverture ; attente pendant les tâches. Préserver données et clés. Mac lancé depuis un DMG doit d’abord être installé dans Applications.
 
 Ouverture : logo Solar existant, fond blanc et moteur de verre fourni (shader MIT Zanwei), ressort, dispersion et passage de lumière, une seule lecture. Pas de boucle ; mouvement réduit saute la scène et erreur graphique ne bloque pas l’app. Nettoyer le canvas et les ressources à la fin.
+
+## 0.15.1 — harmonisation
+
+Pied de sidebar selon la dernière capture : rond d’initiales/photo, capsule Connecter des applications avec jusqu’à trois logos réellement connectés, sans prénom adjacent. Extrémités des contrôles à 20 px minimum du bord de fenêtre. Champ de message et bouton + de 46 à 36,8 px (−20 %), mic/envoi ajustés et saisie multiligne préservée. Animation sur noir avec logo noir, rim lights et dispersion conservés. Icône MAJ en nuage. Publier Mac et Windows sans installer ni cliquer MAJ sur le Mac de James : il vérifie lui-même la mise à jour depuis sa 0.15.

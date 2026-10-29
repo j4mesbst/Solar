@@ -183,3 +183,23 @@
 .apple-account-panel nav button>span{flex:1}
 .apple-account-panel nav button:hover,.apple-account-panel nav button:focus-visible{background:var(--hover)!important}
 .apple-account-panel nav button>svg:last-child{display:block!important;margin-left:auto}
+/* 0.15.1 — reference footer and compact composer */
+.team-app .messenger-sidebar-footer{gap:10px;padding:12px 12px 12px;margin-top:auto}
+.team-app .messenger-sidebar-footer .team-account-trigger{flex:0 0 36px;width:36px;height:36px;min-width:36px;justify-content:center}
+.team-app .messenger-sidebar-footer .team-account-avatar{width:36px;height:36px;border:1px solid var(--apple-separator);background:var(--hover);font-size:13px;color:var(--muted);font-weight:500;overflow:hidden}
+.team-account-avatar img{width:100%;height:100%;object-fit:cover}
+.messenger-connect-pill{display:flex;align-items:center;gap:8px;min-width:0;flex:1;height:36px;padding:0 10px 0 13px;background:var(--team-bg);border:1px solid var(--apple-separator);border-radius:24px;color:var(--text);cursor:pointer;text-align:left}
+.messenger-connect-pill>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.messenger-connected-logos{display:flex;align-items:center;flex-shrink:0;padding-right:2px}
+.messenger-connected-logos .plugin-logo{display:grid;place-items:center;width:21px;height:21px;border-radius:6px;background:var(--team-bg);margin-left:-4px;overflow:hidden}
+.messenger-connected-logos .plugin-logo img{width:17px;height:17px;object-fit:contain}
+.messenger-connect-pill:focus-visible{outline:2px solid #007aff;outline-offset:3px}
+.team-app .team-sidebar-top{padding-right:12px}
+.team-app .atlas-composer-inner{padding-bottom:20px}
+.team-app .atlas-context-button{width:36.8px;height:36.8px}
+.team-app .atlas-context-button svg{width:19.2px;height:19.2px}
+.team-app .atlas-capsule{min-height:36.8px;padding:3px 5px 3px 16px;border-radius:22px}
+.team-app .atlas-capsule textarea{min-height:26.8px;line-height:22.8px;padding:2px 0;font-size:14px}
+.team-app .atlas-send,.team-app .atlas-microphone{width:28.8px;height:28.8px}
+.team-app .messenger-agent-list .team-agent-row{padding-left:12px}
+.team-app .atlas-capsule .voice-mic{width:28.8px;height:28.8px;min-height:0}

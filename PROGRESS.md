@@ -40,3 +40,7 @@ TypeScript et build frontend validés, contrats Messenger/chat et parcours UI (t
 Windows : run 40858453987, compilation NSIS, installation et lancement natifs, WebView2 sans erreur JavaScript. Mac : DMG public reconstruit et signature ad hoc contrôlée ; SHA-256 d0250713f33fdd4fce9fcc8c8de02b29763af43c3cd9495938319ca33285581c. Copie personnelle mise à jour dans /Users/James/Applications/Solar.app avec sa configuration locale préservée, ouverture observée avec agents/historiques existants et nouveaux boutons. Aucun écran privé ajouté au dépôt.
 
 Limites : OAuth complet avec comptes personnels et remplacement automatique entre deux versions différentes non exécutés comme tests de bout en bout. La page de retour est testée avec callback local et le succès dépend du contrôle d’identité et de sauvegarde ; aucun succès OAuth simulé. Les builds publics conservent les exigences de configuration des connecteurs ; aucune clé ou configuration confidentielle personnelle ajoutée. Mise à jour Mac requiert une app installée hors DMG et un dossier accessible en écriture. Les versions 0.14 et antérieures nécessitent cette première installation manuelle.
+
+## 29 octobre — préparation 0.15.1
+
+Footer conforme à la nouvelle référence, vraies connexions seulement, marges de 20 px. Champ et + réduits de 20 %, thème de lancement noir avec éclairage. Nuage pour MAJ dans cette version ; l’ancienne 0.15 garde son icône de téléchargement jusqu’à la mise à jour. Aucune intervention sur l’app installée, aucun clic MAJ : test réservé à James.

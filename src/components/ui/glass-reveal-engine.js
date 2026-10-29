@@ -678,7 +678,7 @@ function frameAt(T, P, outro = 0) {
 }
 
 
-const SETTINGS={tileSize:256,logoScale:.6,finalScale:.8,iconPlate:false,originalColors:false,opticalDepth:1.1,dispersion:1.7,colorBleed:1.25,doubleBevel:1,bevelWidth:.14,corner:4.8,cornerPull:2.1,cornerWidth:2.2,cornerFocus:.58,edgeSmear:2.85,stretch:0,tilt:.35,bulge:1,specular:1,halo:0,shadow:1,ripple:1,bounce:0,response:.42,startSize:.2,startZoom:2.3,glide:2.3,present:2.4,drift:.12,swell:.5,focus:1,sheen:1,lightTurn:.9,background:'#ffffff',plateColor:'#ffffff',logoColor:'#111111'};
+const SETTINGS={tileSize:256,logoScale:.6,finalScale:.8,iconPlate:false,originalColors:false,opticalDepth:1.1,dispersion:1.7,colorBleed:1.25,doubleBevel:1,bevelWidth:.14,corner:4.8,cornerPull:2.1,cornerWidth:2.2,cornerFocus:.58,edgeSmear:2.85,stretch:0,tilt:.35,bulge:1,specular:1.4,halo:1,shadow:0,ripple:1,bounce:0,response:.42,startSize:.2,startZoom:2.3,glide:2.3,present:2.4,drift:.12,swell:.5,focus:1,sheen:1,lightTurn:.9,background:'#000000',plateColor:'#05070b',logoColor:'#111111'};
 export function startGlass(canvas,url,onDone){
  let stopped=false,raf=0,renderer;const began=performance.now();
  try{renderer=createRenderer(canvas);}catch{}if(!renderer){onDone();return()=>{};}

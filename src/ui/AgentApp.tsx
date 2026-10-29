@@ -14,7 +14,7 @@ import {TeamAccountPage,TeamUsagePage} from '../components/team/AccountPages';
 import {prepareContinuations} from '../services/continuationSuggestions';
 import {ContinuationSuggestion} from '../components/team/ContinuationSuggestion';
 import {RoleSuggestions} from '../components/team/RoleSuggestions';
-import {BlocksIcon} from '../components/ui/animated-account-icons';
+import {ConnectionShortcut} from '../components/team/ConnectionShortcut';
 import {UpdateButton} from '../components/team/UpdateButton';
 import {PluginConnectionDialog} from '../components/ui/plugin-connection-dialog';
 import {pluginInfo} from '../services/pluginCatalog';
@@ -107,7 +107,7 @@ export function AgentApp(){
    <div className="team-sidebar-top" data-tauri-drag-region><button className="team-icon-button team-drawer-close" aria-label="Fermer les agents" onClick={()=>setCollapsed(true)}><PanelLeft size={17}/></button><UpdateButton busy={Object.values(busy).some(Boolean)}/><button className="team-icon-button messenger-search-toggle" aria-label="Rechercher un agent" title={/Win/i.test(navigator.platform)?'Rechercher · Ctrl+K':'Rechercher · ⌘K'} aria-expanded={searchOpen} onClick={()=>{setSearchOpen(v=>!v);setTimeout(()=>document.querySelector<HTMLInputElement>('.team-search input')?.focus(),0);}}><Search size={18}/></button><button className="team-icon-button" aria-label="Créer un agent" title={/Win/i.test(navigator.platform)?'Créer un agent · Ctrl+N':'Créer un agent · ⌘N'} onClick={()=>setCreate(true)}><Plus size={21}/></button></div>
    <label className="team-search" hidden={!searchOpen&&!query}><Search size={17}/><input type="search" placeholder="Rechercher" aria-label="Rechercher un agent" value={query} onChange={e=>setQuery(e.target.value)}/><kbd>{/Win/i.test(navigator.platform)?'Ctrl+K':'⌘K'}</kbd></label>
    <AgentRoster data={data} rows={rows} selected={view==='agents'?selected:undefined} busy={busy} reading={readingAgent.current} onSelect={id=>{setDetails(undefined);void select(id);}} onChange={setData} onError={setError}/>
-   <div className="messenger-sidebar-footer"><AccountPopover settings={settings} email={email} onSelect={go}/><button className="messenger-plugin-trigger" aria-label="Connecter des applications" title="Plugins" onClick={()=>setGallery(true)}><BlocksIcon size={20}/></button></div>
+   <div className="messenger-sidebar-footer"><AccountPopover settings={settings} email={email} onSelect={go}/><ConnectionShortcut onClick={()=>setGallery(true)}/></div>
   </aside>
   <main ref={mainRef} className={`team-main ${details?'has-agent-details':''}`}>
    {view==='agents'&&data&&!data.team?.profiles.length&&<div className="team-first-run"><header className="team-conversation-header" data-tauri-drag-region><button className="team-icon-button" aria-label={collapsed?'Afficher la barre latérale':'Masquer la barre latérale'} onClick={()=>setCollapsed(v=>!v)}><PanelLeft size={19}/></button></header><button className="team-first-orbit" aria-label="Créer mon premier agent" onClick={()=>setCreate(true)}><AgentMascot kind="orbit" size={100} active/><span className="team-first-plus"><Plus size={20}/></span></button><h1>Ton premier agent.</h1><p>Un nom. Une mascotte. La suite se passe dans la conversation.</p><button className="team-primary-button" onClick={()=>setCreate(true)}>Créer mon agent<Plus size={17}/></button></div>}
