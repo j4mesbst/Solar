@@ -640,12 +640,14 @@ fn check_project_with_options(
                 ));
                 continue;
             };
-            let mut command = Command::new(npm);
+            #[cfg(windows)]let mut command={let node=binary("node").ok_or("Node.js introuvable")?;let cli=node.parent().ok_or("Dossier Node.js absent")?.join("node_modules/npm/bin/npm-cli.js");let mut command=Command::new(node);command.arg(cli);command};
+            #[cfg(not(windows))]let mut command = Command::new(npm);
+            #[cfg(windows)]let _=npm;
             command
                 .current_dir(&copy.0)
                 .args(["run", key])
-                .env("CI", "1")
-                .env("PATH", "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin");
+                .env("CI", "1");
+            #[cfg(not(windows))]command.env("PATH", "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin");
             let (ok, output) = run(command, cancel, Duration::from_secs(90))?;
             checks.push(check(
                 id,
@@ -1070,6 +1072,7 @@ mod tests {
             "module.exports = 0;"
         );
     }
+    #[cfg(target_os="macos")]
     #[test]
     fn real_bundled_preview() {
         let root = Scratch::new().unwrap();
