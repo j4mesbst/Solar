@@ -48,3 +48,13 @@ Footer conforme à la nouvelle référence, vraies connexions seulement, marges 
 Validation locale : build TypeScript/Vite et bundle Mac réussis, signature ad hoc vérifiée. Playwright mesure 36,8 px pour le champ et le bouton +, ≥20 px aux bords, trois logos issus de connexions de test enregistrées, menus et saisie clavier ; clair/sombre, petit format et mouvement réduit vérifiés. WebGL noir et nettoyage du canvas sans erreur. Contrats Messenger et chat réussis. Transfert du lockfile GitHub corrigé et vérifié octet pour octet ; validation Windows relancée. Aucun changement de l’app installée de James.
 
 Windows validé : run 40861522353 réussi, tests natifs et Credential Manager, installation NSIS et démarrage réel WebView2 sans erreur JavaScript. DMG Mac 0.15.1 vérifié (SHA-256 13c0787295b2d669623054159139f497c13c3ff34f93cc5c4500c4f7722d6ff6). Aucune installation dans /Users/James/Applications : Info.plist toujours 0.15.0. Publication uniquement pour laisser James tester la mise à jour depuis cette version ; son ancien bouton garde son icône jusqu’à installation. Le test utilisateur réel de remplacement/réouverture reste volontairement non exécuté par l’agent.
+
+## 29 octobre — finitions demandées après le test réussi de mise à jour
+
+Nouvelle préparation dans /tmp/solar-0152 depuis main, sans remplacer l’app installée : compte compact sans chevrons, indicateur de clic sur identité au survol/focus, icône sidebar arrondie et suppression du délai de fond à l’ouverture ; verre accéléré ×1,5, yeux blancs et sortie en deux volets diagonaux au lieu d’une coupure. Build TypeScript/Vite validé. Playwright valide le menu de 200 px sans chevrons, apparition/disparition de la flèche au survol, fond de sidebar immédiatement présent à la réouverture, clair/sombre, petite fenêtre, clavier, pièces jointes et mouvement réduit. Rendu WebGL, volets diagonaux et nettoyage sans erreur JavaScript inspectés sur captures. Mise à jour 0.15→0.15.1 confirmée par James ; aucune nouvelle connexion ni authentification personnelle exécutée.
+
+Limites de cette préparation : aucune publication 0.15.2, aucun remplacement de l’app installée ni clic de mise à jour. Authentification Solar avec compte personnel et rendu natif Windows non retestés pour ces seuls ajustements visuels ; les parcours de fournisseur et de stockage ne sont pas modifiés.
+
+## Publication 0.15.2 demandée par James
+
+Version et liens de téléchargement actualisés ; build frontend, contrats Messenger/chat et contrôles visuels validés. Publication conditionnée à la compilation, aux tests natifs et au démarrage des installateurs macOS/Windows, avec empreintes SHA-256. App personnelle laissée en place pour le test du nuage par James.

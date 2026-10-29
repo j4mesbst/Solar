@@ -36,3 +36,7 @@ Ouverture : logo Solar existant, fond blanc et moteur de verre fourni (shader MI
 ## 0.15.1 — harmonisation
 
 Pied de sidebar selon la dernière capture : rond d’initiales/photo, capsule Connecter des applications avec jusqu’à trois logos réellement connectés, sans prénom adjacent. Extrémités des contrôles à 20 px minimum du bord de fenêtre. Champ de message et bouton + de 46 à 36,8 px (−20 %), mic/envoi ajustés et saisie multiligne préservée. Animation sur noir avec logo noir, rim lights et dispersion conservés. Icône MAJ en nuage. Publier Mac et Windows sans installer ni cliquer MAJ sur le Mac de James : il vérifie lui-même la mise à jour depuis sa 0.15.
+
+## Finitions après 0.15.1
+
+Menu de compte compact (200 px, lignes de 28 px, icônes de 14 px), sans chevrons. En-tête d’agent : chevron au seul survol/focus, sans décalage du nom. Fond de sidebar immédiatement présent à l’ouverture, fermeture conservée, apparition légère du contenu et icône de panneau plus ronde. Lancement : yeux blancs, lecture du verre ×1,5 puis deux volets noirs découpés en diagonale, 650 ms ; mouvement réduit saute l’ensemble. Aucun changement de fournisseur, accès, stockage ou mise à jour.

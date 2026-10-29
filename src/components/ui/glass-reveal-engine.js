@@ -678,12 +678,12 @@ function frameAt(T, P, outro = 0) {
 }
 
 
-const SETTINGS={tileSize:256,logoScale:.6,finalScale:.8,iconPlate:false,originalColors:false,opticalDepth:1.1,dispersion:1.7,colorBleed:1.25,doubleBevel:1,bevelWidth:.14,corner:4.8,cornerPull:2.1,cornerWidth:2.2,cornerFocus:.58,edgeSmear:2.85,stretch:0,tilt:.35,bulge:1,specular:1.4,halo:1,shadow:0,ripple:1,bounce:0,response:.42,startSize:.2,startZoom:2.3,glide:2.3,present:2.4,drift:.12,swell:.5,focus:1,sheen:1,lightTurn:.9,background:'#000000',plateColor:'#05070b',logoColor:'#111111'};
+const SETTINGS={tileSize:256,logoScale:.6,finalScale:.8,iconPlate:false,originalColors:false,opticalDepth:1.1,dispersion:1.7,colorBleed:1.25,doubleBevel:1,bevelWidth:.14,corner:4.8,cornerPull:2.1,cornerWidth:2.2,cornerFocus:.58,edgeSmear:2.85,stretch:0,tilt:.35,bulge:1,specular:1.4,halo:1,shadow:0,ripple:1,bounce:0,response:.42,startSize:.2,startZoom:2.3,glide:2.3,present:2.4,drift:.12,swell:.5,focus:1,sheen:1,lightTurn:.9,background:'#000000',plateColor:'#05070b',logoColor:'#ffffff'};
 export function startGlass(canvas,url,onDone){
  let stopped=false,raf=0,renderer;const began=performance.now();
  try{renderer=createRenderer(canvas);}catch{}if(!renderer){onDone();return()=>{};}
  loadImage(url).then(img=>{if(stopped)return;const c=fitToTexture(img,img.naturalWidth,img.naturalHeight);renderer.setLogo({canvas:c,sdf:buildSdf(c)});let last=performance.now(),time=0;
- const tick=now=>{if(stopped)return;const dt=Math.min(.1,(now-last)/1000);last=now;if(!document.hidden)time+=dt;
+ const tick=now=>{if(stopped)return;const dt=Math.min(.1,(now-last)/1000);last=now;if(!document.hidden)time+=dt*1.5;
  const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.max(1,Math.round(canvas.clientWidth*dpr));canvas.height=Math.max(1,Math.round(canvas.clientHeight*dpr));
  renderer.render(frameAt(Math.min(time,3.5),SETTINGS),canvas.width,canvas.height,Math.min(256,Math.min(canvas.clientWidth,canvas.clientHeight)/1.75)*dpr);
  if(time<3.5&&performance.now()-began<7000)raf=requestAnimationFrame(tick);else onDone();};raf=requestAnimationFrame(tick);

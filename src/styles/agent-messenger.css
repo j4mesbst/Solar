@@ -203,3 +203,16 @@
 .team-app .atlas-send,.team-app .atlas-microphone{width:28.8px;height:28.8px}
 .team-app .messenger-agent-list .team-agent-row{padding-left:12px}
 .team-app .atlas-capsule .voice-mic{width:28.8px;height:28.8px;min-height:0}
+
+/* Compact account menu: original 280px/43px rows -> 200px/28px rows. */
+.team-app .apple-account-panel{width:200px!important;min-width:0!important;padding:5px!important;border-radius:14px!important}
+.team-app .apple-account-panel nav{gap:0!important}
+.team-app .apple-account-panel nav button,.team-app .apple-account-panel footer button{min-height:28px!important;padding:5px 8px!important;font-size:12px!important;gap:8px!important;border-radius:7px!important}
+.team-app .apple-account-panel button svg{width:14px;height:14px;flex-shrink:0}
+.team-app .apple-account-panel footer{margin-top:4px;padding-top:4px}
+.team-app .team-active-identity>svg{display:block;opacity:0;width:12px;transition:opacity .15s;flex-shrink:0}
+.team-app .team-active-identity:hover>svg,.team-app .team-active-identity:focus-visible>svg{opacity:1}
+.team-app:not(.sidebar-collapsed) .team-sidebar{transition:none!important}
+.team-app:not(.sidebar-collapsed) .team-roster,.team-app:not(.sidebar-collapsed) .messenger-sidebar-footer{animation:solar-sidebar-content .24s ease-out both}
+@keyframes solar-sidebar-content{from{opacity:0;transform:translateX(-5px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.team-app .team-active-identity>svg{transition:none}.team-app .team-roster,.team-app .messenger-sidebar-footer{animation:none!important}}

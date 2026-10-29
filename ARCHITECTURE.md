@@ -1,4 +1,4 @@
-# Architecture — Solar 0.15.1
+# Architecture — Solar 0.15.2
 
 Solar associe une interface React/TypeScript à un hôte Tauri 2 pour macOS et Windows.
 

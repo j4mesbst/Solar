@@ -1,1 +1,10 @@
 .solar-launch{position:fixed;inset:0;z-index:10000;background:#000;display:grid;place-items:center;pointer-events:auto}.solar-launch canvas{position:absolute;width:100%;height:100%;z-index:1;background:#000}.solar-launch-fallback{width:132px;height:132px;object-fit:contain}@media(prefers-reduced-motion:reduce){.solar-launch{display:none}}
+
+.solar-opening{position:fixed;inset:0;z-index:10000;pointer-events:none;overflow:hidden}
+.solar-opening-half{position:absolute;inset:0;background:#000;will-change:transform;animation-duration:650ms;animation-timing-function:cubic-bezier(.76,0,.24,1);animation-fill-mode:both}
+.solar-opening-left{clip-path:polygon(0 0,65% 0,35% 100%,0 100%);animation-name:solar-open-left}
+.solar-opening-right{clip-path:polygon(65% 0,100% 0,100% 100%,35% 100%);animation-name:solar-open-right}
+.solar-opening-eyes{position:absolute;left:50%;top:50%;width:123px;height:123px;transform:translate(-50%,-50%);background:#fff;mask:url('/solar-eyes.svg') center/contain no-repeat}
+@keyframes solar-open-left{to{transform:translate3d(-72%,0,0)}}
+@keyframes solar-open-right{to{transform:translate3d(72%,0,0)}}
+@media(prefers-reduced-motion:reduce){.solar-opening{display:none}}

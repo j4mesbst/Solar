@@ -1,0 +1,39 @@
+name: Publish verified Solar release
+on:
+  workflow_run:
+    workflows: [Solar Windows x64, Solar macOS installer]
+    types: [completed]
+permissions:
+  contents: write
+concurrency:
+  group: solar-publish-0152
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish only after both installers pass verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          gh release view v0.15.2 --json isDraft --jq .isDraft | grep -qx true || exit 0
+          mkdir checked
+          gh release download v0.15.2 --dir checked
+          cd checked
+          test -s Solar-0.15.2-Windows-x64-setup.exe && test -s Solar-0.15.2-macOS-arm64.dmg || exit 0
+          sha256sum --check SHA256SUMS-Windows.txt
+          sha256sum --check SHA256SUMS-macOS.txt
+          python3 - <<'PYVERIFY'
+          import json
+          w=json.load(open('windows-verification.json',encoding='utf-8-sig'))
+          m=json.load(open('verification.json'))
+          assert w['version']==m['version']=='0.15.2'
+          assert w['installed'] and w['window'] and w['startupSurvived']
+          assert m['dmg_verified'] and m['signature_verified']
+          assert m['launch_test']['status']=='running'
+          PYVERIFY
+          test "$(gh release view v0.15.2 --json targetCommitish --jq .targetCommitish)" = "$EXPECTED_SHA"
+          gh release edit v0.15.2 --draft=false --latest --notes 'Menu du compte compact sans flèches, indicateur au survol des agents, sidebar corrigée et icône arrondie. Animation de lancement ×1,5, yeux blancs et ouverture diagonale. Installateurs macOS Apple Silicon et Windows x64 vérifiés. macOS signé ad hoc sans notarisation ; Windows sans certificat éditeur. Authentifications personnelles et microphone physique non retestés. La mise à jour est proposée par le nuage bleu dans Solar 0.15.1.'

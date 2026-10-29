@@ -25,8 +25,8 @@ try {
   if ($process.HasExited) { throw 'Solar exited after creating its window' }
   node scripts/windows-webview-smoke.cjs
   if ($LASTEXITCODE -ne 0) { throw 'Installed WebView2 validation failed' }
-  @{version='0.15.1';architecture='x64';installed=$true;window=$true;startupSurvived=$true;microphone='Requires manual hardware validation';oauth='Requires user credentials';signed=$false} | ConvertTo-Json | Set-Content artifacts/windows-verification.json
+  @{version='0.15.2';architecture='x64';installed=$true;window=$true;startupSurvived=$true;microphone='Requires manual hardware validation';oauth='Requires user credentials';signed=$false} | ConvertTo-Json | Set-Content artifacts/windows-verification.json
 } finally { if (!$process.HasExited) { Stop-Process -Id $process.Id -Force } }
-Copy-Item $installer.FullName artifacts/Solar-0.15.1-Windows-x64-setup.exe
-$hash=(Get-FileHash artifacts/Solar-0.15.1-Windows-x64-setup.exe -Algorithm SHA256).Hash.ToLower()
-"$hash  Solar-0.15.1-Windows-x64-setup.exe" | Set-Content artifacts/SHA256SUMS-Windows.txt
+Copy-Item $installer.FullName artifacts/Solar-0.15.2-Windows-x64-setup.exe
+$hash=(Get-FileHash artifacts/Solar-0.15.2-Windows-x64-setup.exe -Algorithm SHA256).Hash.ToLower()
+"$hash  Solar-0.15.2-Windows-x64-setup.exe" | Set-Content artifacts/SHA256SUMS-Windows.txt
