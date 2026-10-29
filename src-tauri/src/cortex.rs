@@ -640,7 +640,7 @@ fn check_project_with_options(
                 ));
                 continue;
             };
-            #[cfg(windows)]let mut command={let node=binary("node").ok_or("Node.js introuvable")?;let cli=node.parent().ok_or("Dossier Node.js absent")?.join("node_modules/npm/bin/npm-cli.js");let mut command=Command::new(&node);command.arg(cli);let mut paths=vec![node.parent().unwrap().to_path_buf()];if let Some(path)=std::env::var_os("PATH"){paths.extend(std::env::split_paths(&path));}command.env_remove("PATH").env_remove("Path").env("Path",std::env::join_paths(paths).map_err(|e|e.to_string())?).env("PATHEXT",".COM;.EXE;.BAT;.CMD");command};
+            #[cfg(windows)]let mut command={let node=binary("node").ok_or("Node.js introuvable")?;let cli=node.parent().ok_or("Dossier Node.js absent")?.join("node_modules/npm/bin/npm-cli.js");let mut command=Command::new(&node);command.arg(cli);let mut paths=vec![node.parent().unwrap().to_path_buf()];if let Some(path)=std::env::var_os("PATH"){paths.extend(std::env::split_paths(&path));}command.env_clear().envs(std::env::vars_os().filter(|(key,_)| !key.to_string_lossy().eq_ignore_ascii_case("PATH"))).env("PATH",std::env::join_paths(paths).map_err(|e|e.to_string())?).env("PATHEXT",".COM;.EXE;.BAT;.CMD");command};
             #[cfg(not(windows))]let mut command = Command::new(npm);
             #[cfg(windows)]let _=npm;
             command
@@ -649,7 +649,6 @@ fn check_project_with_options(
                 .env("CI", "1");
             #[cfg(windows)]{let cwd=copy.0.to_string_lossy();let normal=if let Some(p)=cwd.strip_prefix(r"\\?\UNC\"){format!(r"\\{}",p)}else{cwd.strip_prefix(r"\\?\").unwrap_or(&cwd).to_string()};command.current_dir(normal);}
             #[cfg(not(windows))]command.env("PATH", "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin");
-            #[cfg(all(test,windows))] eprintln!("npm child command: {command:?}");
             let (ok, output) = run(command, cancel, Duration::from_secs(90))?;
             checks.push(check(
                 id,
@@ -1036,7 +1035,7 @@ mod tests {
         let root = Scratch::new().unwrap();
         std::fs::create_dir(root.0.join("src")).unwrap();
         std::fs::create_dir(root.0.join("tests")).unwrap();
-        std::fs::write(root.0.join("package.json"),r#"{"scripts":{"build":"echo PATH=%PATH% & where node & node --check src/value.cjs","test":"node --test tests/value.test.cjs"}}"#).unwrap();
+        std::fs::write(root.0.join("package.json"),r#"{"scripts":{"build":"node --check src/value.cjs","test":"node --test tests/value.test.cjs"}}"#).unwrap();
         std::fs::write(root.0.join("src/value.cjs"), "module.exports = 0;").unwrap();
         std::fs::write(
             root.0.join("tests/value.test.cjs"),
