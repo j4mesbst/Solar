@@ -40,6 +40,7 @@ jobs:
         with:
           workspaces: src-tauri
           cache-on-failure: true
+          key: ${{ github.sha }}
       - name: Pin reproducible npm
         run: npm install --global npm@10.9.4 --ignore-scripts
       - run: npm ci

@@ -640,7 +640,7 @@ fn check_project_with_options(
                 ));
                 continue;
             };
-            #[cfg(windows)]let mut command={let node=binary("node").ok_or("Node.js introuvable")?;let cli=node.parent().ok_or("Dossier Node.js absent")?.join("node_modules/npm/bin/npm-cli.js");let mut command=Command::new(node);command.arg(cli);command};
+            #[cfg(windows)]let mut command={let node=binary("node").ok_or("Node.js introuvable")?;let cli=node.parent().ok_or("Dossier Node.js absent")?.join("node_modules/npm/bin/npm-cli.js");let mut command=Command::new(&node);command.arg(cli);let mut paths=vec![node.parent().unwrap().to_path_buf()];if let Some(path)=std::env::var_os("PATH"){paths.extend(std::env::split_paths(&path));}command.env("PATH",std::env::join_paths(paths).map_err(|e|e.to_string())?);command};
             #[cfg(not(windows))]let mut command = Command::new(npm);
             #[cfg(windows)]let _=npm;
             command
