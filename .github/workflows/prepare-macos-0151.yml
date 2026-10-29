@@ -1,0 +1,31 @@
+name: Prepare verified Solar 0.15.1 macOS installer
+on:
+  push:
+    branches: [codex/solar-0151-installer]
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify public macOS image
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,hashlib
+          root=Path('_release');m=json.loads((root/'manifest.json').read_text())
+          data=b''.join((root/p).read_bytes() for p in m['parts'])
+          assert hashlib.sha256(data).hexdigest()==m['sha256']
+          Path(m['name']).write_bytes(data)
+          Path('SHA256SUMS-macOS.txt').write_text(m['sha256']+'  '+m['name']+'\n')
+          PY
+      - name: Keep release draft until both platforms are verified
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v0.15.1 >/dev/null 2>&1 || gh release create v0.15.1 --draft --target 0fa848977475d0fc6b2a3786d3f6c44d92c2c762 --title 'Solar 0.15.1' --notes 'Windows x64 and macOS. Release validation in progress.'
+          test "$(gh release view v0.15.1 --json isDraft --jq .isDraft)" = true
+          gh release upload v0.15.1 Solar-0.15.1-macOS-arm64.dmg SHA256SUMS-macOS.txt --clobber
