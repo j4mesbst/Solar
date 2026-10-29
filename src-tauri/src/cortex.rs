@@ -649,6 +649,12 @@ fn check_project_with_options(
                 .env("CI", "1");
             #[cfg(windows)]{let cwd=copy.0.to_string_lossy();let normal=if let Some(p)=cwd.strip_prefix(r"\\?\UNC\"){format!(r"\\{}",p)}else{cwd.strip_prefix(r"\\?\").unwrap_or(&cwd).to_string()};command.current_dir(normal);}
             #[cfg(not(windows))]command.env("PATH", "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin");
+            #[cfg(all(test,windows))] {
+                let entries:Vec<_>=command.get_envs().filter_map(|(k,v)|v.map(|v|(k,v))).collect();
+                eprintln!("Configured PATH: {:?}",entries.iter().filter(|(k,_)|k.to_string_lossy().eq_ignore_ascii_case("PATH")).collect::<Vec<_>>());
+                let out=Command::new(binary("node").unwrap()).args(["-p","JSON.stringify(Object.fromEntries(Object.entries(process.env).filter(([k])=>/^path$/i.test(k))))"]).env_clear().envs(entries).output().unwrap();
+                eprintln!("Node sees {} {}",String::from_utf8_lossy(&out.stdout),String::from_utf8_lossy(&out.stderr));
+            }
             let (ok, output) = run(command, cancel, Duration::from_secs(90))?;
             checks.push(check(
                 id,
