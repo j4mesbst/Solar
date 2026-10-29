@@ -49,6 +49,10 @@ jobs:
           npm run build
           node scripts/messenger-contract.test.mjs
           npm run test:chat
+      - name: Diagnose Windows Node child environment
+        run: |
+          rustc scripts/windows-node-probe.rs -o solar-node-probe.exe
+          ./solar-node-probe.exe
       - name: Native Windows tests
         run: cargo test --release --target x86_64-pc-windows-msvc --locked --manifest-path src-tauri/Cargo.toml --lib
       - name: Windows Credential Manager round-trip
