@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::net::TcpListener;
-use std::sync::{Mutex, Arc, atomic::{AtomicBool, Ordering}};
+use std::sync::{Mutex, Arc, atomic::{AtomicBool, AtomicU8, Ordering}};
 use std::time::{Duration, Instant};
 
 #[derive(Default)]
-pub struct OAuthState(Mutex<HashMap<String, (Option<TcpListener>, Arc<AtomicBool>)>>);
+pub struct OAuthState(Mutex<HashMap<String, (Option<TcpListener>, Arc<AtomicBool>)>>, Mutex<HashMap<String, Arc<AtomicU8>>>);
 
 #[tauri::command]
 pub async fn oauth_google_token(id:String,body:String,requests:tauri::State<'_,crate::integration_network::IntegrationRequests>)->Result<crate::integration_network::NetworkResponse,String>{
@@ -60,16 +60,37 @@ pub fn oauth_open(url: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn oauth_wait(state: String, sessions: tauri::State<'_, OAuthState>) -> Result<String, String> {
+pub async fn oauth_wait(app:tauri::AppHandle, state: String, sessions: tauri::State<'_, OAuthState>) -> Result<String, String> {
   let (listener, cancelled) = {
     let mut map=sessions.0.lock().map_err(|_| "Verrou OAuth indisponible.")?;
     let (listener,flag)=map.get_mut(&state).ok_or("Session OAuth absente.")?;
     (listener.take().ok_or("Autorisation déjà en attente.")?,flag.clone())
   };
+  let status=Arc::new(AtomicU8::new(0));
+  sessions.1.lock().map_err(|_|"Verrou OAuth indisponible")?.insert(state.clone(),status.clone());
+  let reply_listener=listener.try_clone().map_err(|e|e.to_string())?;
   let expected_state=state.clone();
   let result = tauri::async_runtime::spawn_blocking(move || wait_callback(listener, &expected_state, &cancelled)).await.map_err(|e| e.to_string())?;
   if let Ok(mut map)=sessions.0.lock(){map.remove(&state);}
+  if result.is_ok(){let expected=state.clone();std::thread::spawn(move||{
+    use tauri::Manager;
+    let deadline=Instant::now()+Duration::from_secs(120);
+    while Instant::now()<deadline {
+      if let Ok((mut stream,address))=reply_listener.accept(){
+        if !address.ip().is_loopback(){continue;}
+        let _=stream.set_read_timeout(Some(Duration::from_secs(1)));
+        let mut buf=[0;2048];let n=stream.read(&mut buf).unwrap_or(0);let request=String::from_utf8_lossy(&buf[..n]);
+        let line=request.lines().next().unwrap_or("");
+        let body=if line==format!("GET /return?state={} HTTP/1.1",expected){if let Some(w)=app.get_webview_window("main"){let _=w.show();let _=w.set_focus();} "Retour à Solar.".to_string()}else if line==format!("GET /status?state={} HTTP/1.1",expected){status.load(Ordering::SeqCst).to_string()}else{"Indisponible".into()};
+        let _=write!(stream,"HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",body.len(),body);
+      }else{std::thread::sleep(Duration::from_millis(80));}
+    }
+  });}
   result
+}
+#[tauri::command]
+pub fn oauth_finish(state:String,success:bool,sessions:tauri::State<'_,OAuthState>){
+ if let Ok(mut map)=sessions.1.lock(){if let Some(status)=map.remove(&state){status.store(if success{1}else{2},Ordering::SeqCst);}}
 }
 
 fn wait_callback(listener:TcpListener, expected_state:&str, cancelled:&AtomicBool)->Result<String,String>{
@@ -95,8 +116,8 @@ fn wait_callback(listener:TcpListener, expected_state:&str, cancelled:&AtomicBoo
           }
           let request=String::from_utf8_lossy(&bytes);
           let path=match callback_path(&request,expected_state){Some(path)=>path,None=>{let body="Invalid state.";let _=write!(stream,"HTTP/1.1 400 Bad Request\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",body.len(),body);continue;}};
-          let body = "Autorisation reçue. Revenez à Solar.";
-          let response = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n{}", body.len(), body);
+          let body = completion_page(expected_state,path.contains("error="));
+          let response = format!("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n{}", body.len(), body);
           let _ = stream.write_all(response.as_bytes()); return Ok(path.to_string());
         }
         Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => std::thread::sleep(Duration::from_millis(80)),
@@ -107,14 +128,20 @@ fn wait_callback(listener:TcpListener, expected_state:&str, cancelled:&AtomicBoo
 
 }
 
+fn completion_page(state:&str,denied:bool)->String{
+ format!(r##"<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Solar · Autorisation</title><style>html{{color-scheme:dark}}body{{margin:0;background:#0b0b0b;color:#eee;font:16px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100dvh;display:grid;place-items:center}}main{{text-align:center;padding:24px}}h1{{font-size:18px;font-weight:500}}p{{color:#999;margin:18px 0 24px}}a{{color:#eee;text-underline-offset:4px}}</style><main><h1 id="title">{}</h1><p id="message">{}</p><a href="/return?state={state}">Retourner à Solar</a></main><script>let attempts=0;const timer=setInterval(async()=>{{try{{const status=await fetch('/status?state={state}').then(r=>r.text());if(status==='1'||status==='2'){{clearInterval(timer);document.getElementById('title').textContent=status==='1'?'Autorisation terminée !':'Connexion non terminée';document.getElementById('message').textContent=status==='1'?'Vous pouvez fermer cet onglet':'Revenez dans Solar pour réessayer.';}}}}catch{{}}if(++attempts>110){{clearInterval(timer);document.getElementById('title').textContent='Revenez dans Solar';document.getElementById('message').textContent='Vérifiez le résultat de la connexion dans l’application.';}}}},1000);</script></html>"##,if denied{"Autorisation refusée"}else{"Finalisation de la connexion…"},if denied{"Revenez dans Solar pour réessayer."}else{"Vérification du compte en cours"})
+}
+
 #[tauri::command]
 pub fn oauth_cancel(state:String,sessions:tauri::State<'_,OAuthState>){
+ if let Ok(mut map)=sessions.1.lock(){if let Some(status)=map.remove(&state){status.store(2,Ordering::SeqCst);}}
  if let Ok(mut map)=sessions.0.lock(){if let Some((_,flag))=map.remove(&state){flag.store(true,Ordering::SeqCst);}}
 }
 
 #[cfg(test)]
 mod tests {
   use super::callback_path;
+  #[test]fn callback_page_waits_for_verified_success(){let page=super::completion_page("test-state",false);assert!(page.contains("Finalisation de la connexion"));assert!(page.contains("/status?state=test-state"));assert!(page.contains("Retourner à Solar"));assert!(page.contains("background:#0b0b0b"));assert!(super::completion_page("test-state",true).contains("Autorisation refusée"));}
   #[test]
   fn rejects_wrong_state_and_unexpected_callback() {
     assert!(callback_path("GET /oauth/callback?code=a&state=correct HTTP/1.1\r\n", "correct").is_some());

@@ -22,3 +22,13 @@ Chat clair #fcfcfc, sidebar #f5f5f5 ; sombre #121212 et #0e0e0e. Managers sélec
 ## 0.14.0 — Windows et macOS
 
 Même interface Windows, boutons et barre de titre natifs, clés Windows Credential Manager, OAuth navigateur et Ollama locaux, capture micro explicite. macOS : marges de 20 points logiques, espacement natif. Publication Windows après compilation, tests et démarrage natif ; microphone et connexions personnelles à vérifier sur matériel réel. Aucun accès développeur dans les builds publics.
+
+## 0.15.0 — connexions et commandes de compte
+
+Le clic Connecter démarre le navigateur OAuth sans étape promotionnelle ; clés API et comptes déjà connectés gardent leurs réglages. Retour navigateur noir sobre, texte centré, succès affiché uniquement après échange du jeton, contrôle d’identité et sauvegarde. Lien Retourner à Solar focalise la vraie fenêtre.
+
+Profil : petit rond avec icône de compte, prénom, bouton rond Plugins indépendant. Menu vertical en lignes, icônes à gauche, chevrons à droite, séparation avant déconnexion. Icônes User et Blocks animées au survol, mouvement réduit respecté. Retrait du dégradé supérieur qui barrait les messages.
+
+MAJ bleu Messages avant Rechercher, mêmes dimensions et espacements. Visible uniquement pour une version stable publique plus récente avec installateur adapté et SHA-256 disponible. Clic : téléchargement depuis le seul dépôt Solar, vérification de l’empreinte, installation et réouverture ; attente pendant les tâches. Préserver données et clés. Mac lancé depuis un DMG doit d’abord être installé dans Applications.
+
+Ouverture : logo Solar existant, fond blanc et moteur de verre fourni (shader MIT Zanwei), ressort, dispersion et passage de lumière, une seule lecture. Pas de boucle ; mouvement réduit saute la scène et erreur graphique ne bloque pas l’app. Nettoyer le canvas et les ressources à la fin.

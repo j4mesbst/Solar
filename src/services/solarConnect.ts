@@ -116,8 +116,8 @@ export async function connectOAuth(id:PluginId,signal:AbortSignal,_write=true):P
   if(profile&&missingOAuthScopes(profile,grantedScope).length)throw Error("Certaines permissions nécessaires ont été refusées. Reconnecte le service et vérifie les droits demandés.");
   const identity=await identifyIntegration(id,result.access_token,"oauth",signal);signal.throwIfAborted();
   if(currentAccountScope()!==owner)throw Error("Compte Solar modifié.");
-  await saveConnection(id,{accessToken:result.access_token,refreshToken:result.refresh_token,expiresAt:result.expires_in?Date.now()+result.expires_in*1000:undefined,identity,scopes:grantedScope?.split(/[ ,]+/),auth:"oauth",oauthFlow:"pkce",clientId:config.clientId,tokenEndpoint:endpoint,redirectUri:redirect});return identity;
- }finally{signal.removeEventListener("abort",cancel);await invoke("oauth_cancel",{state}).catch(()=>{});}
+  await saveConnection(id,{accessToken:result.access_token,refreshToken:result.refresh_token,expiresAt:result.expires_in?Date.now()+result.expires_in*1000:undefined,identity,scopes:grantedScope?.split(/[ ,]+/),auth:"oauth",oauthFlow:"pkce",clientId:config.clientId,tokenEndpoint:endpoint,redirectUri:redirect});await invoke("oauth_finish",{state,success:true});return identity;
+ }catch(error){await invoke("oauth_finish",{state,success:false}).catch(()=>{});throw error;}finally{signal.removeEventListener("abort",cancel);await invoke("oauth_cancel",{state}).catch(()=>{});}
 }
 export async function disconnectConnection(id:PluginId,signal?:AbortSignal):Promise<string>{
  const account=await savedConnection(id);if(!account)return "Non connecté";

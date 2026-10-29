@@ -9,6 +9,7 @@ mod hardware;
 mod ollama;
 mod cortex;
 mod oauth;
+mod updates;
 mod integration_network;
 mod attachments;
 #[tauri::command]
@@ -47,6 +48,7 @@ pub fn run() {
     .manage(ollama::OllamaRequestState::default())
     .manage(cortex::CortexState::default())
     .manage(oauth::OAuthState::default())
+    .manage(updates::UpdateState::default())
     .manage(integration_network::IntegrationRequests::default())
     .manage(attachments::AttachmentState::default())
     .setup(|app|{voice::cleanup_stale(app.handle());Ok(())})
@@ -60,7 +62,7 @@ pub fn run() {
         window.state::<attachments::AttachmentState>().allow_drop(paths);
       }
     })
-    .invoke_handler(tauri::generate_handler![computer_open,agent_jobs::agent_jobs,voice::voice_status,voice::voice_model_download,voice::voice_record_start,voice::voice_record_stop,voice::voice_cancel,voice::voice_speak,voice::voice_speech_stop,window_align_header,background::background_mode_set,background::mission_lock,background::mission_unlock,oauth::oauth_google_token,scheduler::scheduler_claim,integration_network::integration_request, integration_network::integration_cancel, oauth::oauth_cancel,attachments::attachment_read, secret_get, secret_set, secret_delete, export_save, artifact_save, oauth::oauth_begin, oauth::oauth_open, oauth::oauth_wait, work::work_open, work::work_default, work::work_set_default, work::work_clear_default, work::work_read, work::work_apply, work::work_undo, hardware::hardware_info, ollama::ollama_status, ollama::ollama_model_info, ollama::ollama_start, ollama::ollama_chat_stream, ollama::ollama_cancel, cortex::cortex_check, cortex::cortex_cancel, cortex::cortex_render, cortex::cortex_semantic])
+    .invoke_handler(tauri::generate_handler![updates::update_check,updates::update_install,computer_open,agent_jobs::agent_jobs,voice::voice_status,voice::voice_model_download,voice::voice_record_start,voice::voice_record_stop,voice::voice_cancel,voice::voice_speak,voice::voice_speech_stop,window_align_header,background::background_mode_set,background::mission_lock,background::mission_unlock,oauth::oauth_google_token,scheduler::scheduler_claim,integration_network::integration_request, integration_network::integration_cancel, oauth::oauth_cancel,attachments::attachment_read, secret_get, secret_set, secret_delete, export_save, artifact_save, oauth::oauth_begin, oauth::oauth_open, oauth::oauth_wait,oauth::oauth_finish, work::work_open, work::work_default, work::work_set_default, work::work_clear_default, work::work_read, work::work_apply, work::work_undo, hardware::hardware_info, ollama::ollama_status, ollama::ollama_model_info, ollama::ollama_start, ollama::ollama_chat_stream, ollama::ollama_cancel, cortex::cortex_check, cortex::cortex_cancel, cortex::cortex_render, cortex::cortex_semantic])
     .build(tauri::generate_context!())
     .expect("error while building Solar")
     .run(|app,event| {

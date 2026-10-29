@@ -1,7 +1,7 @@
 name: Solar Windows x64
 on:
   push:
-    branches: [main, codex/solar-0140-windows]
+    branches: [main, codex/solar-0150]
     paths: ['.github/workflows/windows-package.yml', 'scripts/windows-smoke.ps1', 'src/**', 'src-tauri/**', 'public/**', 'package*.json']
   workflow_dispatch:
 permissions:
@@ -78,7 +78,7 @@ jobs:
         run: ./scripts/windows-smoke.ps1
       - uses: actions/upload-artifact@v4
         with:
-          name: Solar-0.14.0-Windows-x64
+          name: Solar-0.15.0-Windows-x64
           path: artifacts/
           if-no-files-found: error
       - name: Attach verified Windows installer to draft release
@@ -86,7 +86,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v0.14.0 >/dev/null 2>&1 || gh release create v0.14.0 --draft --target "$GITHUB_SHA" --title 'Solar 0.14.0' --notes 'First Windows x64 release and macOS window spacing update. Release preparation.'
-          if [ "$(gh release view v0.14.0 --json isDraft --jq .isDraft)" = "true" ]; then
-            gh release upload v0.14.0 artifacts/Solar-0.14.0-Windows-x64-setup.exe artifacts/SHA256SUMS-Windows.txt artifacts/windows-verification.json --clobber
+          gh release view v0.15.0 >/dev/null 2>&1 || gh release create v0.15.0 --draft --target "$GITHUB_SHA" --title 'Solar 0.15.0' --notes 'Direct OAuth, profile menu, launch animation and native updates. Release preparation.'
+          if [ "$(gh release view v0.15.0 --json isDraft --jq .isDraft)" = "true" ]; then
+            gh release upload v0.15.0 artifacts/Solar-0.15.0-Windows-x64-setup.exe artifacts/SHA256SUMS-Windows.txt artifacts/windows-verification.json --clobber
           fi

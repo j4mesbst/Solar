@@ -24,3 +24,11 @@ Tests natifs Windows et aller-retour d’un secret jetable dans Windows Credenti
 Runner Windows : 35 tests natifs réussis (deux tests explicitement ignorés), puis aller-retour réel dans Windows Credential Manager. Installateur NSIS de 8,37 MiB installé et lancé ; vraie WebView2 inspectée, contexte natif Windows, interface affichée, retrait latéral adapté et aucune erreur JavaScript non interceptée. Capture du premier lancement inspectée. SHA-256 Windows : 9dac453fa95158b93da38e3a4650cd2fe2620cb21a347da5073285b8874c396e.
 
 DMG macOS 0.14.0 contrôlé, signature ad hoc et marges natives à 20 points. Interface clair/sombre, petit format, clavier, mouvement réduit et pièces jointes vérifiés avec les parcours Playwright existants sur Mac et profil Windows. Limites : microphone physique Windows et OAuth avec comptes personnels non testés sur le runner, pas de certificat éditeur Windows ni de notarisation Apple.
+
+## 29 octobre 2026 — préparation 0.15.0
+
+Connexions OAuth démarrées au clic, statut dans l’app et annulation ; page HTML de fin inspirée de la référence, vérification d’identité réelle avant succès, lien de retour vers Solar. Menu de compte vertical, prénom et raccourci Plugins, icônes MIT animées, retrait du dégradé supérieur. Animation de lancement sur blanc, logo existant, shader et ressort issus du moteur fourni ; interruption en mouvement réduit et repli en cas de WebGL indisponible.
+
+Mise à jour native : détection du dernier tag stable GitHub, comparaison stricte des versions, disponibilité des deux fichiers installateur/empreinte ; contrôle SHA-256 avant exécution, verrou d’installation, installation NSIS et /R Windows ; remplacement local Mac avec copie préalable, signature vérifiée et restauration si remplacement impossible. Aucune clé privée distribuée. Les anciens builds 0.14 ne contiennent pas ce bouton ; première installation 0.15 nécessaire pour les suivantes.
+
+TypeScript et build frontend validés, contrats Messenger/chat et parcours UI (thèmes, fichiers, clavier, petit format, mouvement réduit, modèles) validés. Tests natifs en cours de vérification. OAuth réel avec comptes personnels et mise à jour complète entre deux releases restent à confirmer ; ne pas annoncer ces parcours comme validés par des fixtures seules.

@@ -1,3 +1,4 @@
+import {SolarLaunch} from "./components/ui/solar-launch";
 import { StrictMode, Suspense, lazy } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
@@ -16,6 +17,6 @@ async function start(){
  initializeAccountScope(id);
  initializeBilling();
  authClient?.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY")sessionStorage.setItem("solar.auth.recovery","true");if((session?.user.id??undefined)!==id)window.location.reload();});
- createRoot(document.getElementById("root")!).render(<StrictMode><Suspense fallback={<div className="app-loading" role="status">Ouverture de Solar…</div>}><App/></Suspense></StrictMode>);
+ createRoot(document.getElementById("root")!).render(<StrictMode><SolarLaunch><Suspense fallback={<div className="app-loading" role="status">Ouverture de Solar…</div>}><App/></Suspense></SolarLaunch></StrictMode>);
 }
 void start().catch(()=>{document.getElementById("root")!.textContent="Impossible d’ouvrir Solar. Recharge l’application pour réessayer.";});
