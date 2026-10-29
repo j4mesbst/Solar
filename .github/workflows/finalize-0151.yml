@@ -1,0 +1,47 @@
+name: Publish Solar 0.15.1 verified downloads
+on:
+  push:
+    branches: [codex/solar-0151-finalize]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify both installers before publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(gh api repos/j4mesbst/Solar/git/ref/heads/main --jq .object.sha)" = "a0546cc118fb7b91c1d22c45ad4fa2ca5cab04da"
+          mkdir checked
+          gh release download v0.15.1 --dir checked
+          cd checked
+          test -s Solar-0.15.1-Windows-x64-setup.exe
+          test -s Solar-0.15.1-macOS-arm64.dmg
+          sha256sum --check SHA256SUMS-Windows.txt
+          sha256sum --check SHA256SUMS-macOS.txt
+          python3 - <<'PY'
+          import json
+          r=json.load(open('windows-verification.json',encoding='utf-8-sig'))
+          assert r['version']=='0.15.1'
+          assert r['installed'] and r['window'] and r['startupSurvived']
+          PY
+          cat > /tmp/notes.md <<'EOF'
+          Solar 0.15.1 — harmonisation de l’interface, macOS et Windows.
+
+          - Pied de sidebar selon la référence : initiales/photo et capsule Connecter avec les logos des connexions enregistrées.
+          - Marges d’au moins 20 px autour des contrôles périphériques.
+          - Champ de message et bouton + : 36,8 px contre 46 px, soit 20 % de réduction ; saisie multiligne préservée.
+          - Animation de verre sur fond noir avec logo noir et effets de lumière conservés.
+          - Icône MAJ en nuage pour les prochaines publications.
+
+          Pour tester depuis la 0.15.0 : reviens sur la fenêtre Solar, puis clique sur son bouton bleu de téléchargement. La 0.15.0 conserve son ancien pictogramme jusqu’à la mise à jour. La version sera téléchargée, vérifiée, installée puis rouverte. L’app installée de James est volontairement restée en 0.15.0 ; aucun clic MAJ effectué par l’agent.
+
+          Validation : contrats Messenger/chat, parcours UI clair/sombre, petit format, clavier, pièces jointes et dimensions ; rendu WebGL ; Windows 37 tests natifs, Credential Manager, installation et ouverture réelle WebView2. Signature ad hoc Mac vérifiée. Test complet de mise à jour entre les versions laissé à l’utilisateur. Aucun secret personnel inclus.
+
+          Mac Apple Silicon, Windows x64 ; pas de notarisation Apple ni de certificat éditeur Windows.
+          EOF
+          gh release edit v0.15.1 --target a0546cc118fb7b91c1d22c45ad4fa2ca5cab04da --draft=false --latest --notes-file /tmp/notes.md
