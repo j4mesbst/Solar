@@ -1,0 +1,47 @@
+name: Publish Solar 0.15.0 verified downloads
+on:
+  push:
+    branches: [codex/solar-0150-finalize]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify both installers before publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(gh api repos/j4mesbst/Solar/git/ref/heads/main --jq .object.sha)" = "201196e7a032a9e96b83dedf33dcbdb7b1e7f2dd"
+          mkdir checked
+          gh release download v0.15.0 --dir checked
+          cd checked
+          test -s Solar-0.15.0-Windows-x64-setup.exe
+          test -s Solar-0.15.0-macOS-arm64.dmg
+          sha256sum --check SHA256SUMS-Windows.txt
+          sha256sum --check SHA256SUMS-macOS.txt
+          python3 - <<'PY'
+          import json
+          r=json.load(open('windows-verification.json',encoding='utf-8-sig'))
+          assert r['installed'] and r['window'] and r['startupSurvived']
+          PY
+          cat > /tmp/notes.md <<'EOF'
+          Solar 0.15.0 pour macOS Apple Silicon et Windows x64.
+
+          - Connecter ouvre directement le navigateur OAuth, sans page intermédiaire.
+          - Retour d’autorisation sombre et centré ; confirmation après vérification et sauvegarde du compte.
+          - Menu du profil en lignes, prénom et raccourci Plugins avec icônes animées au survol.
+          - Logo Solar animé dans le verre sur fond blanc au lancement ; mouvement réduit respecté.
+          - Suppression du dégradé qui barrait les messages en haut.
+          - Bouton MAJ bleu avant Rechercher, uniquement pour une version stable plus récente. Téléchargement vérifié par SHA-256, installation et réouverture. Désactivé pendant les tâches.
+
+          Installez cette version manuellement une première fois pour disposer du bouton MAJ lors des prochaines publications. Sur Mac, glissez Solar dans Applications ; le dossier doit être accessible en écriture. Conversations et clés restent conservées.
+
+          Validation : 37 tests natifs sur chaque plateforme, Credential Manager Windows, installation et ouverture réelles Windows, parcours UI et rendu WebGL. OAuth avec comptes personnels et remplacement automatique entre deux versions différentes restent à confirmer en conditions réelles. Connecteurs soumis à leur configuration et autorisations. Aucun secret personnel inclus.
+
+          Installateur Windows sans certificat éditeur ; DMG Mac signé ad hoc, sans notarisation.
+          EOF
+          gh release edit v0.15.0 --target 201196e7a032a9e96b83dedf33dcbdb7b1e7f2dd --draft=false --latest --notes-file /tmp/notes.md
