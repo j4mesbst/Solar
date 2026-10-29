@@ -44,3 +44,7 @@ Limites : OAuth complet avec comptes personnels et remplacement automatique entr
 ## 29 octobre — préparation 0.15.1
 
 Footer conforme à la nouvelle référence, vraies connexions seulement, marges de 20 px. Champ et + réduits de 20 %, thème de lancement noir avec éclairage. Nuage pour MAJ dans cette version ; l’ancienne 0.15 garde son icône de téléchargement jusqu’à la mise à jour. Aucune intervention sur l’app installée, aucun clic MAJ : test réservé à James.
+
+Validation locale : build TypeScript/Vite et bundle Mac réussis, signature ad hoc vérifiée. Playwright mesure 36,8 px pour le champ et le bouton +, ≥20 px aux bords, trois logos issus de connexions de test enregistrées, menus et saisie clavier ; clair/sombre, petit format et mouvement réduit vérifiés. WebGL noir et nettoyage du canvas sans erreur. Contrats Messenger et chat réussis. Transfert du lockfile GitHub corrigé et vérifié octet pour octet ; validation Windows relancée. Aucun changement de l’app installée de James.
+
+Windows validé : run 40861522353 réussi, tests natifs et Credential Manager, installation NSIS et démarrage réel WebView2 sans erreur JavaScript. DMG Mac 0.15.1 vérifié (SHA-256 13c0787295b2d669623054159139f497c13c3ff34f93cc5c4500c4f7722d6ff6). Aucune installation dans /Users/James/Applications : Info.plist toujours 0.15.0. Publication uniquement pour laisser James tester la mise à jour depuis cette version ; son ancien bouton garde son icône jusqu’à installation. Le test utilisateur réel de remplacement/réouverture reste volontairement non exécuté par l’agent.
