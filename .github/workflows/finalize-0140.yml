@@ -1,0 +1,44 @@
+name: Publish Solar 0.14.0 verified downloads
+on:
+  push:
+    branches: [codex/solar-0140-finalize]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify both installers before publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(gh api repos/j4mesbst/Solar/git/ref/heads/main --jq .object.sha)" = "42d8997b0b1206b2401adfd70f9088131a4a16f4"
+          mkdir checked
+          gh release download v0.14.0 --dir checked
+          cd checked
+          test -s Solar-0.14.0-Windows-x64-setup.exe
+          test -s Solar-0.14.0-macOS-arm64.dmg
+          sha256sum --check SHA256SUMS-Windows.txt
+          sha256sum --check SHA256SUMS-macOS.txt
+          python3 - <<'PY'
+          import json
+          r=json.load(open('windows-verification.json',encoding='utf-8-sig'))
+          assert r['installed'] and r['window'] and r['startupSurvived']
+          PY
+          cat > /tmp/notes.md <<'EOF'
+          Première version Windows x64 de Solar, avec le même espace d’agents que sur Mac.
+
+          - Installateur Windows NSIS, WebView2, boutons de fenêtre natifs.
+          - Clés sécurisées dans Windows Credential Manager, OAuth navigateur et Ollama adaptés.
+          - Dictée locale Windows : capture explicite, transcription Whisper CPU, audio temporaire supprimé.
+          - macOS : boutons à 20 points logiques du haut et de la gauche, espacement natif préservé.
+          - QCM, thèmes, agents, modèles et stockage conservés.
+
+          Validation Windows : tests Rust, secret jetable, installation silencieuse et démarrage d’une vraie fenêtre sur runner Windows. Microphone physique et connexions personnelles non testés automatiquement. L’aperçu WebKit de développement reste spécifique au Mac ; l’onglet Ordinateur reste Bientôt.
+
+          Windows 10/11 x64 ; installateur sans certificat éditeur, SmartScreen peut afficher un avertissement. macOS Apple Silicon, signature ad hoc sans notarisation. Les fournisseurs et connecteurs nécessitent leur propre configuration. Aucun secret personnel ou accès développeur inclus dans les installeurs publics.
+          EOF
+          gh release edit v0.14.0 --target 42d8997b0b1206b2401adfd70f9088131a4a16f4 --draft=false --latest --notes-file /tmp/notes.md
