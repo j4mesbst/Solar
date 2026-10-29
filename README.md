@@ -2,17 +2,17 @@
 
 <img src="assets/readme/logo.png" alt="Solar" width="112" />
 
-# Solar 0.14.0
+# Solar 0.15.0
 
 **Votre équipe d’agents IA, sur macOS et Windows.**
 
 Des conversations courtes, des agents personnalisables et le modèle de votre choix.
 
-[![Télécharger pour macOS Apple Silicon](https://img.shields.io/badge/Télécharger_macOS-Apple_Silicon-007AFF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/j4mesbst/Solar/releases/download/v0.14.0/Solar-0.14.0-macOS-arm64.dmg)
+[![Télécharger pour macOS Apple Silicon](https://img.shields.io/badge/Télécharger_macOS-Apple_Silicon-007AFF?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/j4mesbst/Solar/releases/download/v0.15.0/Solar-0.15.0-macOS-arm64.dmg)
 
-[![Download for Windows x64](https://img.shields.io/badge/Download_for_Windows-x64-0078D4?style=for-the-badge)](https://github.com/j4mesbst/Solar/releases/download/v0.14.0/Solar-0.14.0-Windows-x64-setup.exe)
+[![Download for Windows x64](https://img.shields.io/badge/Download_for_Windows-x64-0078D4?style=for-the-badge)](https://github.com/j4mesbst/Solar/releases/download/v0.15.0/Solar-0.15.0-Windows-x64-setup.exe)
 
-[Notes de version](https://github.com/j4mesbst/Solar/releases/tag/v0.14.0) · [Signaler un problème](https://github.com/j4mesbst/Solar/issues) · [Licence MIT](LICENSE)
+[Notes de version](https://github.com/j4mesbst/Solar/releases/tag/v0.15.0) · [Signaler un problème](https://github.com/j4mesbst/Solar/issues) · [Licence MIT](LICENSE)
 
 </div>
 
@@ -60,9 +60,9 @@ Les clés personnelles sont conservées dans le Trousseau macOS ou le Gestionnai
 
 ## Télécharger et installer
 
-**[Télécharger Solar 0.14.0 pour macOS — Apple Silicon (.dmg)](https://github.com/j4mesbst/Solar/releases/download/v0.14.0/Solar-0.14.0-macOS-arm64.dmg)**
+**[Télécharger Solar 0.15.0 pour macOS — Apple Silicon (.dmg)](https://github.com/j4mesbst/Solar/releases/download/v0.15.0/Solar-0.15.0-macOS-arm64.dmg)**
 
-**[Download Solar 0.14.0 for Windows — x64 (.exe)](https://github.com/j4mesbst/Solar/releases/download/v0.14.0/Solar-0.14.0-Windows-x64-setup.exe)**
+**[Download Solar 0.15.0 for Windows — x64 (.exe)](https://github.com/j4mesbst/Solar/releases/download/v0.15.0/Solar-0.15.0-Windows-x64-setup.exe)**
 
 1. Sur Mac, ouvrez le DMG et glissez **Solar.app** dans **Applications**. Sur Windows, lancez le programme **setup.exe** et suivez l’installation pour votre compte.
 2. Lancez Solar et choisissez un modèle dans **Modèles**.
@@ -72,13 +72,16 @@ Le DMG est destiné aux Mac **Apple Silicon (arm64)** sous **macOS 11 ou version
 
 Le programme Windows est destiné à **Windows 10/11 x64**. Il installe WebView2 si nécessaire, ce qui demande une connexion Internet. Il n’est pas signé avec un certificat éditeur Windows ; SmartScreen peut afficher un avertissement de provenance. Une compilation ARM64 Windows native n’est pas fournie. La dictée utilise le micro autorisé par Windows et un modèle Whisper local téléchargé explicitement ; son confort dépend du matériel. Les connecteurs demandent leurs propres autorisations et une configuration disponible.
 
-## Nouveautés de la 0.14.0
+## Nouveautés de la 0.15.0
 
-- Première version Windows x64 avec installateur NSIS et fenêtre native.
-- Même interface, agents, QCM, thèmes, modèles et bibliothèque que sur Mac.
-- Stockage sécurisé Windows, navigateur OAuth, détection Ollama et dictée locale adaptés.
-- Boutons macOS à 20 points logiques du haut et de la gauche ; espacement natif conservé.
-- Installation propre des dépendances rendue reproductible pour les builds.
+- Connexion OAuth lancée directement au clic, avec annulation et retour vers Solar.
+- Page d’autorisation sobre ; succès après vérification et sauvegarde du compte.
+- Menu du profil en lignes, prénom et icônes Compte/Plugins animées au survol.
+- Animation de verre du logo à l’ouverture, sur fond blanc ; mouvement réduit respecté.
+- Bouton MAJ bleu affiché uniquement pour une version stable plus récente avec installateur et empreinte SHA-256. Téléchargement, vérification puis installation et réouverture sur Mac/Windows. Termine les tâches avant de mettre à jour.
+- Suppression du dégradé qui coupait les messages en haut du chat.
+
+Le bouton MAJ nécessite d’installer cette version une première fois manuellement. Sur Mac, glisse Solar dans Applications ; l’app doit avoir le droit de s’y remplacer. Les clés et conversations restent dans le stockage existant. Les fichiers proviennent du dépôt GitHub Solar en HTTPS, avec vérification SHA-256 ; cela ne constitue pas une notarisation Apple ni un certificat éditeur Windows.
 
 ## Finitions de la 0.13.4
 
