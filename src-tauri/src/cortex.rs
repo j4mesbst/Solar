@@ -296,7 +296,10 @@ impl Scratch {
         );
         let path = std::env::temp_dir().join(name);
         std::fs::create_dir(&path).map_err(|e| e.to_string())?;
-        Ok(Self(path.canonicalize().map_err(|e| e.to_string())?))
+        let canonical=path.canonicalize().map_err(|e|e.to_string())?;
+        // npm invokes cmd.exe, which rejects verbatim UNC-style working directories.
+        #[cfg(windows)]let canonical={let s=canonical.to_string_lossy();if let Some(rest)=s.strip_prefix(r"\\?\UNC\"){PathBuf::from(format!(r"\\{}",rest))}else if let Some(rest)=s.strip_prefix(r"\\?\"){PathBuf::from(rest)}else{canonical}};
+        Ok(Self(canonical))
     }
 }
 impl Drop for Scratch {
@@ -335,7 +338,7 @@ fn copy_sources(
         let entry = entry.map_err(|e| e.to_string())?;
         let path = entry.path();
         let relative = path.strip_prefix(root).map_err(|e| e.to_string())?;
-        if !safe_relative(&relative.to_string_lossy()) {
+        if !safe_relative(&relative.to_string_lossy().replace('\\',"/")) {
             continue;
         }
         let metadata = entry.metadata().map_err(|e| e.to_string())?;
@@ -1065,7 +1068,7 @@ mod tests {
             None,
         )
         .unwrap();
-        assert!(passed.iter().all(|c| c.success));
+        assert!(passed.iter().all(|c| c.success),"{}",serde_json::to_string(&passed).unwrap());
         assert!(passed.iter().any(|c| c.r#type == "tests"));
         assert_eq!(
             std::fs::read_to_string(root.0.join("src/value.cjs")).unwrap(),
