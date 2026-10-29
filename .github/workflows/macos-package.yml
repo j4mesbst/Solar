@@ -59,9 +59,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v0.15.2 >/dev/null 2>&1 || gh release create v0.15.2 --draft --target "$GITHUB_SHA" --title 'Solar 0.15.2' --notes 'Desktop polish. Release validation in progress.' || gh release view v0.15.2
-          cp artifacts/Solar-macOS-arm64.dmg artifacts/Solar-0.15.2-macOS-arm64.dmg
-          shasum -a 256 artifacts/Solar-0.15.2-macOS-arm64.dmg | sed 's|artifacts/||' > artifacts/SHA256SUMS-macOS.txt
-          if [ "$(gh release view v0.15.2 --json isDraft --jq .isDraft)" = "true" ]; then
-            gh release upload v0.15.2 artifacts/Solar-0.15.2-macOS-arm64.dmg artifacts/SHA256SUMS-macOS.txt artifacts/verification.json --clobber
+          gh release view v0.15.3 >/dev/null 2>&1 || gh release create v0.15.3 --draft --target "$GITHUB_SHA" --title 'Solar 0.15.3' --notes 'Desktop polish. Release validation in progress.' || gh release view v0.15.3
+          cp artifacts/Solar-macOS-arm64.dmg artifacts/Solar-0.15.3-macOS-arm64.dmg
+          shasum -a 256 artifacts/Solar-0.15.3-macOS-arm64.dmg | sed 's|artifacts/||' > artifacts/SHA256SUMS-macOS.txt
+          if [ "$(gh release view v0.15.3 --json isDraft --jq .isDraft)" = "true" ]; then
+            gh release upload v0.15.3 artifacts/Solar-0.15.3-macOS-arm64.dmg artifacts/SHA256SUMS-macOS.txt artifacts/verification.json --clobber
           fi

@@ -1,5 +1,6 @@
 mod agent_jobs;
 mod secret_session;
+#[cfg(target_os="macos")]mod local_vault;
 mod voice;
 #[cfg(windows)]mod voice_windows;
 mod background;
@@ -41,6 +42,7 @@ pub fn run() {
     .plugin(tauri_plugin_http::init())
     .plugin(tauri_plugin_dialog::init())
     .manage(std::sync::Arc::new(secret_session::SessionSecrets::default()))
+
     .manage(voice::VoiceState::default())
     .manage(background::MissionLocks::default())
     .manage(background::BackgroundMode::default())
@@ -51,7 +53,9 @@ pub fn run() {
     .manage(updates::UpdateState::default())
     .manage(integration_network::IntegrationRequests::default())
     .manage(attachments::AttachmentState::default())
-    .setup(|app|{voice::cleanup_stale(app.handle());Ok(())})
+    .setup(|app|{
+      #[cfg(target_os="macos")] { use tauri::Manager; app.manage(std::sync::Arc::new(local_vault::LocalVault::default())); }
+voice::cleanup_stale(app.handle());Ok(())})
     .on_window_event(|window, event| {
       use tauri::Manager;
       #[cfg(target_os="macos")]
@@ -83,28 +87,29 @@ fn keychain_service(app: &tauri::AppHandle) -> &str {
   if id == "fr.j4mesbst.solar" { "solar" } else { id }
 }
 
+#[cfg(target_os="macos")]
+fn mac_vault(app:&tauri::AppHandle)->Result<(std::sync::Arc<local_vault::LocalVault>,std::path::PathBuf),String>{
+ use tauri::Manager;
+ let dir=app.path().app_data_dir().map_err(|_|"Dossier sécurisé indisponible.")?.join("secure-vault");
+ Ok((app.state::<std::sync::Arc<local_vault::LocalVault>>().inner().clone(),dir))
+}
 #[tauri::command]
 async fn secret_get(app:tauri::AppHandle,key:String,state:tauri::State<'_,std::sync::Arc<secret_session::SessionSecrets>>)->Result<Option<String>,String>{
- let service=keychain_service(&app).to_owned();let cache=state.inner().clone();
- tauri::async_runtime::spawn_blocking(move||cache.get(&service,&key,||{
-  let entry=keyring::Entry::new(&service,&key).map_err(|e|e.to_string())?;
-  match entry.get_password(){Ok(v)=>Ok(Some(v)),Err(keyring::Error::NoEntry)=>Ok(None),Err(e)=>Err(e.to_string())}
- })).await.map_err(|_|"Lecture du Trousseau interrompue.".to_string())?
+ let service=keychain_service(&app).to_owned();
+ #[cfg(target_os="macos")]{let _=state;let(vault,dir)=mac_vault(&app)?;return tauri::async_runtime::spawn_blocking(move||vault.get(&dir,&service,&key)).await.map_err(|_|"Lecture du coffre interrompue.".to_string())?;}
+ #[cfg(not(target_os="macos"))]{let cache=state.inner().clone();tauri::async_runtime::spawn_blocking(move||cache.get(&service,&key,||{let entry=keyring::Entry::new(&service,&key).map_err(|e|e.to_string())?;match entry.get_password(){Ok(v)=>Ok(Some(v)),Err(keyring::Error::NoEntry)=>Ok(None),Err(e)=>Err(e.to_string())}})).await.map_err(|_|"Lecture du coffre interrompue.".to_string())?}
 }
 #[tauri::command]
 async fn secret_set(app:tauri::AppHandle,key:String,value:String,state:tauri::State<'_,std::sync::Arc<secret_session::SessionSecrets>>)->Result<(),String>{
- let service=keychain_service(&app).to_owned();let cache=state.inner().clone();
- tauri::async_runtime::spawn_blocking(move||cache.set(&service,&key,Some(value.clone()),||{
-  keyring::Entry::new(&service,&key).map_err(|e|e.to_string())?.set_password(&value).map_err(|e|e.to_string())
- })).await.map_err(|_|"Enregistrement dans le Trousseau interrompu.".to_string())?
+ let service=keychain_service(&app).to_owned();
+ #[cfg(target_os="macos")]{let _=state;let(vault,dir)=mac_vault(&app)?;return tauri::async_runtime::spawn_blocking(move||vault.set(&dir,&service,&key,Some(value))).await.map_err(|_|"Sauvegarde du coffre interrompue.".to_string())?;}
+ #[cfg(not(target_os="macos"))]{let cache=state.inner().clone();tauri::async_runtime::spawn_blocking(move||cache.set(&service,&key,Some(value.clone()),||keyring::Entry::new(&service,&key).map_err(|e|e.to_string())?.set_password(&value).map_err(|e|e.to_string()))).await.map_err(|_|"Sauvegarde du coffre interrompue.".to_string())?}
 }
 #[tauri::command]
 async fn secret_delete(app:tauri::AppHandle,key:String,state:tauri::State<'_,std::sync::Arc<secret_session::SessionSecrets>>)->Result<(),String>{
- let service=keychain_service(&app).to_owned();let cache=state.inner().clone();
- tauri::async_runtime::spawn_blocking(move||cache.set(&service,&key,None,||{
-  let entry=keyring::Entry::new(&service,&key).map_err(|e|e.to_string())?;
-  match entry.delete_credential(){Ok(())|Err(keyring::Error::NoEntry)=>Ok(()),Err(e)=>Err(e.to_string())}
- })).await.map_err(|_|"Suppression du Trousseau interrompue.".to_string())?
+ let service=keychain_service(&app).to_owned();
+ #[cfg(target_os="macos")]{let _=state;let(vault,dir)=mac_vault(&app)?;return tauri::async_runtime::spawn_blocking(move||vault.set(&dir,&service,&key,None)).await.map_err(|_|"Suppression du coffre interrompue.".to_string())?;}
+ #[cfg(not(target_os="macos"))]{let cache=state.inner().clone();tauri::async_runtime::spawn_blocking(move||cache.set(&service,&key,None,||{let entry=keyring::Entry::new(&service,&key).map_err(|e|e.to_string())?;match entry.delete_credential(){Ok(())|Err(keyring::Error::NoEntry)=>Ok(()),Err(e)=>Err(e.to_string())}})).await.map_err(|_|"Suppression du coffre interrompue.".to_string())?}
 }
 
 // The path is chosen by the native dialog; frontend code cannot provide an arbitrary write path.
